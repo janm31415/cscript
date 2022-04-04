@@ -2539,10 +2539,7 @@ namespace
 void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const std::vector<external_function>& externals)
   {
   (void*)size;
-
-  regs.rsp -= 8;
-  *((uint64_t*)regs.rsp) = 0xffffffffffffffff; // this address means the function call representing this bytecode
-
+  *((uint64_t*)regs.rsp - 1) = 0xffffffffffffffff; // this address means the function call representing this bytecode
   const uint8_t* bytecode_ptr = bytecode;
 
   for (;;)
@@ -3238,7 +3235,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::RET:
       {
-      uint64_t address = *((uint64_t*)regs.rsp);
+      uint64_t address = *((uint64_t*)regs.rsp - 1);
       regs.rsp += 8; // to check, might need to pop more
       if (address == 0xffffffffffffffff) // we're at the end of this bytecode function call
         return;
