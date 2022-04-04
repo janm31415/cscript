@@ -158,7 +158,7 @@ struct compile_fixture
     reg.r8 = i3;
     reg.r9 = i4;
     uint64_t* mem = (uint64_t*)reg.rsp;
-    *(mem - 16) = i5;
+    *(mem - 1) = i5;
     reg.rsp -= 40;
     try {
       VM::run_bytecode(f, size, reg);
@@ -257,35 +257,60 @@ struct compile_fixture
     VM::free_bytecode(f, size);
     return res;
     }
-  /*
-  float runfffff(const std::string& script, float i1, float i2, float i3, float i4, float i5, bool _optimize = true)
+  
+  double runfffff(const std::string& script, double i1, double i2, double i3, double i4, double i5, bool _optimize = true)
     {
-    float res = std::numeric_limits<float>::quiet_NaN();
+    double res = std::numeric_limits<double>::quiet_NaN();
     auto code = get_vmcode(script, _optimize);
-    typedef float(__cdecl *fun_ptr)(float, float, float, float, float);
-    fun_ptr f = (fun_ptr)assemble(code);
-    if (f)
-      {
-      res = f(i1, i2, i3, i4, i5);
-      free_assembled_function(f);
+    uint64_t size;
+    uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
+    VM::registers reg;
+    reg.xmm0 = i1;
+    reg.xmm1 = i2;
+    reg.xmm2 = i3;
+    reg.xmm3 = i4;
+    uint64_t* mem = (uint64_t*)reg.rsp;
+    *(mem - 1) = *reinterpret_cast<uint64_t*>(&i5);
+    reg.rsp -= 40;
+    try {
+      VM::run_bytecode(f, size, reg);
+      res = reg.xmm0;
       }
+    catch (std::logic_error e)
+      {
+      std::cout << e.what() << "\n";
+      }
+    VM::free_bytecode(f, size);
     return res;
     }
-
-  float runififif(const std::string& script, int64_t i1, float f2, int64_t i3, float f4, int64_t i5, float f6, bool _optimize = true)
+  
+  double runififif(const std::string& script, int64_t i1, double f2, int64_t i3, double f4, int64_t i5, double f6, bool _optimize = true)
     {
-    float res = std::numeric_limits<float>::quiet_NaN();
+    double res = std::numeric_limits<double>::quiet_NaN();
     auto code = get_vmcode(script, _optimize);
-    typedef float(__cdecl *fun_ptr)(int, float, int, float, int, float);
-    fun_ptr f = (fun_ptr)assemble(code);
-    if (f)
-      {
-      res = f(i1, f2, i3, f4, i5, f6);
-      free_assembled_function(f);
+    uint64_t size;
+    uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
+    VM::registers reg;
+    reg.rcx = i1;
+    reg.xmm1 = f2;
+    reg.r8 = i3;
+    reg.xmm3 = f4;
+    uint64_t* mem = (uint64_t*)reg.rsp;
+    *(mem - 2) = i5;
+    *(mem - 1) = *reinterpret_cast<uint64_t*>(&f6);
+    reg.rsp -= 48;
+    try {
+      VM::run_bytecode(f, size, reg);
+      res = reg.xmm0;
       }
+    catch (std::logic_error e)
+      {
+      std::cout << e.what() << "\n";
+      }
+    VM::free_bytecode(f, size);
     return res;
     }
-    */
+    
   double runpi(const std::string& script, int64_t* i1, bool _optimize = true)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
@@ -592,16 +617,16 @@ struct parameter_test : public compile_fixture
     TEST_EQ(10.f, runii("(int i, int j) i + j;", 3, 7, false));
     TEST_EQ(15.f, runiii("(int i, int j, int k) i + j + k;", 3, 7, 5, false));
     TEST_EQ(35.f, runiiii("(int i, int j, int k, int l) i + j + k + l;", 3, 7, 5, 20, false));
-    //TEST_EQ(135.f, runiiiii("(int i, int j, int k, int l, int m) i + j + k + l + m;", 3, 7, 5, 20, 100, false));
+    TEST_EQ(135.f, runiiiii("(int i, int j, int k, int l, int m) i + j + k + l + m;", 3, 7, 5, 20, 100, false));
 
     TEST_EQ(1.2 + 1.5, runf("(float f) f + 1.5;", 1.2, false));
     TEST_EQ(1.2 + 1.5, runff("(float f, float g) f + g;", 1.2, 1.5, false));
     TEST_EQ(1.2 + 1.5 + 7.9, runfff("(float f, float g, float h) f + g + h;", 1.2, 1.5, 7.9, false));
     TEST_EQ(1.2 + 1.5 + 7.9 + 10.4, runffff("(float f, float g, float h, float i) f + g + h + i;", 1.2, 1.5, 7.9, 10.4, false));
-    //TEST_EQ(1.2f + 1.5f + 7.9f + 10.4f + 19.1f, runfffff("(float f, float g, float h, float i, float j) f + g + h + i + j;", 1.2f, 1.5f, 7.9f, 10.4f, 19.1f, false));
-    //
-    //
-    //TEST_EQ(1.f + 1.5f + 7.f + 10.4f + 19.f + 3.14f, runififif("(int i1, float f2, int i3, float f4, int i5, float f6) i1+f2+i3+f4+i5+f6;", 1, 1.5f, 7, 10.4f, 19, 3.14f, false));
+    TEST_EQ(1.2 + 1.5 + 7.9 + 10.4 + 19.1, runfffff("(float f, float g, float h, float i, float j) f + g + h + i + j;", 1.2, 1.5, 7.9, 10.4, 19.1, false));
+    
+    
+    TEST_EQ(1.0 + 1.5 + 7.0 + 10.4 + 19.0 + 3.14, runififif("(int i1, float f2, int i3, float f4, int i5, float f6) i1+f2+i3+f4+i5+f6;", 1, 1.5, 7, 10.4, 19, 3.14, false));
     }
   };
 
