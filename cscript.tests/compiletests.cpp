@@ -159,7 +159,7 @@ struct compile_fixture
     reg.r9 = i4;
     uint64_t* mem = (uint64_t*)reg.rsp;
     *(mem - 1) = i5;
-    reg.rsp -= 40;
+    reg.rsp -= 8;
     try {
       VM::run_bytecode(f, size, reg);
       res = reg.xmm0;
@@ -271,7 +271,7 @@ struct compile_fixture
     reg.xmm3 = i4;
     uint64_t* mem = (uint64_t*)reg.rsp;
     *(mem - 1) = *reinterpret_cast<uint64_t*>(&i5);
-    reg.rsp -= 40;
+    reg.rsp -= 8;
     try {
       VM::run_bytecode(f, size, reg);
       res = reg.xmm0;
@@ -298,7 +298,7 @@ struct compile_fixture
     uint64_t* mem = (uint64_t*)reg.rsp;
     *(mem - 2) = i5;
     *(mem - 1) = *reinterpret_cast<uint64_t*>(&f6);
-    reg.rsp -= 48;
+    reg.rsp -= 16;
     try {
       VM::run_bytecode(f, size, reg);
       res = reg.xmm0;

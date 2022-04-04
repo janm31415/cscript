@@ -2521,7 +2521,7 @@ void compile_int_parameter_pointer(VM::vmcode& code, compile_data& data, const I
   }
   else
   {
-    int addr = parameter_id + 1;
+    int addr = parameter_id + 1 - 4;
     code.add(VM::vmcode::MOV, VM::vmcode::RAX, VM::vmcode::MEM_RSP, rsp_offset + addr * 8);
     code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, VM::vmcode::RAX);
   }
@@ -2552,7 +2552,7 @@ void compile_int_parameter_single(VM::vmcode& code, compile_data& data, const In
   }
   else
   {
-    int addr = parameter_id + 1;
+    int addr = parameter_id + 1 - 4;
     code.add(VM::vmcode::MOV, VM::vmcode::RAX, VM::vmcode::MEM_RSP, rsp_offset + addr * 8);
     code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, VM::vmcode::RAX);
   }
@@ -2592,7 +2592,7 @@ void compile_float_parameter_pointer(VM::vmcode& code, compile_data& data, const
   }
   else
   {
-    int addr = parameter_id + 1;
+    int addr = parameter_id + 1 - 4;
     code.add(VM::vmcode::MOV, VM::vmcode::RAX, VM::vmcode::MEM_RSP, rsp_offset + addr * 8);
     code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, VM::vmcode::RAX);
   }
@@ -2623,7 +2623,7 @@ void compile_float_parameter_single(VM::vmcode& code, compile_data& data, const 
   }
   else
   {
-    int addr = parameter_id + 1;
+    int addr = parameter_id + 1 - 4;
     code.add(VM::vmcode::MOV, VM::vmcode::RAX, VM::vmcode::MEM_RSP, rsp_offset + addr * 8);
     code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, VM::vmcode::RAX);
   }
