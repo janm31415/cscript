@@ -789,8 +789,8 @@ struct funccall_tests : public compile_fixture
     TEST_EQ(std::cos(0.5), run("() cos(0.5f);", false));
     TEST_EQ(std::cos(0.5), run("() cos(0.5f);", true));
 
-    //TEST_EQ(std::exp(0.5), run("() exp(0.5f);", false));
-    //TEST_EQ(std::exp(0.5), run("() exp(0.5f);", true));
+    TEST_EQ(std::exp(0.5), run("() exp(0.5f);", false));
+    TEST_EQ(std::exp(0.5), run("() exp(0.5f);", true));
 
     TEST_EQ(std::log(0.5), run("() log(0.5f);", false));
     TEST_EQ(std::log(0.5), run("() log(0.5f);", true));

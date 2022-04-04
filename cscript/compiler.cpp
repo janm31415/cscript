@@ -889,7 +889,7 @@ struct cos_functor
     code.add(VM::vmcode::FCOS);
     }
   };
-/*
+
 struct exp_functor
   {
   void operator () (VM::vmcode& code)
@@ -907,7 +907,7 @@ struct exp_functor
     code.add(VM::vmcode::FMULP, VM::vmcode::ST1, VM::vmcode::ST0);
     }
   };
-  */
+  
 struct log_functor
   {
   void operator () (VM::vmcode& code)
@@ -1001,7 +1001,7 @@ c_funcs_t c_funcs =
   {"sqrt", compile_sqrt},
   {"sin", compile_fpu_fun1<sin_functor>},
   {"cos", compile_fpu_fun1<cos_functor>},
-  //{"exp", compile_fpu_fun1<exp_functor>},
+  {"exp", compile_fpu_fun1<exp_functor>},
   {"log", compile_fpu_fun1<log_functor>},
   {"log2", compile_fpu_fun1<log2_functor>},
   {"fabs", compile_fpu_fun1<fabs_functor>}

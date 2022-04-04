@@ -54,11 +54,14 @@ namespace
       case vmcode::FABS: return 0;
       case vmcode::FADD: return 2;
       case vmcode::FADDP: return 0;
+      case vmcode::FMULP: return 0;
+      case vmcode::FPREM: return 0;
       case vmcode::FISTPQ: return 1;
       case vmcode::FILD:return 1;
       case vmcode::FLD: return 1;
       case vmcode::FLD1:return 0;
       case vmcode::FLDPI: return 0;
+      case vmcode::FLDL2E:return 0;
       case vmcode::FLDLN2:return 0;
       case vmcode::FMUL:return 2;
       case vmcode::FSIN:return 0;
@@ -2758,6 +2761,12 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       *regs.fpstackptr = 1.0;
       break;
       }
+      case vmcode::FLDL2E:
+      {
+      regs.fpstackptr -= 1;
+      *regs.fpstackptr = 1.0/std::log(2.0);
+      break;
+      }
       case vmcode::FLDLN2:
       {
       regs.fpstackptr -= 1;
@@ -2768,6 +2777,13 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       {
       regs.fpstackptr -= 1;
       *regs.fpstackptr = 3.141592653589793238462643383;
+      break;
+      }
+      case vmcode::FMULP:
+      {
+      double tmp = *(regs.fpstackptr);
+      regs.fpstackptr += 1;
+      *regs.fpstackptr *= tmp;
       break;
       }
       case vmcode::FMUL:
@@ -2802,6 +2818,13 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       double x = *(regs.fpstackptr);
       regs.fpstackptr += 1;
       *regs.fpstackptr = std::atan2(y, x);
+      break;
+      }
+      case vmcode::FPREM:
+      {
+      double y = *(regs.fpstackptr + 1);
+      double x = *(regs.fpstackptr);
+      *(regs.fpstackptr) = fmod(x,y);
       break;
       }
       case vmcode::FPTAN:
