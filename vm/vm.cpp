@@ -77,7 +77,7 @@ namespace
       case vmcode::LABEL:return 0;
       case vmcode::LABEL_ALIGNED:return 0;
       case vmcode::IDIV:return 1;
-      case vmcode::IMUL:return 1;
+      case vmcode::IMUL:return 2;
       case vmcode::INC: return 1;
       case vmcode::JE: return 1;
       case vmcode::JL: return 1;
@@ -747,7 +747,7 @@ void* vm_bytecode(uint64_t& size, vmcode& code)
 void free_bytecode(void* f, uint64_t size)
   {
   (void*)size;
-  delete[] (uint8_t*)f;
+  delete[](uint8_t*)f;
   }
 
 
@@ -1045,13 +1045,13 @@ namespace
       case vmcode::BYTE_MEM_R15: return nullptr;
       case vmcode::NUMBER: return nullptr;
       case vmcode::ST0:  return (uint64_t*)(regs.fpstackptr);
-      case vmcode::ST1:  return (uint64_t*)(regs.fpstackptr+1);
-      case vmcode::ST2:  return (uint64_t*)(regs.fpstackptr+2);
-      case vmcode::ST3:  return (uint64_t*)(regs.fpstackptr+3);
-      case vmcode::ST4:  return (uint64_t*)(regs.fpstackptr+4);
-      case vmcode::ST5:  return (uint64_t*)(regs.fpstackptr+5);
-      case vmcode::ST6:  return (uint64_t*)(regs.fpstackptr+6);
-      case vmcode::ST7:  return (uint64_t*)(regs.fpstackptr+7);
+      case vmcode::ST1:  return (uint64_t*)(regs.fpstackptr + 1);
+      case vmcode::ST2:  return (uint64_t*)(regs.fpstackptr + 2);
+      case vmcode::ST3:  return (uint64_t*)(regs.fpstackptr + 3);
+      case vmcode::ST4:  return (uint64_t*)(regs.fpstackptr + 4);
+      case vmcode::ST5:  return (uint64_t*)(regs.fpstackptr + 5);
+      case vmcode::ST6:  return (uint64_t*)(regs.fpstackptr + 6);
+      case vmcode::ST7:  return (uint64_t*)(regs.fpstackptr + 7);
       case vmcode::XMM0: return (uint64_t*)(&regs.xmm0);
       case vmcode::XMM1: return (uint64_t*)(&regs.xmm1);
       case vmcode::XMM2: return (uint64_t*)(&regs.xmm2);
@@ -1636,422 +1636,422 @@ namespace
       }
     return args;
     }
-  
+
   template <class T>
   T _call_external_0(const external_function& f)
-  {
-      typedef T(*fun_ptr)();
-      fun_ptr fun = (fun_ptr)f.address;
-      return fun();
-  }
-  
+    {
+    typedef T(*fun_ptr)();
+    fun_ptr fun = (fun_ptr)f.address;
+    return fun();
+    }
+
   template <>
   void _call_external_0<void>(const external_function& f)
-  {
-      typedef void(*fun_ptr)();
-      fun_ptr fun = (fun_ptr)f.address;
-      fun();
-  }
-  
+    {
+    typedef void(*fun_ptr)();
+    fun_ptr fun = (fun_ptr)f.address;
+    fun();
+    }
+
   template <class T, class T1, class V1>
   T _call_external_1(const external_function& f, V1 value)
-  {
-      typedef T(*fun_ptr)(T1);
-      fun_ptr fun = (fun_ptr)f.address;
-      return fun((T1)value);
-  }
-  
+    {
+    typedef T(*fun_ptr)(T1);
+    fun_ptr fun = (fun_ptr)f.address;
+    return fun((T1)value);
+    }
+
   template <class T1, class V1>
   void _call_external_1_void(const external_function& f, V1 value)
-  {
-      typedef void(*fun_ptr)(T1);
-      fun_ptr fun = (fun_ptr)f.address;
-      fun((T1)value);
-  }
-  
+    {
+    typedef void(*fun_ptr)(T1);
+    fun_ptr fun = (fun_ptr)f.address;
+    fun((T1)value);
+    }
+
   template <class T>
   T _call_external_1(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      assert(args.size() == 1);
-      switch (f.arguments[0])
+    {
+    assert(args.size() == 1);
+    switch (f.arguments[0])
       {
-          case external_function::T_BOOL: return _call_external_1<T, bool, uint64_t>(f, get_integer_register_value(args[0], regs));
-          case external_function::T_CHAR_POINTER: return _call_external_1<T, char*, uint64_t>(f, get_integer_register_value(args[0], regs));
-          case external_function::T_DOUBLE: return _call_external_1<T, double, double>(f, get_floating_register_value(args[0], regs));
-          case external_function::T_INT64: return _call_external_1<T, int64_t, uint64_t>(f, get_integer_register_value(args[0], regs));
-          case external_function::T_VOID: return 0;
+      case external_function::T_BOOL: return _call_external_1<T, bool, uint64_t>(f, get_integer_register_value(args[0], regs));
+      case external_function::T_CHAR_POINTER: return _call_external_1<T, char*, uint64_t>(f, get_integer_register_value(args[0], regs));
+      case external_function::T_DOUBLE: return _call_external_1<T, double, double>(f, get_floating_register_value(args[0], regs));
+      case external_function::T_INT64: return _call_external_1<T, int64_t, uint64_t>(f, get_integer_register_value(args[0], regs));
+      case external_function::T_VOID: return 0;
       }
-      return 0;
-  }
-  
+    return 0;
+    }
+
   template <>
   void _call_external_1<void>(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      assert(args.size() == 1);
-      switch (f.arguments[0])
+    {
+    assert(args.size() == 1);
+    switch (f.arguments[0])
       {
-          case external_function::T_BOOL:  _call_external_1_void<bool, uint64_t>(f, get_integer_register_value(args[0], regs));break;
-          case external_function::T_CHAR_POINTER:  _call_external_1_void<char*, uint64_t>(f, get_integer_register_value(args[0], regs));break;
-          case external_function::T_DOUBLE:  _call_external_1_void<double, double>(f, get_floating_register_value(args[0], regs));break;
-          case external_function::T_INT64:  _call_external_1_void<int64_t, uint64_t>(f, get_integer_register_value(args[0], regs));break;
-          case external_function::T_VOID: break;
+      case external_function::T_BOOL:  _call_external_1_void<bool, uint64_t>(f, get_integer_register_value(args[0], regs)); break;
+      case external_function::T_CHAR_POINTER:  _call_external_1_void<char*, uint64_t>(f, get_integer_register_value(args[0], regs)); break;
+      case external_function::T_DOUBLE:  _call_external_1_void<double, double>(f, get_floating_register_value(args[0], regs)); break;
+      case external_function::T_INT64:  _call_external_1_void<int64_t, uint64_t>(f, get_integer_register_value(args[0], regs)); break;
+      case external_function::T_VOID: break;
       }
-  }
-  
+    }
+
   template <class T>
   T get_value(const vmcode::operand& arg, registers& regs)
-  {
-      return (T)get_integer_register_value(arg, regs);
-  }
-  
+    {
+    return (T)get_integer_register_value(arg, regs);
+    }
+
   template <>
   double get_value<double>(const vmcode::operand& arg, registers& regs)
-  {
-      return (double)get_floating_register_value(arg, regs);
-  }
-  
+    {
+    return (double)get_floating_register_value(arg, regs);
+    }
+
   template <class T, class T1, class T2>
   T _call_external_2_2(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      typedef T(*fun_ptr)(T1, T2);
-      fun_ptr fun = (fun_ptr)f.address;
-      return fun(get_value<T1>(args[0], regs), get_value<T2>(args[1], regs));
-  }
-  
+    {
+    typedef T(*fun_ptr)(T1, T2);
+    fun_ptr fun = (fun_ptr)f.address;
+    return fun(get_value<T1>(args[0], regs), get_value<T2>(args[1], regs));
+    }
+
   template <class T, class T1>
   T _call_external_2_1(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      assert(args.size() == 2);
-      switch (f.arguments[1])
+    {
+    assert(args.size() == 2);
+    switch (f.arguments[1])
       {
-          case external_function::T_BOOL: return _call_external_2_2<T,T1, bool>(f, args, regs);
-          case external_function::T_CHAR_POINTER: return _call_external_2_2<T,T1, char*>(f, args, regs);
-          case external_function::T_DOUBLE: return _call_external_2_2<T, T1,double>(f, args, regs);
-          case external_function::T_INT64: return _call_external_2_2<T, T1,int64_t>(f, args, regs);
-          case external_function::T_VOID: return 0;
+      case external_function::T_BOOL: return _call_external_2_2<T, T1, bool>(f, args, regs);
+      case external_function::T_CHAR_POINTER: return _call_external_2_2<T, T1, char*>(f, args, regs);
+      case external_function::T_DOUBLE: return _call_external_2_2<T, T1, double>(f, args, regs);
+      case external_function::T_INT64: return _call_external_2_2<T, T1, int64_t>(f, args, regs);
+      case external_function::T_VOID: return 0;
       }
-      return 0;
-  }
-  
+    return 0;
+    }
+
   template < class T1, class T2>
   void _call_external_2_2_void(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      typedef void(*fun_ptr)(T1, T2);
-      fun_ptr fun = (fun_ptr)f.address;
-      fun(get_value<T1>(args[0], regs), get_value<T2>(args[1], regs));
-  }
-  
+    {
+    typedef void(*fun_ptr)(T1, T2);
+    fun_ptr fun = (fun_ptr)f.address;
+    fun(get_value<T1>(args[0], regs), get_value<T2>(args[1], regs));
+    }
+
   template <class T1>
   void _call_external_2_1_void(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      assert(args.size() == 2);
-      switch (f.arguments[1])
+    {
+    assert(args.size() == 2);
+    switch (f.arguments[1])
       {
-          case external_function::T_BOOL:  _call_external_2_2_void<T1, bool>(f, args, regs); break;
-          case external_function::T_CHAR_POINTER:  _call_external_2_2_void<T1, char*>(f, args, regs); break;
-          case external_function::T_DOUBLE:  _call_external_2_2_void<T1,double>(f, args, regs); break;
-          case external_function::T_INT64:  _call_external_2_2_void<T1,int64_t>(f, args, regs); break;
-          case external_function::T_VOID: break;
+      case external_function::T_BOOL:  _call_external_2_2_void<T1, bool>(f, args, regs); break;
+      case external_function::T_CHAR_POINTER:  _call_external_2_2_void<T1, char*>(f, args, regs); break;
+      case external_function::T_DOUBLE:  _call_external_2_2_void<T1, double>(f, args, regs); break;
+      case external_function::T_INT64:  _call_external_2_2_void<T1, int64_t>(f, args, regs); break;
+      case external_function::T_VOID: break;
       }
-  }
-  
+    }
+
   template <class T>
   T _call_external_2(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      assert(args.size() == 2);
-      switch (f.arguments[0])
+    {
+    assert(args.size() == 2);
+    switch (f.arguments[0])
       {
-          case external_function::T_BOOL: return _call_external_2_1<T, bool>(f, args, regs);
-          case external_function::T_CHAR_POINTER: return _call_external_2_1<T, char*>(f, args, regs);
-          case external_function::T_DOUBLE: return _call_external_2_1<T, double>(f, args, regs);
-          case external_function::T_INT64: return _call_external_2_1<T, int64_t>(f, args, regs);
-          case external_function::T_VOID: return 0;
+      case external_function::T_BOOL: return _call_external_2_1<T, bool>(f, args, regs);
+      case external_function::T_CHAR_POINTER: return _call_external_2_1<T, char*>(f, args, regs);
+      case external_function::T_DOUBLE: return _call_external_2_1<T, double>(f, args, regs);
+      case external_function::T_INT64: return _call_external_2_1<T, int64_t>(f, args, regs);
+      case external_function::T_VOID: return 0;
       }
-      return 0;
-  }
-  
+    return 0;
+    }
+
   template <>
   void _call_external_2<void>(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      assert(args.size() == 2);
-      switch (f.arguments[0])
+    {
+    assert(args.size() == 2);
+    switch (f.arguments[0])
       {
-          case external_function::T_BOOL:  _call_external_2_1_void<bool>(f, args, regs); break;
-          case external_function::T_CHAR_POINTER:  _call_external_2_1_void<char*>(f, args, regs); break;
-          case external_function::T_DOUBLE:  _call_external_2_1_void<double>(f, args, regs); break;
-          case external_function::T_INT64:  _call_external_2_1_void<int64_t>(f, args, regs); break;
-          case external_function::T_VOID: break;
+      case external_function::T_BOOL:  _call_external_2_1_void<bool>(f, args, regs); break;
+      case external_function::T_CHAR_POINTER:  _call_external_2_1_void<char*>(f, args, regs); break;
+      case external_function::T_DOUBLE:  _call_external_2_1_void<double>(f, args, regs); break;
+      case external_function::T_INT64:  _call_external_2_1_void<int64_t>(f, args, regs); break;
+      case external_function::T_VOID: break;
       }
-  }
-  
+    }
+
   template <class T, class T1, class T2, class T3>
   T _call_external_3_3(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      typedef T(*fun_ptr)(T1, T2, T3);
-      fun_ptr fun = (fun_ptr)f.address;
-      return fun(get_value<T1>(args[0], regs), get_value<T2>(args[1], regs), get_value<T3>(args[2], regs));
-  }
-  
+    {
+    typedef T(*fun_ptr)(T1, T2, T3);
+    fun_ptr fun = (fun_ptr)f.address;
+    return fun(get_value<T1>(args[0], regs), get_value<T2>(args[1], regs), get_value<T3>(args[2], regs));
+    }
+
   template <class T, class T1, class T2>
   T _call_external_3_2(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      assert(args.size() == 3);
-      switch (f.arguments[2])
+    {
+    assert(args.size() == 3);
+    switch (f.arguments[2])
       {
-          case external_function::T_BOOL: return _call_external_3_3<T,T1, T2,bool>(f, args, regs);
-          case external_function::T_CHAR_POINTER: return _call_external_3_3<T,T1, T2,char*>(f, args, regs);
-          case external_function::T_DOUBLE: return _call_external_3_3<T, T1,T2,double>(f, args, regs);
-          case external_function::T_INT64: return _call_external_3_3<T, T1,T2,int64_t>(f, args, regs);
-          case external_function::T_VOID: return 0;
+      case external_function::T_BOOL: return _call_external_3_3<T, T1, T2, bool>(f, args, regs);
+      case external_function::T_CHAR_POINTER: return _call_external_3_3<T, T1, T2, char*>(f, args, regs);
+      case external_function::T_DOUBLE: return _call_external_3_3<T, T1, T2, double>(f, args, regs);
+      case external_function::T_INT64: return _call_external_3_3<T, T1, T2, int64_t>(f, args, regs);
+      case external_function::T_VOID: return 0;
       }
-      return 0;
-  }
-  
+    return 0;
+    }
+
   template <class T, class T1>
   T _call_external_3_1(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      assert(args.size() == 3);
-      switch (f.arguments[1])
+    {
+    assert(args.size() == 3);
+    switch (f.arguments[1])
       {
-          case external_function::T_BOOL: return _call_external_3_2<T,T1, bool>(f, args, regs);
-          case external_function::T_CHAR_POINTER: return _call_external_3_2<T,T1, char*>(f, args, regs);
-          case external_function::T_DOUBLE: return _call_external_3_2<T, T1,double>(f, args, regs);
-          case external_function::T_INT64: return _call_external_3_2<T, T1,int64_t>(f, args, regs);
-          case external_function::T_VOID: return 0;
+      case external_function::T_BOOL: return _call_external_3_2<T, T1, bool>(f, args, regs);
+      case external_function::T_CHAR_POINTER: return _call_external_3_2<T, T1, char*>(f, args, regs);
+      case external_function::T_DOUBLE: return _call_external_3_2<T, T1, double>(f, args, regs);
+      case external_function::T_INT64: return _call_external_3_2<T, T1, int64_t>(f, args, regs);
+      case external_function::T_VOID: return 0;
       }
-      return 0;
-  }
-  
+    return 0;
+    }
+
   template <class T1, class T2, class T3>
   void _call_external_3_3_void(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      typedef void(*fun_ptr)(T1, T2, T3);
-      fun_ptr fun = (fun_ptr)f.address;
-      fun(get_value<T1>(args[0], regs), get_value<T2>(args[1], regs), get_value<T3>(args[2], regs));
-  }
-  
+    {
+    typedef void(*fun_ptr)(T1, T2, T3);
+    fun_ptr fun = (fun_ptr)f.address;
+    fun(get_value<T1>(args[0], regs), get_value<T2>(args[1], regs), get_value<T3>(args[2], regs));
+    }
+
   template <class T1, class T2>
   void _call_external_3_2_void(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      assert(args.size() == 3);
-      switch (f.arguments[2])
+    {
+    assert(args.size() == 3);
+    switch (f.arguments[2])
       {
-          case external_function::T_BOOL:  _call_external_3_3_void<T1, T2, bool>(f, args, regs); break;
-          case external_function::T_CHAR_POINTER:  _call_external_3_3_void<T1, T2, char*>(f, args, regs); break;
-          case external_function::T_DOUBLE:  _call_external_3_3_void<T1,T2, double>(f, args, regs); break;
-          case external_function::T_INT64:  _call_external_3_3_void<T1,T2,int64_t>(f, args, regs); break;
-          case external_function::T_VOID: break;
+      case external_function::T_BOOL:  _call_external_3_3_void<T1, T2, bool>(f, args, regs); break;
+      case external_function::T_CHAR_POINTER:  _call_external_3_3_void<T1, T2, char*>(f, args, regs); break;
+      case external_function::T_DOUBLE:  _call_external_3_3_void<T1, T2, double>(f, args, regs); break;
+      case external_function::T_INT64:  _call_external_3_3_void<T1, T2, int64_t>(f, args, regs); break;
+      case external_function::T_VOID: break;
       }
-  }
-  
+    }
+
   template <class T1>
   void _call_external_3_1_void(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      assert(args.size() == 3);
-      switch (f.arguments[1])
+    {
+    assert(args.size() == 3);
+    switch (f.arguments[1])
       {
-          case external_function::T_BOOL:  _call_external_3_2_void<T1, bool>(f, args, regs); break;
-          case external_function::T_CHAR_POINTER:  _call_external_3_2_void<T1, char*>(f, args, regs); break;
-          case external_function::T_DOUBLE:  _call_external_3_2_void<T1,double>(f, args, regs); break;
-          case external_function::T_INT64:  _call_external_3_2_void<T1,int64_t>(f, args, regs); break;
-          case external_function::T_VOID: break;
+      case external_function::T_BOOL:  _call_external_3_2_void<T1, bool>(f, args, regs); break;
+      case external_function::T_CHAR_POINTER:  _call_external_3_2_void<T1, char*>(f, args, regs); break;
+      case external_function::T_DOUBLE:  _call_external_3_2_void<T1, double>(f, args, regs); break;
+      case external_function::T_INT64:  _call_external_3_2_void<T1, int64_t>(f, args, regs); break;
+      case external_function::T_VOID: break;
       }
-  }
-  
+    }
+
   template <class T>
   T _call_external_3(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      assert(args.size() == 3);
-      switch (f.arguments[0])
+    {
+    assert(args.size() == 3);
+    switch (f.arguments[0])
       {
-          case external_function::T_BOOL: return _call_external_3_1<T, bool>(f, args, regs);
-          case external_function::T_CHAR_POINTER: return _call_external_3_1<T, char*>(f, args, regs);
-          case external_function::T_DOUBLE: return _call_external_3_1<T, double>(f, args, regs);
-          case external_function::T_INT64: return _call_external_3_1<T, int64_t>(f, args, regs);
-          case external_function::T_VOID: return 0;
+      case external_function::T_BOOL: return _call_external_3_1<T, bool>(f, args, regs);
+      case external_function::T_CHAR_POINTER: return _call_external_3_1<T, char*>(f, args, regs);
+      case external_function::T_DOUBLE: return _call_external_3_1<T, double>(f, args, regs);
+      case external_function::T_INT64: return _call_external_3_1<T, int64_t>(f, args, regs);
+      case external_function::T_VOID: return 0;
       }
-      return 0;
-  }
-  
+    return 0;
+    }
+
   template <>
   void _call_external_3<void>(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      assert(args.size() == 3);
-      switch (f.arguments[0])
+    {
+    assert(args.size() == 3);
+    switch (f.arguments[0])
       {
-          case external_function::T_BOOL:  _call_external_3_1_void<bool>(f, args, regs); break;
-          case external_function::T_CHAR_POINTER:  _call_external_3_1_void<char*>(f, args, regs); break;
-          case external_function::T_DOUBLE:  _call_external_3_1_void<double>(f, args, regs); break;
-          case external_function::T_INT64:  _call_external_3_1_void<int64_t>(f, args, regs); break;
-          case external_function::T_VOID: break;
+      case external_function::T_BOOL:  _call_external_3_1_void<bool>(f, args, regs); break;
+      case external_function::T_CHAR_POINTER:  _call_external_3_1_void<char*>(f, args, regs); break;
+      case external_function::T_DOUBLE:  _call_external_3_1_void<double>(f, args, regs); break;
+      case external_function::T_INT64:  _call_external_3_1_void<int64_t>(f, args, regs); break;
+      case external_function::T_VOID: break;
       }
-  }
-  
-  
+    }
+
+
   template <class T, class T1, class T2, class T3, class T4>
   T _call_external_4_4(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      typedef T(*fun_ptr)(T1, T2, T3, T4);
-      fun_ptr fun = (fun_ptr)f.address;
-      return fun(get_value<T1>(args[0], regs), get_value<T2>(args[1], regs), get_value<T3>(args[2], regs), get_value<T4>(args[3], regs));
-  }
-  
+    {
+    typedef T(*fun_ptr)(T1, T2, T3, T4);
+    fun_ptr fun = (fun_ptr)f.address;
+    return fun(get_value<T1>(args[0], regs), get_value<T2>(args[1], regs), get_value<T3>(args[2], regs), get_value<T4>(args[3], regs));
+    }
+
   template <class T, class T1, class T2, class T3>
   T _call_external_4_3(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      assert(args.size() == 4);
-      switch (f.arguments[3])
+    {
+    assert(args.size() == 4);
+    switch (f.arguments[3])
       {
-          case external_function::T_BOOL: return _call_external_4_4<T,T1, T2,T3,bool>(f, args, regs);
-          case external_function::T_CHAR_POINTER: return _call_external_4_4<T,T1, T2,T3,char*>(f, args, regs);
-          case external_function::T_DOUBLE: return _call_external_4_4<T, T1,T2,T3,double>(f, args, regs);
-          case external_function::T_INT64: return _call_external_4_4<T, T1,T2,T3,int64_t>(f, args, regs);
-          case external_function::T_VOID: return 0;
+      case external_function::T_BOOL: return _call_external_4_4<T, T1, T2, T3, bool>(f, args, regs);
+      case external_function::T_CHAR_POINTER: return _call_external_4_4<T, T1, T2, T3, char*>(f, args, regs);
+      case external_function::T_DOUBLE: return _call_external_4_4<T, T1, T2, T3, double>(f, args, regs);
+      case external_function::T_INT64: return _call_external_4_4<T, T1, T2, T3, int64_t>(f, args, regs);
+      case external_function::T_VOID: return 0;
       }
-      return 0;
-  }
-  
+    return 0;
+    }
+
   template <class T, class T1, class T2>
   T _call_external_4_2(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      assert(args.size() == 4);
-      switch (f.arguments[2])
+    {
+    assert(args.size() == 4);
+    switch (f.arguments[2])
       {
-          case external_function::T_BOOL: return _call_external_4_3<T,T1, T2,bool>(f, args, regs);
-          case external_function::T_CHAR_POINTER: return _call_external_4_3<T,T1, T2,char*>(f, args, regs);
-          case external_function::T_DOUBLE: return _call_external_4_3<T, T1,T2,double>(f, args, regs);
-          case external_function::T_INT64: return _call_external_4_3<T, T1,T2,int64_t>(f, args, regs);
-          case external_function::T_VOID: return 0;
+      case external_function::T_BOOL: return _call_external_4_3<T, T1, T2, bool>(f, args, regs);
+      case external_function::T_CHAR_POINTER: return _call_external_4_3<T, T1, T2, char*>(f, args, regs);
+      case external_function::T_DOUBLE: return _call_external_4_3<T, T1, T2, double>(f, args, regs);
+      case external_function::T_INT64: return _call_external_4_3<T, T1, T2, int64_t>(f, args, regs);
+      case external_function::T_VOID: return 0;
       }
-      return 0;
-  }
-  
+    return 0;
+    }
+
   template <class T, class T1>
   T _call_external_4_1(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      assert(args.size() == 4);
-      switch (f.arguments[1])
+    {
+    assert(args.size() == 4);
+    switch (f.arguments[1])
       {
-          case external_function::T_BOOL: return _call_external_4_2<T,T1, bool>(f, args, regs);
-          case external_function::T_CHAR_POINTER: return _call_external_4_2<T,T1, char*>(f, args, regs);
-          case external_function::T_DOUBLE: return _call_external_4_2<T, T1,double>(f, args, regs);
-          case external_function::T_INT64: return _call_external_4_2<T, T1,int64_t>(f, args, regs);
-          case external_function::T_VOID: return 0;
+      case external_function::T_BOOL: return _call_external_4_2<T, T1, bool>(f, args, regs);
+      case external_function::T_CHAR_POINTER: return _call_external_4_2<T, T1, char*>(f, args, regs);
+      case external_function::T_DOUBLE: return _call_external_4_2<T, T1, double>(f, args, regs);
+      case external_function::T_INT64: return _call_external_4_2<T, T1, int64_t>(f, args, regs);
+      case external_function::T_VOID: return 0;
       }
-      return 0;
-  }
-  
+    return 0;
+    }
+
   template <class T>
   T _call_external_4(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      assert(args.size() == 4);
-      switch (f.arguments[0])
+    {
+    assert(args.size() == 4);
+    switch (f.arguments[0])
       {
-          case external_function::T_BOOL: return _call_external_4_1<T, bool>(f, args, regs);
-          case external_function::T_CHAR_POINTER: return _call_external_4_1<T, char*>(f, args, regs);
-          case external_function::T_DOUBLE: return _call_external_4_1<T, double>(f, args, regs);
-          case external_function::T_INT64: return _call_external_4_1<T, int64_t>(f, args, regs);
-          case external_function::T_VOID: return 0;
+      case external_function::T_BOOL: return _call_external_4_1<T, bool>(f, args, regs);
+      case external_function::T_CHAR_POINTER: return _call_external_4_1<T, char*>(f, args, regs);
+      case external_function::T_DOUBLE: return _call_external_4_1<T, double>(f, args, regs);
+      case external_function::T_INT64: return _call_external_4_1<T, int64_t>(f, args, regs);
+      case external_function::T_VOID: return 0;
       }
-      return 0;
-  }
-  
-  
+    return 0;
+    }
+
+
   template <class T1, class T2, class T3, class T4>
   void _call_external_4_4_void(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      typedef void(*fun_ptr)(T1, T2, T3, T4);
-      fun_ptr fun = (fun_ptr)f.address;
-      fun(get_value<T1>(args[0], regs), get_value<T2>(args[1], regs), get_value<T3>(args[2], regs), get_value<T4>(args[3], regs));
-  }
-  
+    {
+    typedef void(*fun_ptr)(T1, T2, T3, T4);
+    fun_ptr fun = (fun_ptr)f.address;
+    fun(get_value<T1>(args[0], regs), get_value<T2>(args[1], regs), get_value<T3>(args[2], regs), get_value<T4>(args[3], regs));
+    }
+
   template <class T1, class T2, class T3>
   void _call_external_4_3_void(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      assert(args.size() == 2);
-      switch (f.arguments[3])
+    {
+    assert(args.size() == 2);
+    switch (f.arguments[3])
       {
-          case external_function::T_BOOL:  _call_external_4_4_void<T1, T2, T3, bool>(f, args, regs); break;
-          case external_function::T_CHAR_POINTER:  _call_external_4_4_void<T1, T2, T3, char*>(f, args, regs); break;
-          case external_function::T_DOUBLE:  _call_external_4_4_void<T1,T2, T3, double>(f, args, regs); break;
-          case external_function::T_INT64:  _call_external_4_4_void<T1,T2,T3, int64_t>(f, args, regs); break;
-          case external_function::T_VOID: break;
+      case external_function::T_BOOL:  _call_external_4_4_void<T1, T2, T3, bool>(f, args, regs); break;
+      case external_function::T_CHAR_POINTER:  _call_external_4_4_void<T1, T2, T3, char*>(f, args, regs); break;
+      case external_function::T_DOUBLE:  _call_external_4_4_void<T1, T2, T3, double>(f, args, regs); break;
+      case external_function::T_INT64:  _call_external_4_4_void<T1, T2, T3, int64_t>(f, args, regs); break;
+      case external_function::T_VOID: break;
       }
-  }
-  
+    }
+
   template <class T1, class T2>
   void _call_external_4_2_void(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      assert(args.size() == 2);
-      switch (f.arguments[2])
+    {
+    assert(args.size() == 2);
+    switch (f.arguments[2])
       {
-          case external_function::T_BOOL:  _call_external_4_3_void<T1, T2, bool>(f, args, regs); break;
-          case external_function::T_CHAR_POINTER:  _call_external_4_3_void<T1, T2, char*>(f, args, regs); break;
-          case external_function::T_DOUBLE:  _call_external_4_3_void<T1,T2, double>(f, args, regs); break;
-          case external_function::T_INT64:  _call_external_4_3_void<T1,T2,int64_t>(f, args, regs); break;
-          case external_function::T_VOID: break;
+      case external_function::T_BOOL:  _call_external_4_3_void<T1, T2, bool>(f, args, regs); break;
+      case external_function::T_CHAR_POINTER:  _call_external_4_3_void<T1, T2, char*>(f, args, regs); break;
+      case external_function::T_DOUBLE:  _call_external_4_3_void<T1, T2, double>(f, args, regs); break;
+      case external_function::T_INT64:  _call_external_4_3_void<T1, T2, int64_t>(f, args, regs); break;
+      case external_function::T_VOID: break;
       }
-  }
-  
+    }
+
   template <class T1>
   void _call_external_4_1_void(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      assert(args.size() == 2);
-      switch (f.arguments[1])
+    {
+    assert(args.size() == 2);
+    switch (f.arguments[1])
       {
-          case external_function::T_BOOL:  _call_external_4_2_void<T1, bool>(f, args, regs); break;
-          case external_function::T_CHAR_POINTER:  _call_external_4_2_void<T1, char*>(f, args, regs); break;
-          case external_function::T_DOUBLE:  _call_external_4_2_void<T1,double>(f, args, regs); break;
-          case external_function::T_INT64:  _call_external_4_2_void<T1,int64_t>(f, args, regs); break;
-          case external_function::T_VOID: break;
+      case external_function::T_BOOL:  _call_external_4_2_void<T1, bool>(f, args, regs); break;
+      case external_function::T_CHAR_POINTER:  _call_external_4_2_void<T1, char*>(f, args, regs); break;
+      case external_function::T_DOUBLE:  _call_external_4_2_void<T1, double>(f, args, regs); break;
+      case external_function::T_INT64:  _call_external_4_2_void<T1, int64_t>(f, args, regs); break;
+      case external_function::T_VOID: break;
       }
-  }
-  
+    }
+
   template <>
   void _call_external_4<void>(const external_function& f, std::vector<vmcode::operand>& args, registers& regs)
-  {
-      assert(args.size() == 4);
-      switch (f.arguments[0])
+    {
+    assert(args.size() == 4);
+    switch (f.arguments[0])
       {
-          case external_function::T_BOOL:  _call_external_4_1_void<bool>(f, args, regs); break;
-          case external_function::T_CHAR_POINTER:  _call_external_4_1_void<char*>(f, args, regs); break;
-          case external_function::T_DOUBLE:  _call_external_4_1_void<double>(f, args, regs); break;
-          case external_function::T_INT64:  _call_external_4_1_void<int64_t>(f, args, regs); break;
-          case external_function::T_VOID: break;
+      case external_function::T_BOOL:  _call_external_4_1_void<bool>(f, args, regs); break;
+      case external_function::T_CHAR_POINTER:  _call_external_4_1_void<char*>(f, args, regs); break;
+      case external_function::T_DOUBLE:  _call_external_4_1_void<double>(f, args, regs); break;
+      case external_function::T_INT64:  _call_external_4_1_void<int64_t>(f, args, regs); break;
+      case external_function::T_VOID: break;
       }
-  }
-  
-  
+    }
+
+
   template <class T>
   T _call_external(const external_function& f, registers& regs)
-  {
-      auto args = _get_arguments(f);
-      switch (args.size())
+    {
+    auto args = _get_arguments(f);
+    switch (args.size())
       {
-          case 0: return _call_external_0<T>(f);
-          case 1: return _call_external_1<T>(f, args, regs);
-          case 2: return _call_external_2<T>(f, args, regs);
-          case 3: return _call_external_3<T>(f, args, regs);
-          case 4: return _call_external_4<T>(f, args, regs);
-          default: break;
+      case 0: return _call_external_0<T>(f);
+      case 1: return _call_external_1<T>(f, args, regs);
+      case 2: return _call_external_2<T>(f, args, regs);
+      case 3: return _call_external_3<T>(f, args, regs);
+      case 4: return _call_external_4<T>(f, args, regs);
+      default: break;
       }
-      return 0;
-  }
-  
+    return 0;
+    }
+
   template <>
   void _call_external(const external_function& f, registers& regs)
-  {
-      auto args = _get_arguments(f);
-      switch (args.size())
+    {
+    auto args = _get_arguments(f);
+    switch (args.size())
       {
-          case 0: _call_external_0<void>(f); break;
-          case 1: _call_external_1<void>(f, args, regs); break;
-          case 2: _call_external_2<void>(f, args, regs); break;
-          case 3: _call_external_3<void>(f, args, regs); break;
-          case 4: _call_external_4<void>(f, args, regs); break;
-          default: break;
+      case 0: _call_external_0<void>(f); break;
+      case 1: _call_external_1<void>(f, args, regs); break;
+      case 2: _call_external_2<void>(f, args, regs); break;
+      case 3: _call_external_3<void>(f, args, regs); break;
+      case 4: _call_external_4<void>(f, args, regs); break;
+      default: break;
       }
-  }
+    }
 
   /*
   template <class T>
@@ -2702,7 +2702,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       *regs.fpstackptr = v;
       break;
       }
-      case vmcode::FADD: 
+      case vmcode::FADD:
       {
       if (operand2 == vmcode::EMPTY)
         {
@@ -2740,8 +2740,8 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       break;
       }
       case vmcode::FLD:
-      {      
-      double* oprnd1 = (double*)get_address_64bit(operand1, operand1_mem, regs);      
+      {
+      double* oprnd1 = (double*)get_address_64bit(operand1, operand1_mem, regs);
       regs.fpstackptr -= 1;
       *regs.fpstackptr = *oprnd1;
       break;
@@ -2795,7 +2795,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       double y = *(regs.fpstackptr + 1);
       double x = *(regs.fpstackptr);
       regs.fpstackptr += 1;
-      *regs.fpstackptr = std::atan2(y,x);
+      *regs.fpstackptr = std::atan2(y, x);
       break;
       }
       case vmcode::FPTAN:
@@ -2850,7 +2850,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       regs.fpstackptr += 1;
       *regs.fpstackptr -= tmp;
       break;
-      }      
+      }
       case vmcode::FSUBRP:
       {
       double tmp = *(regs.fpstackptr);
@@ -2895,19 +2895,28 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       case vmcode::IMUL:
       {
       uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
-      if (oprnd1)
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+      if (oprnd2)
         {
-        int64_t rax = (int64_t)regs.rax;
-        rax *= (int64_t)(*oprnd1);
-        regs.rax = rax;
+        assert(oprnd1);
+        *oprnd1 *= (int64_t)(*oprnd2);
         }
       else
         {
-        uint8_t* oprnd1_8 = get_address_8bit(operand1, operand1_mem, regs);
-        int8_t rax = ((int64_t)regs.rax) & 255;
-        rax *= (int8_t)(*oprnd1_8);
-        regs.rax &= 0xffffffffffffff00;
-        regs.rax |= rax;
+        if (oprnd1)
+          {
+          int64_t rax = (int64_t)regs.rax;
+          rax *= (int64_t)(*oprnd1);
+          regs.rax = rax;
+          }
+        else
+          {
+          uint8_t* oprnd1_8 = get_address_8bit(operand1, operand1_mem, regs);
+          int8_t rax = ((int64_t)regs.rax) & 255;
+          rax *= (int8_t)(*oprnd1_8);
+          regs.rax &= 0xffffffffffffff00;
+          regs.rax |= rax;
+          }
         }
       break;
       }

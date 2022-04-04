@@ -660,7 +660,7 @@ void compile_divi(VM::vmcode& code, compile_data& data)
     }
   else
     {
-    code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -data.stack_index * 4, VM::vmcode::RAX); // save RAX
+    code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -data.stack_index * 8, VM::vmcode::RAX); // save RAX
     if (offset1)
       {
       code.add(VM::vmcode::MOV, VM::vmcode::RAX, VM::vmcode::MEM_RSP, offset1);
@@ -681,7 +681,7 @@ void compile_divi(VM::vmcode& code, compile_data& data)
       }
     else
       code.add(VM::vmcode::MOV, op1, VM::vmcode::RAX);
-    code.add(VM::vmcode::MOV, VM::vmcode::RAX, VM::vmcode::MEM_RSP, -data.stack_index * 4);
+    code.add(VM::vmcode::MOV, VM::vmcode::RAX, VM::vmcode::MEM_RSP, -data.stack_index * 8);
     }
   rt = RT_INTEGER;
   }
@@ -800,7 +800,7 @@ void change_sign_real(VM::vmcode& code, compile_data& data)
     code.add(VM::vmcode::MOVSD, VM::vmcode::XMM6, VM::vmcode::MEM_RSP, offset1);
     op1 = VM::vmcode::XMM6;
     }
-  code.add(VM::vmcode::MOV, VM::vmcode::RDX, VM::vmcode::NUMBER, 0x80000000);
+  code.add(VM::vmcode::MOV, VM::vmcode::RDX, VM::vmcode::NUMBER, 0x8000000000000000);
   code.add(VM::vmcode::MOVQ, VM::vmcode::XMM7, VM::vmcode::RDX);
   code.add(VM::vmcode::XORPD, op1, VM::vmcode::XMM7);
   if (offset1)
@@ -1023,7 +1023,7 @@ void compile_make_int_array(VM::vmcode& code, compile_data& data, const Int& mak
     {
     int64_t var_id = data.var_offset | variable_tag;
     data.vars.insert(std::make_pair(make_i.name, make_variable(var_id, constant, integer_array)));
-    data.var_offset += 4 * val;
+    data.var_offset += 8 * val;
     }
   else
     {
@@ -1058,7 +1058,7 @@ void compile_make_int_single(VM::vmcode& code, compile_data& data, const Int& ma
     if (init)
       code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, int_op);
     data.vars.insert(std::make_pair(make_i.name, make_variable(var_id, constant, integer)));
-    data.var_offset += 4;
+    data.var_offset += 8;
     }
   else
     {
@@ -1091,7 +1091,7 @@ void compile_make_float_array(VM::vmcode& code, compile_data& data, const Float&
     {
     int64_t var_id = data.var_offset | variable_tag;
     data.vars.insert(std::make_pair(make_f.name, make_variable(var_id, constant, single_array)));
-    data.var_offset += 4 * val;
+    data.var_offset += 8 * val;
     }
   else
     {
@@ -1131,7 +1131,7 @@ void compile_make_float_single(VM::vmcode& code, compile_data& data, const Float
         code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, -var_id, float_op);
       }
     data.vars.insert(std::make_pair(make_f.name, make_variable(var_id, constant, single)));
-    data.var_offset += 4;
+    data.var_offset += 8;
     }
   else
     {
@@ -1201,7 +1201,7 @@ void compile_assignment_pointer(VM::vmcode& code, compile_data& data, const Assi
     convert_real_to_integer(code, data.stack_index);
     rt = RT_INTEGER;
     }
-  code.add(VM::vmcode::SHL, VM::vmcode::RAX, VM::vmcode::NUMBER, 2);
+  code.add(VM::vmcode::SHL, VM::vmcode::RAX, VM::vmcode::NUMBER, 3);
   ++data.stack_index;
   update_data(data);
   compile_expression(code, data, a.expr);
@@ -1320,7 +1320,7 @@ void compile_assignment_array(VM::vmcode& code, compile_data& data, const Assign
     convert_real_to_integer(code, data.stack_index);
     rt = RT_INTEGER;
     }
-  code.add(VM::vmcode::SHL, VM::vmcode::RAX, VM::vmcode::NUMBER, 2);
+  code.add(VM::vmcode::SHL, VM::vmcode::RAX, VM::vmcode::NUMBER, 3);
   ++data.stack_index;
   update_data(data);
   compile_expression(code, data, a.expr);
@@ -1761,7 +1761,7 @@ void compile_array_call(VM::vmcode& code, compile_data& data, const ArrayCall& a
       code.add(VM::vmcode::MOV, VM::vmcode::RDX, VM::vmcode::MEM_RSP, offset);
       op = VM::vmcode::RDX;
       }
-    code.add(VM::vmcode::SHL, op, VM::vmcode::NUMBER, 2);
+    code.add(VM::vmcode::SHL, op, VM::vmcode::NUMBER, 3);
     code.add(VM::vmcode::MOV, VM::vmcode::R10, VM::vmcode::RSP);
     code.add(VM::vmcode::SUB, VM::vmcode::R10, op);
     index_to_real_operand(op, offset, data.stack_index);
@@ -1782,7 +1782,7 @@ void compile_array_call(VM::vmcode& code, compile_data& data, const ArrayCall& a
       code.add(VM::vmcode::MOV, VM::vmcode::RDX, VM::vmcode::MEM_RSP, offset);
       op = VM::vmcode::RDX;
       }
-    code.add(VM::vmcode::SHL, op, VM::vmcode::NUMBER, 2);
+    code.add(VM::vmcode::SHL, op, VM::vmcode::NUMBER, 3);
     code.add(VM::vmcode::MOV, VM::vmcode::R10, VM::vmcode::RSP);
     code.add(VM::vmcode::SUB, VM::vmcode::R10, op);
     if (offset)
@@ -1803,12 +1803,12 @@ void compile_array_call(VM::vmcode& code, compile_data& data, const ArrayCall& a
     if (offset)
       {
       code.add(VM::vmcode::MOV, VM::vmcode::RDX, VM::vmcode::MEM_RSP, offset);
-      code.add(VM::vmcode::SHL, VM::vmcode::RDX, VM::vmcode::NUMBER, 2);
+      code.add(VM::vmcode::SHL, VM::vmcode::RDX, VM::vmcode::NUMBER, 3);
       code.add(VM::vmcode::ADD, VM::vmcode::R10, VM::vmcode::RDX);
       }
     else
       {
-      code.add(VM::vmcode::SHL, op, VM::vmcode::NUMBER, 2);
+      code.add(VM::vmcode::SHL, op, VM::vmcode::NUMBER, 3);
       code.add(VM::vmcode::ADD, VM::vmcode::R10, op);
       }
     index_to_real_operand(op, offset, data.stack_index);
@@ -1832,14 +1832,14 @@ void compile_array_call(VM::vmcode& code, compile_data& data, const ArrayCall& a
     if (offset)
       {
       code.add(VM::vmcode::MOV, VM::vmcode::RDX, VM::vmcode::MEM_RSP, offset);
-      code.add(VM::vmcode::SHL, VM::vmcode::RDX, VM::vmcode::NUMBER, 2);
+      code.add(VM::vmcode::SHL, VM::vmcode::RDX, VM::vmcode::NUMBER, 3);
       code.add(VM::vmcode::ADD, VM::vmcode::R10, VM::vmcode::RDX);
       code.add(VM::vmcode::MOV, VM::vmcode::RDX, VM::vmcode::MEM_R10);
       code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset, VM::vmcode::RDX);
       }
     else
       {
-      code.add(VM::vmcode::SHL, op, VM::vmcode::NUMBER, 2);
+      code.add(VM::vmcode::SHL, op, VM::vmcode::NUMBER, 3);
       code.add(VM::vmcode::ADD, VM::vmcode::R10, op);
       code.add(VM::vmcode::MOV, op, VM::vmcode::MEM_R10);
       }
@@ -1892,19 +1892,19 @@ void compile_dereference(VM::vmcode& code, compile_data& data, const Dereference
 
 void compile_real(VM::vmcode& code, compile_data& data, const value_t& v)
   {
-  float f = (float)std::get<double>(v);
+  double f = (double)std::get<double>(v);
   VM::vmcode::operand op;
   int64_t offset;
   index_to_real_operand(op, offset, data.stack_index);
   if (offset)
     {
-    code.add(VM::vmcode::MOV, op, offset, VM::vmcode::NUMBER, *(reinterpret_cast<uint32_t*>(&f)));
+    code.add(VM::vmcode::MOV, op, offset, VM::vmcode::NUMBER, *(reinterpret_cast<uint64_t*>(&f)));
     }
   else
     {
     if (f)
       {
-      code.add(VM::vmcode::MOV, VM::vmcode::RDX, VM::vmcode::NUMBER, *(reinterpret_cast<uint32_t*>(&f)));
+      code.add(VM::vmcode::MOV, VM::vmcode::RDX, VM::vmcode::NUMBER, *(reinterpret_cast<uint64_t*>(&f)));
       code.add(VM::vmcode::MOVQ, op, VM::vmcode::RDX);
       }
     else
@@ -1917,7 +1917,7 @@ void compile_real(VM::vmcode& code, compile_data& data, const value_t& v)
 
 void compile_integer(VM::vmcode& code, compile_data& data, const value_t& v)
   {
-  int32_t i = (int32_t)std::get<int64_t>(v);
+  int64_t i = (int64_t)std::get<int64_t>(v);
   VM::vmcode::operand op;
   int64_t offset;
   index_to_integer_operand(op, offset, data.stack_index);
@@ -1987,8 +1987,8 @@ void compile_lvalue_operator(VM::vmcode& code, compile_data& data, const LValueO
         }
       else
         code.add(VM::vmcode::MOVSD, op, VM::vmcode::MEM_RSP, -var_id);
-      float f = 1.f;
-      code.add(VM::vmcode::MOV, VM::vmcode::RDX, VM::vmcode::NUMBER, *(reinterpret_cast<uint32_t*>(&f)));
+      double f = 1.0;
+      code.add(VM::vmcode::MOV, VM::vmcode::RDX, VM::vmcode::NUMBER, *(reinterpret_cast<uint64_t*>(&f)));
       code.add(VM::vmcode::MOVQ, VM::vmcode::XMM7, VM::vmcode::RDX);
       if (lvo.name == "++")
         code.add(VM::vmcode::ADDSD, op, VM::vmcode::XMM7);
@@ -2023,7 +2023,7 @@ void compile_lvalue_operator(VM::vmcode& code, compile_data& data, const LValueO
         code.add(VM::vmcode::MOV, VM::vmcode::RDX, VM::vmcode::MEM_RSP, offset);
         op = VM::vmcode::RDX;
         }
-      code.add(VM::vmcode::SHL, op, VM::vmcode::NUMBER, 2);
+      code.add(VM::vmcode::SHL, op, VM::vmcode::NUMBER, 3);
       code.add(VM::vmcode::MOV, VM::vmcode::R10, VM::vmcode::RSP);
       code.add(VM::vmcode::SUB, VM::vmcode::R10, op);
       index_to_real_operand(op, offset, data.stack_index);
@@ -2035,8 +2035,8 @@ void compile_lvalue_operator(VM::vmcode& code, compile_data& data, const LValueO
         }
       else
         code.add(VM::vmcode::MOVSD, op, VM::vmcode::MEM_R10, -var_id);
-      float f = 1.f;
-      code.add(VM::vmcode::MOV, VM::vmcode::RDX, VM::vmcode::NUMBER, *(reinterpret_cast<uint32_t*>(&f)));
+      double f = 1.0;
+      code.add(VM::vmcode::MOV, VM::vmcode::RDX, VM::vmcode::NUMBER, *(reinterpret_cast<uint64_t*>(&f)));
       code.add(VM::vmcode::MOVQ, VM::vmcode::XMM7, VM::vmcode::RDX);
       if (lvo.name == "++")
         code.add(VM::vmcode::ADDSD, op, VM::vmcode::XMM7);
@@ -2058,7 +2058,7 @@ void compile_lvalue_operator(VM::vmcode& code, compile_data& data, const LValueO
         code.add(VM::vmcode::MOV, VM::vmcode::RDX, VM::vmcode::MEM_RSP, offset);
         op = VM::vmcode::RDX;
         }
-      code.add(VM::vmcode::SHL, op, VM::vmcode::NUMBER, 2);
+      code.add(VM::vmcode::SHL, op, VM::vmcode::NUMBER, 3);
       code.add(VM::vmcode::MOV, VM::vmcode::R10, VM::vmcode::RSP);
       code.add(VM::vmcode::SUB, VM::vmcode::R10, op);
       if (lvo.name == "++")
@@ -2085,12 +2085,12 @@ void compile_lvalue_operator(VM::vmcode& code, compile_data& data, const LValueO
       if (offset)
         {
         code.add(VM::vmcode::MOV, VM::vmcode::RDX, VM::vmcode::MEM_RSP, offset);
-        code.add(VM::vmcode::SHL, VM::vmcode::RDX, VM::vmcode::NUMBER, 2);
+        code.add(VM::vmcode::SHL, VM::vmcode::RDX, VM::vmcode::NUMBER, 3);
         code.add(VM::vmcode::ADD, VM::vmcode::R10, VM::vmcode::RDX);
         }
       else
         {
-        code.add(VM::vmcode::SHL, op, VM::vmcode::NUMBER, 2);
+        code.add(VM::vmcode::SHL, op, VM::vmcode::NUMBER, 3);
         code.add(VM::vmcode::ADD, VM::vmcode::R10, op);
         }
       index_to_real_operand(op, offset, data.stack_index);
@@ -2101,8 +2101,8 @@ void compile_lvalue_operator(VM::vmcode& code, compile_data& data, const LValueO
         }
       else
         code.add(VM::vmcode::MOVSD, op, VM::vmcode::MEM_R10);
-      float f = 1.f;
-      code.add(VM::vmcode::MOV, VM::vmcode::RDX, VM::vmcode::NUMBER, *(reinterpret_cast<uint32_t*>(&f)));
+      double f = 1.0;
+      code.add(VM::vmcode::MOV, VM::vmcode::RDX, VM::vmcode::NUMBER, *(reinterpret_cast<uint64_t*>(&f)));
       code.add(VM::vmcode::MOVQ, VM::vmcode::XMM7, VM::vmcode::RDX);
       if (lvo.name == "++")
         code.add(VM::vmcode::ADDSD, op, VM::vmcode::XMM7);
@@ -2123,12 +2123,12 @@ void compile_lvalue_operator(VM::vmcode& code, compile_data& data, const LValueO
       if (offset)
         {
         code.add(VM::vmcode::MOV, VM::vmcode::RDX, VM::vmcode::MEM_RSP, offset);
-        code.add(VM::vmcode::SHL, VM::vmcode::RDX, VM::vmcode::NUMBER, 2);
+        code.add(VM::vmcode::SHL, VM::vmcode::RDX, VM::vmcode::NUMBER, 3);
         code.add(VM::vmcode::ADD, VM::vmcode::R10, VM::vmcode::RDX);
         }
       else
         {
-        code.add(VM::vmcode::SHL, op, VM::vmcode::NUMBER, 2);
+        code.add(VM::vmcode::SHL, op, VM::vmcode::NUMBER, 3);
         code.add(VM::vmcode::ADD, VM::vmcode::R10, op);
         }
       if (lvo.name == "++")
@@ -2171,8 +2171,8 @@ void compile_lvalue_operator(VM::vmcode& code, compile_data& data, const LValueO
         }
       else
         code.add(VM::vmcode::MOVSD, op, VM::vmcode::MEM_R10);
-      float f = 1.f;
-      code.add(VM::vmcode::MOV, VM::vmcode::RDX, VM::vmcode::NUMBER, *(reinterpret_cast<uint32_t*>(&f)));
+      double f = 1.0;
+      code.add(VM::vmcode::MOV, VM::vmcode::RDX, VM::vmcode::NUMBER, *(reinterpret_cast<uint64_t*>(&f)));
       code.add(VM::vmcode::MOVQ, VM::vmcode::XMM7, VM::vmcode::RDX);
       if (lvo.name == "++")
         code.add(VM::vmcode::ADDSD, op, VM::vmcode::XMM7);
@@ -2477,11 +2477,11 @@ void compile_statement(VM::vmcode& code, compile_data& data, const Statement& st
 
 void adapt_offset_stack(VM::vmcode::operand& op, uint64_t& mem, compile_data& data)
   {
-  if ((op == VM::vmcode::MEM_RSP || op == VM::vmcode::MEM_R10 || op == VM::vmcode::MEM_RSP || op == VM::vmcode::MEM_R10) && ((mem & variable_tag) == variable_tag))
+  if ((op == VM::vmcode::MEM_RSP || op == VM::vmcode::MEM_R10) && ((mem & variable_tag) == variable_tag))
     {
-    mem = mem & 0xFFFFFFFFFFFFFFFC;
+    mem = mem & 0xFFFFFFFFFFFFFFF8;
     if (data.max_stack_index)
-      mem -= (data.max_stack_index - 1) * 4;
+      mem -= (data.max_stack_index - 1) * 8;
     }
   }
 
@@ -2494,8 +2494,6 @@ void offset_stack(VM::vmcode& code, compile_data& data)
       {
       adapt_offset_stack(instr.operand1, instr.operand1_mem, data);
       adapt_offset_stack(instr.operand2, instr.operand2_mem, data);
-      //adapt_offset_stack(instr.operand3, instr.operand3_mem, data);
-      //adapt_offset_stack(instr.operand4, instr.operand4_mem, data);
       }
     }
   }
@@ -2534,7 +2532,7 @@ void compile_int_parameter_pointer(VM::vmcode& code, compile_data& data, const I
 void compile_int_parameter_single(VM::vmcode& code, compile_data& data, const IntParameter& ip, int parameter_id)
   {
   int64_t var_id = data.var_offset | variable_tag;
-  data.var_offset += 4;
+  data.var_offset += 8;
   if (parameter_id < 4)
     {
     VM::vmcode::operand op;
@@ -2605,7 +2603,7 @@ void compile_float_parameter_pointer(VM::vmcode& code, compile_data& data, const
 void compile_float_parameter_single(VM::vmcode& code, compile_data& data, const FloatParameter& fp, int parameter_id)
   {
   int64_t var_id = data.var_offset | variable_tag;
-  data.var_offset += 4;
+  data.var_offset += 8;
   if (parameter_id < 4)
     {
     VM::vmcode::operand op;

@@ -642,6 +642,50 @@ namespace
     free_bytecode(f, size);
     }
 
+  void test_vm_imul()
+    {
+    vmcode code;
+    code.add(vmcode::MOV, vmcode::RAX, vmcode::NUMBER, 12);
+    code.add(vmcode::MOV, vmcode::RCX, vmcode::NUMBER, 13);
+    code.add(vmcode::IMUL, vmcode::RCX);
+    code.add(vmcode::RET);
+    uint64_t size;
+    uint8_t* f = (uint8_t*)vm_bytecode(size, code);
+    registers reg;
+    try
+      {
+      run_bytecode(f, size, reg);
+      }
+    catch (std::logic_error e)
+      {
+      std::cout << e.what() << "\n";
+      }
+    TEST_EQ(156, reg.rax);
+    free_bytecode(f, size);
+    }
+
+  void test_vm_imul2()
+    {
+    vmcode code;
+    code.add(vmcode::MOV, vmcode::RAX, vmcode::NUMBER, 12);
+    code.add(vmcode::MOV, vmcode::RCX, vmcode::NUMBER, 13);
+    code.add(vmcode::IMUL, vmcode::RAX, vmcode::RCX);
+    code.add(vmcode::RET);
+    uint64_t size;
+    uint8_t* f = (uint8_t*)vm_bytecode(size, code);
+    registers reg;
+    try
+      {
+      run_bytecode(f, size, reg);
+      }
+    catch (std::logic_error e)
+      {
+      std::cout << e.what() << "\n";
+      }
+    TEST_EQ(156, reg.rax);
+    free_bytecode(f, size);
+    }
+
   } // namespace
 
 VM_END
@@ -673,4 +717,6 @@ void run_all_vm_tests()
   test_vm_movq();
   test_vm_addsd();
   test_vm_fldpi();
+  test_vm_imul();
+  test_vm_imul2();
   }
