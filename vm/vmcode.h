@@ -33,6 +33,7 @@ class vmcode
       DIVSD,  
       EXTERN,
       F2XM1,
+      FABS,
       FADD,                  
       FADDP,
       FILD,      

@@ -927,7 +927,7 @@ struct log2_functor
     code.add(VM::vmcode::FYL2X);
     }
   };
-/*
+
 struct fabs_functor
   {
   void operator () (VM::vmcode& code)
@@ -935,7 +935,7 @@ struct fabs_functor
     code.add(VM::vmcode::FABS);
     }
   };
-  */
+  
 template <class T>
 void compile_fpu_fun1(VM::vmcode& code, compile_data& data)
   {
@@ -1003,8 +1003,8 @@ c_funcs_t c_funcs =
   {"cos", compile_fpu_fun1<cos_functor>},
   //{"exp", compile_fpu_fun1<exp_functor>},
   {"log", compile_fpu_fun1<log_functor>},
-  {"log2", compile_fpu_fun1<log2_functor>}//,
-  //{"fabs", compile_fpu_fun1<fabs_functor>}
+  {"log2", compile_fpu_fun1<log2_functor>},
+  {"fabs", compile_fpu_fun1<fabs_functor>}
   };
 
 void compile_make_int_array(VM::vmcode& code, compile_data& data, const Int& make_i)

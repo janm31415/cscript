@@ -745,60 +745,73 @@ struct inc_dec_test : public compile_fixture
     TEST_EQ(7.5f, f1);
     }
   };
-/*
 
-TEST_FIXTURE(compile_fixture, for_loop_test)
+struct for_loop_test : public compile_fixture
   {
-  TEST_EQ(1225.f, run("() float f = 0; for (int i = 0; i < 50; ++i) { f += i; } f;", false));
-  }
+  void test()
+    {
+    TEST_EQ(1225.f, run("() float f = 0; for (int i = 0; i < 50; ++i) { f += i; } f;", false));
+    }
+  };
 
-
-TEST_FIXTURE(compile_fixture, harmonic)
+struct harmonic : public compile_fixture
   {
-  auto tic = std::chrono::high_resolution_clock::now();
-  TEST_EQ_CLOSE(14.3574f, run("() float sum = 0.0;for (int i = 1; i<1000000; ++i) { sum += 1.0/i; } sum;", false), 1e-4);
-  //TEST_EQ_CLOSE(15.4037f, run("() float sum = 0.0;for (int i = 1; i<1000000000; ++i) { sum += 1.0/i; } sum;", false), 1e-4);
-  auto toc = std::chrono::high_resolution_clock::now();
-  auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
-  printf("Harmonic timing: %dms\n", ms);
-  }
+  void test()
+    {
+    auto tic = std::chrono::high_resolution_clock::now();
+    TEST_EQ_CLOSE(14.3927, run("() float sum = 0.0; for (int i = 1; i<1000000; ++i) { sum += 1.0/i; } sum;", false), 1e-4);    
+    auto toc = std::chrono::high_resolution_clock::now();
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
+    printf("Harmonic timing: %dms\n", ms);
+    }
+  };
 
-TEST_FIXTURE(compile_fixture, optimize_tests)
+struct optimize_tests : public compile_fixture
   {
-  TEST_EQ(0, run("() int i = 0;", false));
-  TEST_EQ(0, run("() float f = 0.0;", false));
-  TEST_EQ(0, run("() float f = 0;", false));
-  }
-TEST_FIXTURE(compile_fixture, funccall_tests)
+  void test()
+    {
+    TEST_EQ(0, run("() int i = 0;", false));
+    TEST_EQ(0, run("() float f = 0.0;", false));
+    TEST_EQ(0, run("() float f = 0;", false));
+    }
+  };
+
+struct funccall_tests : public compile_fixture
   {
-  TEST_EQ(std::sqrt(2.f), run("() sqrt(2.f);", false));
-  TEST_EQ(std::sqrt(2.f), run("() sqrt(2.f);", true));
+  void test()
+    {
+    TEST_EQ(std::sqrt(2.0), run("() sqrt(2.f);", false));
+    TEST_EQ(std::sqrt(2.0), run("() sqrt(2.f);", true));
 
-  TEST_EQ(std::sin(0.5f), run("() sin(0.5f);", false));
-  TEST_EQ(std::sin(0.5f), run("() sin(0.5f);", true));
+    TEST_EQ(std::sin(0.5), run("() sin(0.5f);", false));
+    TEST_EQ(std::sin(0.5), run("() sin(0.5f);", true));
 
-  TEST_EQ(std::cos(0.5f), run("() cos(0.5f);", false));
-  TEST_EQ(std::cos(0.5f), run("() cos(0.5f);", true));
+    TEST_EQ(std::cos(0.5), run("() cos(0.5f);", false));
+    TEST_EQ(std::cos(0.5), run("() cos(0.5f);", true));
 
-  TEST_EQ(std::exp(0.5f), run("() exp(0.5f);", false));
-  TEST_EQ(std::exp(0.5f), run("() exp(0.5f);", true));
+    //TEST_EQ(std::exp(0.5), run("() exp(0.5f);", false));
+    //TEST_EQ(std::exp(0.5), run("() exp(0.5f);", true));
 
-  TEST_EQ(std::log(0.5f), run("() log(0.5f);", false));
-  TEST_EQ(std::log(0.5f), run("() log(0.5f);", true));
+    TEST_EQ(std::log(0.5), run("() log(0.5f);", false));
+    TEST_EQ(std::log(0.5), run("() log(0.5f);", true));
 
-  TEST_EQ(std::log2(0.5f), run("() log2(0.5f);", false));
-  TEST_EQ(std::log2(0.5f), run("() log2(0.5f);", true));
+    TEST_EQ(std::log2(0.5), run("() log2(0.5f);", false));
+    TEST_EQ(std::log2(0.5), run("() log2(0.5f);", true));
 
-  TEST_EQ(std::fabs(-0.5f), run("() fabs(0.5f);", false));
-  TEST_EQ(std::fabs(-0.5f), run("() fabs(0.5f);", true));
-  }
+    TEST_EQ(std::fabs(-0.5), run("() fabs(0.5f);", false));
+    TEST_EQ(std::fabs(-0.5), run("() fabs(0.5f);", true));
+    }
+  };
 
-TEST_FIXTURE(compile_fixture, rsp_offset_test)
+struct rsp_offset_test : public compile_fixture
   {
-  TEST_EQ_CLOSE(0.f, runf("(float x) float y = 1.0 - x; sin(y*y*3.141592653589793238462643383*4.0);", 1.f), 1e-5);
-  TEST_EQ_CLOSE(0.f, runf("(float x) float y = 1.0 - x; sin(y*y*3.141592653589793238462643383*4.0);", 0.f), 1e-5);
-  }
-*/
+  void test()
+    {
+    TEST_EQ_CLOSE(0.0, runf("(float x) float y = 1.0 - x; sin(y*y*3.141592653589793238462643383*4.0);", 1.f), 1e-5);
+    TEST_EQ_CLOSE(0.0, runf("(float x) float y = 1.0 - x; sin(y*y*3.141592653589793238462643383*4.0);", 0.f), 1e-5);
+    }
+  };
+
 COMPILER_END
 
 void run_all_compile_tests()
@@ -818,4 +831,9 @@ void run_all_compile_tests()
   parameter_pointer_test().test();
   parameter_dereference_test().test();
   inc_dec_test().test();
+  for_loop_test().test();
+  optimize_tests().test();
+  funccall_tests().test();
+  rsp_offset_test().test();
+  //harmonic().test();
   }

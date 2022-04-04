@@ -198,6 +198,7 @@ namespace
       case vmcode::DIV: return "div";
       case vmcode::DIVSD: return "divsd";
       case vmcode::F2XM1: return "f2xm1";
+      case vmcode::FABS: return "fabs";
       case vmcode::FADD: return "fadd";
       case vmcode::FADDP: return "faddp";
       case vmcode::FILD: return "fild";
@@ -528,6 +529,7 @@ std::string vmcode::operation_to_string(operation oper)
     case vmcode::DIVSD: return std::string("DIVSD");   
     case vmcode::EXTERN: return std::string("EXTERN");
     case vmcode::F2XM1:return std::string("F2XM1");
+    case vmcode::FABS: return std::string("FABS");
     case vmcode::FADD: return std::string("FADD");   
     case vmcode::FADDP: return std::string("FADDP");
     case vmcode::FISTPQ:return std::string("FISTPQ");  

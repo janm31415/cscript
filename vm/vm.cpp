@@ -51,6 +51,7 @@ namespace
       case vmcode::DIVSD: return 2;
       case vmcode::EXTERN: return 0;
       case vmcode::F2XM1:return 0;
+      case vmcode::FABS: return 0;
       case vmcode::FADD: return 2;
       case vmcode::FADDP: return 0;
       case vmcode::FISTPQ: return 1;
@@ -2700,6 +2701,11 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       {
       double v = std::pow(2.0, *regs.fpstackptr) - 1.0;
       *regs.fpstackptr = v;
+      break;
+      }
+      case vmcode::FABS:
+      {
+      *regs.fpstackptr = std::abs(*regs.fpstackptr);
       break;
       }
       case vmcode::FADD:
