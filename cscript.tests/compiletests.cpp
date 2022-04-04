@@ -13,6 +13,7 @@
 #include <iomanip>
 #include <iostream>
 #include <fstream>
+#include <cmath>
 
 #include "test_assert.h"
 

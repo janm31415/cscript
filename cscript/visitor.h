@@ -22,9 +22,9 @@ struct visitor<LValue, T>
   {
   static void visit(LValue& lv, T* v)
     {
-    ((T::base*)v)->_previsit(lv);
+    ((typename T::base*)v)->_previsit(lv);
     std::visit(*v, lv.lvalue);
-    ((T::base*)v)->_postvisit(lv);
+    ((typename T::base*)v)->_postvisit(lv);
     }
   };
 
@@ -33,9 +33,9 @@ struct visitor<Factor, T>
   {
   static void visit(Factor& f, T* v)
     {
-    ((T::base*)v)->_previsit(f);
+    ((typename T::base*)v)->_previsit(f);
     std::visit(*v, f.factor);
-    ((T::base*)v)->_postvisit(f);
+    ((typename T::base*)v)->_postvisit(f);
     }
   };
 
@@ -44,10 +44,10 @@ struct visitor<Term, T>
   {
   static void visit(Term& t, T* v)
     {
-    ((T::base*)v)->_previsit(t);
+    ((typename T::base*)v)->_previsit(t);
     for (auto& op : t.operands)
       visitor<Factor, T>::visit(op, v);
-    ((T::base*)v)->_postvisit(t);
+    ((typename T::base*)v)->_postvisit(t);
     }
   };
 
@@ -56,10 +56,10 @@ struct visitor<Relop, T>
   {
   static void visit(Relop& relop, T* v)
     {
-    ((T::base*)v)->_previsit(relop);
+    ((typename T::base*)v)->_previsit(relop);
     for (auto& op : relop.operands)
       visitor<Term, T>::visit(op, v);
-    ((T::base*)v)->_postvisit(relop);
+    ((typename T::base*)v)->_postvisit(relop);
     }
   };
 
@@ -68,10 +68,10 @@ struct visitor<Expression, T>
   {
   static void visit(Expression& expr, T* v)
     {
-    //((T::base*)v)->_previsit(expr);
+    //((typename T::base*)v)->_previsit(expr);
     for (auto& op : expr.operands)
       visitor<Relop, T>::visit(op, v);
-    //((T::base*)v)->_postvisit(expr);
+    //((typename T::base*)v)->_postvisit(expr);
     }
   };
 
@@ -80,9 +80,9 @@ struct visitor<Statement, T>
   {
   static void visit(Statement& stm, T* v)
     {
-    ((T::base*)v)->_previsit(stm);
+    ((typename T::base*)v)->_previsit(stm);
     std::visit(*v, stm);
-    ((T::base*)v)->_postvisit(stm);
+    ((typename T::base*)v)->_postvisit(stm);
     }
   };
 
@@ -109,7 +109,7 @@ struct visitor<Program, T>
 template <class T>
 struct base_visitor
   {
-  typedef typename base_visitor<T> base;
+  typedef base_visitor<T> base;
   void operator()(Nop& i)
     {
     _previsit(i);
