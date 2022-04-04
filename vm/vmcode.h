@@ -223,7 +223,7 @@ class vmcode
       VM_API instruction(operation op, operand op1, operand op2, uint64_t op2_mem, const std::string& text);
 
       VM_API void stream(std::ostream& out) const;
-      VM_API uint64_t fill_opcode(uint8_t* opcode_stream) const;
+      //VM_API uint64_t fill_opcode(uint8_t* opcode_stream) const;
       };
 
     VM_API vmcode();

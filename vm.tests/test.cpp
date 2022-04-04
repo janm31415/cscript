@@ -1,6 +1,5 @@
 #include "test_assert.h"
 
-#include "vmcodetests.h"
 #include "vmtests.h"
 
 #include <ctime>
@@ -10,7 +9,6 @@ int main(int /*argc*/, const char* /*argv*/[])
   InitTestEngine();
 
   auto tic = std::clock();
-  run_all_vmcode_tests();
   run_all_vm_tests();
   auto toc = std::clock();
 

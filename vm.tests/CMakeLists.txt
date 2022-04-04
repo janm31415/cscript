@@ -1,12 +1,10 @@
 
 set(HDRS
-vmcodetests.h
 test_assert.h
 vmtests.h
     )
 	
 set(SRCS
-vmcodetests.cpp
 test_assert.cpp
 test.cpp
 vmtests.cpp
