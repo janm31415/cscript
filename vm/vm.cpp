@@ -908,22 +908,22 @@ namespace
       case vmcode::CH: return (uint8_t*)(((uint8_t*)(&regs.rcx)) + 1);
       case vmcode::DL: return (uint8_t*)&regs.rdx;
       case vmcode::DH: return (uint8_t*)(((uint8_t*)(&regs.rdx)) + 1);
-      case vmcode::RAX: return nullptr;
-      case vmcode::RBX: return nullptr;
-      case vmcode::RCX: return nullptr;
-      case vmcode::RDX: return nullptr;
-      case vmcode::RDI: return nullptr;
-      case vmcode::RSI: return nullptr;
-      case vmcode::RSP: return nullptr;
-      case vmcode::RBP: return nullptr;
-      case vmcode::R8:  return nullptr;
-      case vmcode::R9:  return nullptr;
-      case vmcode::R10: return nullptr;
-      case vmcode::R11: return nullptr;
-      case vmcode::R12: return nullptr;
-      case vmcode::R13: return nullptr;
-      case vmcode::R14: return nullptr;
-      case vmcode::R15: return nullptr;
+      case vmcode::RAX: return (uint8_t*)&regs.rax;
+      case vmcode::RBX: return (uint8_t*)&regs.rbx;
+      case vmcode::RCX: return (uint8_t*)&regs.rcx;
+      case vmcode::RDX: return (uint8_t*)&regs.rdx;
+      case vmcode::RDI: return (uint8_t*)&regs.rdi;
+      case vmcode::RSI: return (uint8_t*)&regs.rsi;
+      case vmcode::RSP: return (uint8_t*)&regs.rsp;
+      case vmcode::RBP: return (uint8_t*)&regs.rbp;
+      case vmcode::R8:  return (uint8_t*)&regs.r8;
+      case vmcode::R9:  return (uint8_t*)&regs.r9;
+      case vmcode::R10: return (uint8_t*)&regs.r10;
+      case vmcode::R11: return (uint8_t*)&regs.r11;
+      case vmcode::R12: return (uint8_t*)&regs.r12;
+      case vmcode::R13: return (uint8_t*)&regs.r13;
+      case vmcode::R14: return (uint8_t*)&regs.r14;
+      case vmcode::R15: return (uint8_t*)&regs.r15;
       case vmcode::MEM_RAX: return nullptr;
       case vmcode::MEM_RBX: return nullptr;
       case vmcode::MEM_RCX: return nullptr;
@@ -2540,6 +2540,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
   {
   (void*)size;
   *((uint64_t*)regs.rsp - 1) = 0xffffffffffffffff; // this address means the function call representing this bytecode
+  regs.rsp -= 8;
   const uint8_t* bytecode_ptr = bytecode;
 
   for (;;)
@@ -3235,7 +3236,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::RET:
       {
-      uint64_t address = *((uint64_t*)regs.rsp - 1);
+      uint64_t address = *((uint64_t*)regs.rsp);
       regs.rsp += 8; // to check, might need to pop more
       if (address == 0xffffffffffffffff) // we're at the end of this bytecode function call
         return;

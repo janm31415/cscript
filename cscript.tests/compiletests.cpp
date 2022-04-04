@@ -37,6 +37,11 @@ struct compile_fixture
       optimize(prog);
     VM::vmcode code;
     compile(code, data, prog);
+    if (false)
+      {
+      code.stream(std::cout);
+      }
+
     return code;
     }
 

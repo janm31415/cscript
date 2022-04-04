@@ -8,6 +8,7 @@
 #include "cscript/utility.h"
 #include "cscript/visitor.h"
 #include "cscript/pp_visitor.h"
+#include "cscript/compiler.h"
 
 #include <iomanip>
 #include <iostream>
@@ -45,6 +46,10 @@ void test_optimize_expression()
   visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
   optimize(prog);
   visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
+  VM::vmcode code;
+  compile_data data;
+  compile(code, data, prog);
+  code.stream(std::cout);
   }
 
 COMPILER_END

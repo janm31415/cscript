@@ -189,7 +189,9 @@ namespace
   void test_vm_call()
     {
     vmcode code;
+    code.add(vmcode::SUB, vmcode::RSP, vmcode::NUMBER, 40);
     code.add(vmcode::CALL, "L_label");
+    code.add(vmcode::ADD, vmcode::RSP, vmcode::NUMBER, 40);
     code.add(vmcode::RET);
     code.add(vmcode::LABEL, "L_label");
     code.add(vmcode::MOV, vmcode::RAX, vmcode::NUMBER, 10);
