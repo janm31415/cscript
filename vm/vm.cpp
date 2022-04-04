@@ -81,6 +81,7 @@ namespace
       case vmcode::LABEL:return 0;
       case vmcode::LABEL_ALIGNED:return 0;
       case vmcode::IDIV:return 1;
+      case vmcode::IDIV2:return 1;
       case vmcode::IMUL:return 2;
       case vmcode::INC: return 1;
       case vmcode::JE: return 1;
@@ -2693,6 +2694,14 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       regs.rdx = remainder;
       break;
       }
+      case vmcode::DIV2:
+      {
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t divider = *oprnd1;
+      uint64_t result = regs.rax / divider;      
+      regs.rax = result;      
+      break;
+      }
       case vmcode::DIVSD:
       {
       execute_double_operation<DivsdOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
@@ -2917,6 +2926,14 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       int64_t remainder = (int64_t)regs.rax % divider;
       regs.rax = result;
       regs.rdx = remainder;
+      break;
+      }
+      case vmcode::IDIV2:
+      {
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      int64_t divider = (int64_t)*oprnd1;
+      int64_t result = (int64_t)regs.rax / divider;      
+      regs.rax = result;      
       break;
       }
       case vmcode::IMUL:

@@ -196,6 +196,7 @@ namespace
       case vmcode::CVTTSD2SI: return "cvttsd2si";
       case vmcode::DEC: return "dec";
       case vmcode::DIV: return "div";
+      case vmcode::DIV2: return "div2";
       case vmcode::DIVSD: return "divsd";
       case vmcode::F2XM1: return "f2xm1";
       case vmcode::FABS: return "fabs";
@@ -225,6 +226,7 @@ namespace
       case vmcode::FXCH: return "fxch";
       case vmcode::FYL2X: return "fyl2x";
       case vmcode::IDIV: return "idiv";
+      case vmcode::IDIV2: return "idiv2";
       case vmcode::IMUL: return "imul";
       case vmcode::INC: return "inc";
       case vmcode::MOV: return "mov";
@@ -529,6 +531,7 @@ std::string vmcode::operation_to_string(operation oper)
     case vmcode::CVTTSD2SI:return std::string("CVTTSD2SI");
     case vmcode::DEC: return std::string("DEC");
     case vmcode::DIV: return std::string("DIV");
+    case vmcode::DIV2: return std::string("DIV2");
     case vmcode::DIVSD: return std::string("DIVSD");   
     case vmcode::EXTERN: return std::string("EXTERN");
     case vmcode::F2XM1:return std::string("F2XM1");
@@ -562,6 +565,7 @@ std::string vmcode::operation_to_string(operation oper)
     case vmcode::LABEL:return std::string("LABEL");
     case vmcode::LABEL_ALIGNED:return std::string("LABEL_ALIGNED");
     case vmcode::IDIV:return std::string("IDIV");
+    case vmcode::IDIV2:return std::string("IDIV2");
     case vmcode::IMUL:return std::string("IMUL");
     case vmcode::INC: return std::string("INC");
     case vmcode::JE: return std::string("JE");

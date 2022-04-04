@@ -30,6 +30,7 @@ class vmcode
       CVTTSD2SI,
       DEC,
       DIV,
+      DIV2, // same as DIV but without remainder to rdx
       DIVSD,  
       EXTERN,
       F2XM1,
@@ -61,6 +62,7 @@ class vmcode
       FYL2X,
       GLOBAL,
       IDIV,
+      IDIV2, // same as IDIV, but without remainder to rdx
       IMUL,
       INC,
       JMP,
