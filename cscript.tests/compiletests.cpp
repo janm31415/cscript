@@ -876,6 +876,17 @@ struct modulo_test : public compile_fixture
     }
   };
 
+struct if_test : public compile_fixture
+  {
+  void test(bool optimize = false, bool peephole = true)
+    {
+    TEST_EQ(7.0, run("() float f = 0; if (3 > 2) { f = 7; } else { f = 9; } f;", optimize, peephole));
+    TEST_EQ(9.0, run("() float f = 0; if (3 > 2) { f = 9; } f;", optimize, peephole));
+    TEST_EQ(9.0, run("() float f = 0; if (3 < 2) { f = 7; } else { f = 9; } f;", optimize, peephole));
+    TEST_EQ(0.0, run("() float f = 0; if (3 < 2) { f = 9; } f;", optimize, peephole));
+    }
+  };
+
 struct harmonic : public compile_fixture
   {
   void test(bool optimize = false, bool peephole = true)
@@ -976,6 +987,7 @@ void run_all_compile_tests()
     funccall_tests().test(optimize, peephole);
     rsp_offset_test().test(optimize, peephole);
     modulo_test().test(optimize, peephole);
+    if_test().test(optimize, peephole);
     //harmonic().test(optimize, peephole);
     //fibonacci().test(optimize, peephole);
     //hamming().test(optimize, peephole);

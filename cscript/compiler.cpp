@@ -1205,7 +1205,7 @@ namespace
       {"pow", compile_pow}
     };
 
-  void compile_make_int_array(VM::vmcode& code, compile_data& data, const Int& make_i)
+  void compile_make_int_array(VM::vmcode& /*code*/, compile_data& data, const Int& make_i)
     {
     if (make_i.dims.size() != 1)
       throw_compile_error(make_i.line_nr, "compile error: only single dimension arrays are allowed");
@@ -1284,7 +1284,7 @@ namespace
     }
 
 
-  void compile_make_float_array(VM::vmcode& code, compile_data& data, const Float& make_f)
+  void compile_make_float_array(VM::vmcode& /*code*/, compile_data& data, const Float& make_f)
     {
     if (make_f.dims.size() != 1)
       throw_compile_error(make_f.line_nr, "compile error: only single dimension arrays are allowed");
@@ -1312,7 +1312,7 @@ namespace
     {
     bool init = !make_f.expr.operands.empty();
     VM::vmcode::operand float_op;
-    int64_t float_offset;
+    int64_t float_offset=0;
     if (init)
       {
       compile_expression(code, data, make_f.expr);
@@ -2335,14 +2335,14 @@ namespace
         if (lvo.name == "++")
           {
           if (it->second.at == memory_address)
-            code.add(VM::vmcode::ADD, VM::vmcode::MEM_RSP, -var_id, VM::vmcode::NUMBER, 1);
+            code.add(VM::vmcode::ADD, VM::vmcode::MEM_RSP, -(int64_t)var_id, VM::vmcode::NUMBER, 1);
           else
             code.add(VM::vmcode::INC, (VM::vmcode::operand)var_id);
           }
         else if (lvo.name == "--")
           {
           if (it->second.at == memory_address)
-            code.add(VM::vmcode::SUB, VM::vmcode::MEM_RSP, -var_id, VM::vmcode::NUMBER, 1);
+            code.add(VM::vmcode::SUB, VM::vmcode::MEM_RSP, -(int64_t)var_id, VM::vmcode::NUMBER, 1);
           else
             code.add(VM::vmcode::DEC, (VM::vmcode::operand)var_id);
           }
@@ -2355,11 +2355,11 @@ namespace
           {
           if (offset)
             {
-            code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, -var_id);
+            code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, -(int64_t)var_id);
             code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset, RESERVED_INTEGER_REG);
             }
           else
-            code.add(VM::vmcode::MOV, op, VM::vmcode::MEM_RSP, -var_id);
+            code.add(VM::vmcode::MOV, op, VM::vmcode::MEM_RSP, -(int64_t)var_id);
           }
         else
           {
@@ -2379,10 +2379,10 @@ namespace
           if (offset)
             {
             op = RESERVED_REAL_REG;
-            code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, -var_id);
+            code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, -(int64_t)var_id);
             }
           else
-            code.add(VM::vmcode::MOV, op, VM::vmcode::MEM_RSP, -var_id);
+            code.add(VM::vmcode::MOV, op, VM::vmcode::MEM_RSP, -(int64_t)var_id);
           double f = 1.0;
           code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::NUMBER, *(reinterpret_cast<uint64_t*>(&f)));
           code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, RESERVED_INTEGER_REG);
@@ -2392,7 +2392,7 @@ namespace
             code.add(VM::vmcode::SUBSD, op, RESERVED_REAL_REG_2);
           else
             throw_compile_error(lvo.line_nr, "operator " + lvo.name + " is unknown");
-          code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, op);
+          code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -(int64_t)var_id, op);
           }
         else
           {
@@ -2886,6 +2886,35 @@ namespace
     code.add(VM::vmcode::LABEL, label_to_string(end));
     }
 
+  void compile_if(VM::vmcode& code, compile_data& data, const If& i)
+    {
+    compile_statement(code, data, i.condition[0]);
+    if (rt != RT_INTEGER)
+      throw_compile_error(i.line_nr, "if condition is not a boolean expression");
+    if (data.stack_index != 0)
+      throw_compile_error(i.line_nr, "if statement not expected as an expression");
+    code.add(VM::vmcode::CMP, FIRST_TEMP_INTEGER_REG, VM::vmcode::NUMBER, 0);
+    auto end_label = data.label++;
+    if (i.alternative.empty())
+      {      
+      code.add(VM::vmcode::JE, label_to_string(end_label));
+      for (const auto& stm : i.body)
+        compile_statement(code, data, stm);
+      }
+    else
+      {
+      auto else_label = data.label++;
+      code.add(VM::vmcode::JE, label_to_string(else_label));
+      for (const auto& stm : i.body)
+        compile_statement(code, data, stm);    
+      code.add(VM::vmcode::JMP, label_to_string(end_label));
+      code.add(VM::vmcode::LABEL, label_to_string(else_label));
+      for (const auto& stm : i.alternative)
+        compile_statement(code, data, stm);
+      }
+    code.add(VM::vmcode::LABEL, label_to_string(end_label));
+    }
+
   void compile_statement(VM::vmcode& code, compile_data& data, const Statement& stm)
     {
     if (std::holds_alternative<Expression>(stm))
@@ -2907,6 +2936,10 @@ namespace
     else if (std::holds_alternative<For>(stm))
       {
       compile_for(code, data, std::get<For>(stm));
+      }
+    else if (std::holds_alternative<If>(stm))
+      {
+      compile_if(code, data, std::get<If>(stm));
       }
     else if (std::holds_alternative<Nop>(stm))
       {
@@ -2946,7 +2979,7 @@ namespace
 
     if (parameter_id < 4)
       {
-      VM::vmcode::operand op;
+      VM::vmcode::operand op = CALLING_CONVENTION_INT_PAR_1;
       switch (parameter_id)
         {
         case 0: op = CALLING_CONVENTION_INT_PAR_1; break;
@@ -2978,7 +3011,7 @@ namespace
 
     if (parameter_id < 4)
       {
-      VM::vmcode::operand op;
+      VM::vmcode::operand op = CALLING_CONVENTION_INT_PAR_1;
       switch (parameter_id)
         {
         case 0: op = CALLING_CONVENTION_INT_PAR_1; break;
@@ -3049,7 +3082,7 @@ namespace
 
     if (parameter_id < 4)
       {
-      VM::vmcode::operand op;
+      VM::vmcode::operand op = CALLING_CONVENTION_REAL_PAR_1;
       switch (parameter_id)
         {
         case 0: op = CALLING_CONVENTION_REAL_PAR_1; break;
@@ -3116,7 +3149,7 @@ void compile(VM::vmcode& code, const Program& prog)
     {
     code.add(VM::vmcode::CVTSI2SD, VM::vmcode::XMM0, FIRST_TEMP_INTEGER_REG);
     }
-  else if (FIRST_TEMP_REAL_REG != VM::vmcode::XMM0)
+  else if constexpr (FIRST_TEMP_REAL_REG != VM::vmcode::XMM0)
     {
     code.add(VM::vmcode::MOV, VM::vmcode::XMM0, FIRST_TEMP_REAL_REG);
     }

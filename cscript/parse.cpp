@@ -15,7 +15,7 @@ LValueOperator make_increment_decrement_call(const std::string& name, tokens& to
 
 namespace
   {
-  int64_t s64(const char *s)
+  int64_t s64(const char* s)
     {
     uint64_t i;
     char c;
@@ -81,7 +81,7 @@ namespace
   void check_for_semicolon(tokens& tokes, const Statement& stmt)
     {
     bool optional = false;
-    if (std::holds_alternative<For>(stmt))
+    if (std::holds_alternative<For>(stmt) || std::holds_alternative<If>(stmt))
       optional = true;
     if (optional)
       {
@@ -199,6 +199,25 @@ For make_for(tokens& tokes)
   require(tokes, "{");
   f.statements = make_statements(tokes, "}");
   return f;
+  }
+
+If make_if(tokens& tokes)
+  {
+  If i;
+  i.line_nr = tokes.back().line_nr;
+  require(tokes, "if");
+  require(tokes, "(");
+  i.condition.push_back(make_statement(tokes));
+  require(tokes, ")");
+  require(tokes, "{");
+  i.body = make_statements(tokes, "}");
+  if (current(tokes) == std::string("else"))
+    {
+    require(tokes, "else");
+    require(tokes, "{");
+    i.alternative = make_statements(tokes, "}");
+    }
+  return i;
   }
 
 Int make_int(tokens& tokes)
@@ -375,6 +394,7 @@ Statement make_statement(tokens& tokes)
   static const std::map<std::string, std::function<Statement(tokens&)>> commands =
     {
     {"for",   make_for},
+    {"if",    make_if},
     {"int",   make_int},
     {"float", make_float}
     };

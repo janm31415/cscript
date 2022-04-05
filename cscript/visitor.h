@@ -128,6 +128,14 @@ struct base_visitor
     visitor<Statements, T>::visit(i.statements, (T*)this);
     _postvisit(i);
     }
+  void operator()(If& i)
+    {
+    _previsit(i);
+    visitor<Statements, T>::visit(i.condition, (T*)this);
+    visitor<Statements, T>::visit(i.body, (T*)this);
+    visitor<Statements, T>::visit(i.alternative, (T*)this);
+    _postvisit(i);
+    }
   void operator()(Int& i)
     {
     _previsit(i);
@@ -216,6 +224,7 @@ struct base_visitor
   virtual void _previsit(Factor&) {}
   virtual void _previsit(LValue&) {}
   virtual void _previsit(For&) {}
+  virtual void _previsit(If&) {}
   virtual void _previsit(Int&) {}
   virtual void _previsit(Float&) {}
   virtual void _previsit(Assignment&) {}
@@ -236,6 +245,7 @@ struct base_visitor
   virtual void _postvisit(Factor&) {}
   virtual void _postvisit(LValue&) {}
   virtual void _postvisit(For&) {}
+  virtual void _postvisit(If&) {}
   virtual void _postvisit(Int&) {}
   virtual void _postvisit(Float&) {}
   virtual void _postvisit(Assignment&) {}
