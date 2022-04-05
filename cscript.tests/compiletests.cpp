@@ -938,10 +938,11 @@ struct qsorter : public compile_fixture
   {
   void test(bool optimize = false, bool peephole = true)
     {
-    uint64_t max_size = 1000;
+    uint64_t max_size = 100;
     uint32_t x = 0x76543513;
-    std::vector<int64_t> a;
+    std::vector<int64_t> a, st;
     a.resize(max_size);
+    st.resize(max_size);
     for (auto& v : a)
       {
       x ^= x << 13;
@@ -950,9 +951,58 @@ struct qsorter : public compile_fixture
       v = x % max_size;
       }
     auto tic = std::chrono::high_resolution_clock::now();
-    auto result = runpii(R"((int* a, int size)
+    auto result = runpipii(R"((int* a, int* stack, int size)
+      int lo = 0;
+      int hi = size-1;
+      // initialize top of stack
+      int top = -1;
+      // push initial values of l and h to stack
+      stack[++top] = lo;
+      stack[++top] = hi;
+      for (; top >= 0; )
+        {
+        hi = stack[top];
+        --top;
+        lo = stack[top];
+        --top;
+        // partitioning algorithm
+        // Set pivot element at its correct position
+        // in sorted array
+        int x = a[hi];
+        int i = (lo - 1);
+        for (int j = lo; j <= hi - 1; ++j)
+          {
+          if (a[j] <= x)
+            {
+            ++i;
+            int tmp = a[i];
+            a[i] = a[j];
+            a[j] = tmp;
+            }
+          }
+        int tmp2 = a[i+1];
+        a[i+1] = a[hi];
+        a[hi] = tmp2;
+        int p = i+1;
+        // end partitioning algorithm
 
-)", a.data(), max_size);
+        // If there are elements on left side of pivot,
+        // then push left side to stack
+        if (p - 1 > lo)
+          {
+          stack[++top] = lo;
+          stack[++top] = p-1;
+          }
+
+        // If there are elements on right side of pivot,
+        // then push right side to stack
+        if (p + 1 < hi)
+          {
+          stack[++top] = p+1;
+          stack[++top] = hi;
+          }
+        }
+)", a.data(), st.data(), max_size);
     auto toc = std::chrono::high_resolution_clock::now();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
     printf("qsort timing: %dms\n", ms);
@@ -991,6 +1041,6 @@ void run_all_compile_tests()
     //harmonic().test(optimize, peephole);
     //fibonacci().test(optimize, peephole);
     //hamming().test(optimize, peephole);
-    //qsorter().test(optimize, peephole);
+    qsorter().test(optimize, peephole);
     }
   }

@@ -402,6 +402,10 @@ Statement make_statement(tokens& tokes)
   Statement stm;
   switch (tokes.back().type)
     {
+    case token::T_SEMICOLON:
+    {
+    return Nop();
+    }
     case token::T_RIGHT_ROUND_BRACKET:
     {
     return Nop();
