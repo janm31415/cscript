@@ -9,6 +9,7 @@
 #include "cscript/visitor.h"
 #include "cscript/pp_visitor.h"
 #include "cscript/compiler.h"
+#include "cscript/peephole.h"
 
 #include <iomanip>
 #include <iostream>
@@ -48,6 +49,7 @@ void test_optimize_expression()
   visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
   VM::vmcode code;
   compile(code, prog);
+  peephole_optimization(code);
   code.stream(std::cout);
   }
 

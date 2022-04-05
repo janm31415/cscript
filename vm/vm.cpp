@@ -104,9 +104,7 @@ namespace
       case vmcode::JNES:return 1;
       case vmcode::JMPS:return 1;
       case vmcode::MOV: return 2;
-      case vmcode::MOVQ: return 2;
       case vmcode::MOVMSKPD: return 2;
-      case vmcode::MOVSD:return 2;
       case vmcode::MUL: return 1;
       case vmcode::MULSD:return 2;
       case vmcode::NEG:return 1;
@@ -2489,8 +2487,6 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       *oprnd1 = (*oprnd2) ? 1 : 0;
       break;
       }
-      case vmcode::MOVSD:
-      case vmcode::MOVQ:
       case vmcode::MOV:
       {
       execute_operation<MovOper>(operand1, operand2, operand1_mem, operand2_mem, regs);

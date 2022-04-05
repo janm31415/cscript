@@ -8,6 +8,7 @@
 #include "cscript/optimize.h"
 #include "cscript/parse.h"
 #include "cscript/tokenize.h"
+#include "cscript/peephole.h"
 
 #include <chrono>
 #include <iomanip>
@@ -28,7 +29,7 @@ struct compile_fixture
   ~compile_fixture()
     {
     }
-  VM::vmcode get_vmcode(const std::string& script, bool _optimize)
+  VM::vmcode get_vmcode(const std::string& script, bool _optimize, bool _peephole)
     {
     auto tokens = tokenize(script);
     auto prog = make_program(tokens);
@@ -36,6 +37,8 @@ struct compile_fixture
       optimize(prog);
     VM::vmcode code;
     compile(code, prog);
+    if (_peephole)
+      peephole_optimization(code);
     if (false)
       {
       code.stream(std::cout);
@@ -44,10 +47,10 @@ struct compile_fixture
     return code;
     }
 
-  double run(const std::string& script, bool _optimize = true)
+  double run(const std::string& script, bool _optimize = true, bool _peephole = true)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize);
+    auto code = get_vmcode(script, _optimize, _peephole);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     VM::registers reg;
@@ -64,10 +67,10 @@ struct compile_fixture
     return res;
     }
 
-  double runi(const std::string& script, int64_t i1, bool _optimize = true)
+  double runi(const std::string& script, int64_t i1, bool _optimize = true, bool _peephole = true)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize);
+    auto code = get_vmcode(script, _optimize, _peephole);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     VM::registers reg;
@@ -84,10 +87,10 @@ struct compile_fixture
     return res;
     }
 
-  double runii(const std::string& script, int64_t i1, int64_t i2, bool _optimize = true)
+  double runii(const std::string& script, int64_t i1, int64_t i2, bool _optimize = true, bool _peephole = true)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize);
+    auto code = get_vmcode(script, _optimize, _peephole);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     VM::registers reg;
@@ -105,10 +108,10 @@ struct compile_fixture
     return res;
     }
 
-  double runiii(const std::string& script, int64_t i1, int64_t i2, int64_t i3, bool _optimize = true)
+  double runiii(const std::string& script, int64_t i1, int64_t i2, int64_t i3, bool _optimize = true, bool _peephole = true)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize);
+    auto code = get_vmcode(script, _optimize, _peephole);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     VM::registers reg;
@@ -127,10 +130,10 @@ struct compile_fixture
     return res;
     }
 
-  double runiiii(const std::string& script, int64_t i1, int64_t i2, int64_t i3, int64_t i4, bool _optimize = true)
+  double runiiii(const std::string& script, int64_t i1, int64_t i2, int64_t i3, int64_t i4, bool _optimize = true, bool _peephole = true)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize);
+    auto code = get_vmcode(script, _optimize, _peephole);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     VM::registers reg;
@@ -150,10 +153,10 @@ struct compile_fixture
     return res;
     }
 
-  float runiiiii(const std::string& script, int64_t i1, int64_t i2, int64_t i3, int64_t i4, int64_t i5, bool _optimize = true)
+  float runiiiii(const std::string& script, int64_t i1, int64_t i2, int64_t i3, int64_t i4, int64_t i5, bool _optimize = true, bool _peephole = true)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize);
+    auto code = get_vmcode(script, _optimize, _peephole);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     VM::registers reg;
@@ -176,10 +179,10 @@ struct compile_fixture
     return res;
     }
 
-  double runf(const std::string& script, double i1, bool _optimize = true)
+  double runf(const std::string& script, double i1, bool _optimize = true, bool _peephole = true)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize);
+    auto code = get_vmcode(script, _optimize, _peephole);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     VM::registers reg;
@@ -196,10 +199,10 @@ struct compile_fixture
     return res;
     }
 
-  double runff(const std::string& script, double i1, double i2, bool _optimize = true)
+  double runff(const std::string& script, double i1, double i2, bool _optimize = true, bool _peephole = true)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize);
+    auto code = get_vmcode(script, _optimize, _peephole);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     VM::registers reg;
@@ -217,10 +220,10 @@ struct compile_fixture
     return res;
     }
 
-  double runfff(const std::string& script, double i1, double i2, double i3, bool _optimize = true)
+  double runfff(const std::string& script, double i1, double i2, double i3, bool _optimize = true, bool _peephole = true)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize);
+    auto code = get_vmcode(script, _optimize, _peephole);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     VM::registers reg;
@@ -239,10 +242,10 @@ struct compile_fixture
     return res;
     }
 
-  double runffff(const std::string& script, double i1, double i2, double i3, double i4, bool _optimize = true)
+  double runffff(const std::string& script, double i1, double i2, double i3, double i4, bool _optimize = true, bool _peephole = true)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize);
+    auto code = get_vmcode(script, _optimize, _peephole);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     VM::registers reg;
@@ -262,10 +265,10 @@ struct compile_fixture
     return res;
     }
   
-  double runfffff(const std::string& script, double i1, double i2, double i3, double i4, double i5, bool _optimize = true)
+  double runfffff(const std::string& script, double i1, double i2, double i3, double i4, double i5, bool _optimize = true, bool _peephole = true)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize);
+    auto code = get_vmcode(script, _optimize, _peephole);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     VM::registers reg;
@@ -288,10 +291,10 @@ struct compile_fixture
     return res;
     }
   
-  double runififif(const std::string& script, int64_t i1, double f2, int64_t i3, double f4, int64_t i5, double f6, bool _optimize = true)
+  double runififif(const std::string& script, int64_t i1, double f2, int64_t i3, double f4, int64_t i5, double f6, bool _optimize = true, bool _peephole = true)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize);
+    auto code = get_vmcode(script, _optimize, _peephole);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     VM::registers reg;
@@ -315,10 +318,10 @@ struct compile_fixture
     return res;
     }
     
-  double runpi(const std::string& script, int64_t* i1, bool _optimize = true)
+  double runpi(const std::string& script, int64_t* i1, bool _optimize = true, bool _peephole = true)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize);
+    auto code = get_vmcode(script, _optimize, _peephole);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     VM::registers reg;
@@ -335,10 +338,10 @@ struct compile_fixture
     return res;
     }
 
-  double runpf(const std::string& script, double* f1, bool _optimize = true)
+  double runpf(const std::string& script, double* f1, bool _optimize = true, bool _peephole = true)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize);
+    auto code = get_vmcode(script, _optimize, _peephole);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     VM::registers reg;

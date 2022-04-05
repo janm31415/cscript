@@ -573,9 +573,9 @@ namespace
     {
     vmcode code;
     code.add(vmcode::MOV, vmcode::RAX, vmcode::NUMBER, 10);
-    code.add(vmcode::MOVQ, vmcode::XMM0, vmcode::RAX);
+    code.add(vmcode::MOV, vmcode::XMM0, vmcode::RAX);
     code.add(vmcode::MOV, vmcode::RAX, vmcode::NUMBER, 15);
-    code.add(vmcode::MOVQ, vmcode::RAX, vmcode::XMM0);    
+    code.add(vmcode::MOV, vmcode::RAX, vmcode::XMM0);    
     code.add(vmcode::RET);
 
     uint64_t size;
@@ -600,9 +600,9 @@ namespace
     double v1 = 1.5;
     double v2 = 0.2;
     code.add(vmcode::MOV, vmcode::RAX, vmcode::NUMBER, *reinterpret_cast<uint64_t*>(&v1));
-    code.add(vmcode::MOVQ, vmcode::XMM0, vmcode::RAX);
+    code.add(vmcode::MOV, vmcode::XMM0, vmcode::RAX);
     code.add(vmcode::MOV, vmcode::RAX, vmcode::NUMBER, *reinterpret_cast<uint64_t*>(&v2));
-    code.add(vmcode::MOVQ, vmcode::XMM1, vmcode::RAX);
+    code.add(vmcode::MOV, vmcode::XMM1, vmcode::RAX);
     code.add(vmcode::ADDSD, vmcode::XMM0, vmcode::XMM1);
     code.add(vmcode::RET);
 
@@ -696,12 +696,12 @@ namespace
     mov r9, 0x01
     mov r10, 0x32
     mov r11, 0x3FF0000000000000
-    movq xmm4, r11
+    mov xmm4, r11
   L_0:
     cmp r9, r10
     jge L_1
     cvtsi2sd xmm5, r9
-    movsd xmm2, xmm4
+    mov xmm2, xmm4
     divsd xmm2, xmm5
     addsd xmm0, xmm2
     inc r9
@@ -714,12 +714,12 @@ namespace
     code.add(vmcode::MOV, vmcode::R9, vmcode::NUMBER, 1);
     code.add(vmcode::MOV, vmcode::R10, vmcode::NUMBER, 1000000);
     code.add(vmcode::MOV, vmcode::R11, vmcode::NUMBER, 0x3FF0000000000000);
-    code.add(vmcode::MOVQ, vmcode::XMM4, vmcode::R11);
+    code.add(vmcode::MOV, vmcode::XMM4, vmcode::R11);
     code.add(vmcode::LABEL, "L_0");
     code.add(vmcode::CMP, vmcode::R9, vmcode::R10);
     code.add(vmcode::JGES, "L_1");
     code.add(vmcode::CVTSI2SD, vmcode::XMM5, vmcode::R9);
-    code.add(vmcode::MOVSD, vmcode::XMM2, vmcode::XMM4);
+    code.add(vmcode::MOV, vmcode::XMM2, vmcode::XMM4);
     code.add(vmcode::DIVSD, vmcode::XMM2, vmcode::XMM5);
     code.add(vmcode::ADDSD, vmcode::XMM0, vmcode::XMM2);
     code.add(vmcode::INC, vmcode::R9);

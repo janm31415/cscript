@@ -230,9 +230,7 @@ namespace
       case vmcode::IMUL: return "imul";
       case vmcode::INC: return "inc";
       case vmcode::MOV: return "mov";
-      case vmcode::MOVQ: return "movq";
-      case vmcode::MOVMSKPD: return "movmskpd";
-      case vmcode::MOVSD: return "movsd";      
+      case vmcode::MOVMSKPD: return "movmskpd";   
       case vmcode::MUL: return "mul";
       case vmcode::MULSD: return "mulsd";
       case vmcode::NEG: return "neg";
@@ -562,9 +560,7 @@ std::string vmcode::operation_to_string(operation oper)
     case vmcode::JNES:return std::string("JNES");
     case vmcode::JMPS:return std::string("JMPS");
     case vmcode::MOV: return std::string("MOV");
-    case vmcode::MOVQ: return std::string("MOVQ");
-    case vmcode::MOVMSKPD: return std::string("MOVMSKPD");
-    case vmcode::MOVSD:return std::string("MOVSD");    
+    case vmcode::MOVMSKPD: return std::string("MOVMSKPD");   
     case vmcode::MUL: return std::string("MUL");
     case vmcode::MULSD:return std::string("MULSD");
     case vmcode::NEG:return std::string("NEG");

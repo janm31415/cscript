@@ -1,9 +1,11 @@
 set(HDRS
 compiler.h
 cscript_api.h
+defines.h
 namespace.h
 optimize.h
 parse.h
+peephole.h
 pp_visitor.h
 regalloc.h
 tokenize.h
@@ -15,6 +17,7 @@ set(SRCS
 compiler.cpp
 optimize.cpp
 parse.cpp
+peephole.cpp
 regalloc.cpp
 utility.cpp
 tokenize.cpp
