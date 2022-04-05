@@ -8,6 +8,7 @@
 #include "vm/vmcode.h"
 #include "vm/vm.h"
 #include "test_assert.h"
+#include <chrono>
 
 VM_BEGIN
 
@@ -687,6 +688,62 @@ namespace
     TEST_EQ(156, reg.rax);
     free_bytecode(f, size);
     }
+  
+  void test_vm_harmonic()
+    {
+    /*
+    xorpd xmm0, xmm0
+    mov r9, 0x01
+    mov r10, 0x32
+    mov r11, 0x3FF0000000000000
+    movq xmm4, r11
+  L_0:
+    cmp r9, r10
+    jge L_1
+    cvtsi2sd xmm5, r9
+    movsd xmm2, xmm4
+    divsd xmm2, xmm5
+    addsd xmm0, xmm2
+    inc r9
+    jmp L_0
+  L_1:
+    ret
+    */
+    vmcode code;
+    code.add(vmcode::XORPD, vmcode::XMM0, vmcode::XMM0);
+    code.add(vmcode::MOV, vmcode::R9, vmcode::NUMBER, 1);
+    code.add(vmcode::MOV, vmcode::R10, vmcode::NUMBER, 1000000);
+    code.add(vmcode::MOV, vmcode::R11, vmcode::NUMBER, 0x3FF0000000000000);
+    code.add(vmcode::MOVQ, vmcode::XMM4, vmcode::R11);
+    code.add(vmcode::LABEL, "L_0");
+    code.add(vmcode::CMP, vmcode::R9, vmcode::R10);
+    code.add(vmcode::JGES, "L_1");
+    code.add(vmcode::CVTSI2SD, vmcode::XMM5, vmcode::R9);
+    code.add(vmcode::MOVSD, vmcode::XMM2, vmcode::XMM4);
+    code.add(vmcode::DIVSD, vmcode::XMM2, vmcode::XMM5);
+    code.add(vmcode::ADDSD, vmcode::XMM0, vmcode::XMM2);
+    code.add(vmcode::INC, vmcode::R9);
+    code.add(vmcode::JMPS, "L_0");
+    code.add(vmcode::LABEL, "L_1");
+    code.add(vmcode::RET);
+    uint64_t size;
+    uint8_t* f = (uint8_t*)vm_bytecode(size, code);
+    registers reg;
+    try
+      {
+      auto tic = std::chrono::high_resolution_clock::now();
+      run_bytecode(f, size, reg);
+      auto toc = std::chrono::high_resolution_clock::now();
+      auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
+      printf("Harmonic timing: %dms\n", ms);
+      }
+    catch (std::logic_error e)
+      {
+      std::cout << e.what() << "\n";
+      }
+    TEST_EQ_CLOSE(14.3927, reg.xmm0, 1e-4);
+    free_bytecode(f, size);
+    }
 
   } // namespace
 
@@ -721,4 +778,5 @@ void run_all_vm_tests()
   test_vm_fldpi();
   test_vm_imul();
   test_vm_imul2();
+  test_vm_harmonic();
   }

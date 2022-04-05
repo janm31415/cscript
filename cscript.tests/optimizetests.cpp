@@ -58,5 +58,5 @@ void run_all_optimize_tests()
   using namespace COMPILER;
   //test_visitor_print();
   //test_visitor_print2();
-  //test_optimize_expression();
+  test_optimize_expression();
   }
