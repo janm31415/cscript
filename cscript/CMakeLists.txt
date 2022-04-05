@@ -5,6 +5,7 @@ namespace.h
 optimize.h
 parse.h
 pp_visitor.h
+regalloc.h
 tokenize.h
 utility.h
 visitor.h
@@ -14,6 +15,7 @@ set(SRCS
 compiler.cpp
 optimize.cpp
 parse.cpp
+regalloc.cpp
 utility.cpp
 tokenize.cpp
 )

@@ -40,7 +40,7 @@ VM_API uint64_t disassemble_bytecode(vmcode::operation& op,
 struct registers
   {
   VM_API registers();
-
+  uint64_t eflags;
   uint64_t rax;
   uint64_t rbx;
   uint64_t rcx;
@@ -74,9 +74,7 @@ struct registers
   double xmm14;
   double xmm15;
   double fpstack[16];
-  double* fpstackptr; // pointer to top of floating point stack
-
-  uint16_t eflags;
+  double* fpstackptr; // pointer to top of floating point stack  
   uint64_t stack[256];
   };
 

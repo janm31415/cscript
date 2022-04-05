@@ -28,19 +28,27 @@ enum value_type
   pointer_to_integer
   };
 
+enum address_type
+  {
+  register_address,
+  memory_address
+  };
+
 struct variable_type
   {
   int64_t address;
   storage_type st;
   value_type vt;
+  address_type at;
   };
 
-inline variable_type make_variable(int64_t addr, storage_type st, value_type vt)
+inline variable_type make_variable(int64_t addr, storage_type st, value_type vt, address_type at)
   {
   variable_type ret;
   ret.address = addr;
   ret.st = st;
   ret.vt = vt;
+  ret.at = at;
   return ret;
   }
 

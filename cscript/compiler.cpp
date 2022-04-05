@@ -40,6 +40,26 @@ COMPILER_BEGIN
 namespace
   {
 
+  std::vector<VM::vmcode::operand> get_registers_for_integer_variables()
+    {
+    std::vector<VM::vmcode::operand> reg;
+    reg.push_back(VM::vmcode::RCX);
+    reg.push_back(VM::vmcode::RDX);
+    reg.push_back(VM::vmcode::R8);
+    reg.push_back(VM::vmcode::R9);
+    return reg;
+    }
+
+  std::vector<VM::vmcode::operand> get_registers_for_real_variables()
+    {
+    std::vector<VM::vmcode::operand> reg;
+    reg.push_back(VM::vmcode::XMM0);
+    reg.push_back(VM::vmcode::XMM1);
+    reg.push_back(VM::vmcode::XMM2);
+    reg.push_back(VM::vmcode::XMM3);
+    return reg;
+    }
+
   enum return_type
     {
     RT_INTEGER,
@@ -1047,7 +1067,7 @@ namespace
     if (it == data.vars.end())
       {
       int64_t var_id = data.var_offset | variable_tag;
-      data.vars.insert(std::make_pair(make_i.name, make_variable(var_id, constant, integer_array)));
+      data.vars.insert(std::make_pair(make_i.name, make_variable(var_id, constant, integer_array, memory_address)));
       data.var_offset += 8 * val;
       }
     else
@@ -1082,7 +1102,7 @@ namespace
       int64_t var_id = data.var_offset | variable_tag;
       if (init)
         code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, int_op);
-      data.vars.insert(std::make_pair(make_i.name, make_variable(var_id, constant, integer)));
+      data.vars.insert(std::make_pair(make_i.name, make_variable(var_id, constant, integer, memory_address)));
       data.var_offset += 8;
       }
     else
@@ -1115,7 +1135,7 @@ namespace
     if (it == data.vars.end())
       {
       int64_t var_id = data.var_offset | variable_tag;
-      data.vars.insert(std::make_pair(make_f.name, make_variable(var_id, constant, single_array)));
+      data.vars.insert(std::make_pair(make_f.name, make_variable(var_id, constant, single_array, memory_address)));
       data.var_offset += 8 * val;
       }
     else
@@ -1155,7 +1175,7 @@ namespace
         else
           code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, -var_id, float_op);
         }
-      data.vars.insert(std::make_pair(make_f.name, make_variable(var_id, constant, single)));
+      data.vars.insert(std::make_pair(make_f.name, make_variable(var_id, constant, single, memory_address)));
       data.var_offset += 8;
       }
     else
@@ -2541,7 +2561,7 @@ namespace
       }
     auto it = data.vars.find(ip.name);
     if (it == data.vars.end())
-      data.vars.insert(std::make_pair(ip.name, make_variable(var_id, external, pointer_to_integer)));
+      data.vars.insert(std::make_pair(ip.name, make_variable(var_id, external, pointer_to_integer, memory_address)));
     else
       throw_compile_error(ip.line_nr, "Variable " + ip.name + " already exists");
     }
@@ -2572,7 +2592,7 @@ namespace
       }
     auto it = data.vars.find(ip.name);
     if (it == data.vars.end())
-      data.vars.insert(std::make_pair(ip.name, make_variable(var_id, constant, integer)));
+      data.vars.insert(std::make_pair(ip.name, make_variable(var_id, constant, integer, memory_address)));
     else
       throw_compile_error(ip.line_nr, "Variable " + ip.name + " already exists");
     }
@@ -2612,7 +2632,7 @@ namespace
       }
     auto it = data.vars.find(fp.name);
     if (it == data.vars.end())
-      data.vars.insert(std::make_pair(fp.name, make_variable(var_id, external, pointer_to_single)));
+      data.vars.insert(std::make_pair(fp.name, make_variable(var_id, external, pointer_to_single, memory_address)));
     else
       throw_compile_error(fp.line_nr, "Variable " + fp.name + " already exists");
     }
@@ -2643,7 +2663,7 @@ namespace
       }
     auto it = data.vars.find(fp.name);
     if (it == data.vars.end())
-      data.vars.insert(std::make_pair(fp.name, make_variable(var_id, constant, single)));
+      data.vars.insert(std::make_pair(fp.name, make_variable(var_id, constant, single, memory_address)));
     else
       throw_compile_error(fp.line_nr, "Variable " + fp.name + " already exists");
     }
