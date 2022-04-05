@@ -551,7 +551,7 @@ struct compiler_assignment : public compile_fixture
     TEST_EQ(4.0, run("() float f; int i; f = 3.1415; i = 1; i+=f;i;", false));
 
     TEST_EQ(2.1415, run("() float f; int i; f = 3.1415; i = 1; f-=i;f;", false));
-    TEST_EQ(-2.0, run("() float f; int i; f = 3.1415; i = 1; i-=f;i;", false));
+    TEST_EQ(-2.0, run("() float f; int i; f = 3.1415; i = 1; i-=f;i;", false));    
 
     TEST_EQ(6.2830, run("() float f; int i; f = 3.1415; i = 2; f*=i;f;", false));
     TEST_EQ(6., run("() float f; int i; f = 3.1415; i = 2; i*=f;i;", false));
@@ -865,5 +865,5 @@ void run_all_compile_tests()
   optimize_tests().test();
   funccall_tests().test();
   rsp_offset_test().test();
-  //harmonic().test();
+  harmonic().test();
   }
