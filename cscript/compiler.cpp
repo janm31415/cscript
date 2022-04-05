@@ -21,6 +21,10 @@ namespace
     reg.push_back(CALLING_CONVENTION_INT_PAR_2);
     reg.push_back(CALLING_CONVENTION_INT_PAR_3);
     reg.push_back(CALLING_CONVENTION_INT_PAR_4);
+    reg.push_back(REGISTER_FOR_INT_VARIABLE_1);
+    reg.push_back(REGISTER_FOR_INT_VARIABLE_2);
+    reg.push_back(REGISTER_FOR_INT_VARIABLE_3);
+    reg.push_back(REGISTER_FOR_INT_VARIABLE_4);
     return reg;
     }
 
@@ -31,6 +35,10 @@ namespace
     reg.push_back(CALLING_CONVENTION_REAL_PAR_2);
     reg.push_back(CALLING_CONVENTION_REAL_PAR_3);
     reg.push_back(CALLING_CONVENTION_REAL_PAR_4);
+    reg.push_back(REGISTER_FOR_REAL_VARIABLE_1);
+    reg.push_back(REGISTER_FOR_REAL_VARIABLE_2);
+    reg.push_back(REGISTER_FOR_REAL_VARIABLE_3);
+    reg.push_back(REGISTER_FOR_REAL_VARIABLE_4);
     return reg;
     }
 

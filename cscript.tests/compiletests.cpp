@@ -338,6 +338,28 @@ struct compile_fixture
     return res;
     }
 
+  double runpipii(const std::string& script, int64_t* i1, int64_t* i2, int64_t i3, bool _optimize = true, bool _peephole = true)
+    {
+    double res = std::numeric_limits<double>::quiet_NaN();
+    auto code = get_vmcode(script, _optimize, _peephole);
+    uint64_t size;
+    uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
+    VM::registers reg;
+    reg.rcx = (uint64_t)i1;
+    reg.rdx = (uint64_t)i2;
+    reg.r8 = (uint64_t)i3;
+    try {
+      VM::run_bytecode(f, size, reg);
+      res = reg.xmm0;
+      }
+    catch (std::logic_error e)
+      {
+      std::cout << e.what() << "\n";
+      }
+    VM::free_bytecode(f, size);
+    return res;
+    }
+
   double runpf(const std::string& script, double* f1, bool _optimize = true, bool _peephole = true)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
@@ -787,18 +809,6 @@ struct for_loop_test : public compile_fixture
     }
   };
 
-struct harmonic : public compile_fixture
-  {
-  void test()
-    {
-    auto tic = std::chrono::high_resolution_clock::now();
-    TEST_EQ_CLOSE(14.3927, run("() float sum = 0.0; for (int i = 1; i<1000000; ++i) { sum += 1.0/i; } sum;", false), 1e-4);    
-    auto toc = std::chrono::high_resolution_clock::now();
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
-    printf("Harmonic timing: %dms\n", ms);
-    }
-  };
-
 struct optimize_tests : public compile_fixture
   {
   void test()
@@ -845,6 +855,53 @@ struct rsp_offset_test : public compile_fixture
     }
   };
 
+struct harmonic : public compile_fixture
+  {
+  void test()
+    {
+    auto tic = std::chrono::high_resolution_clock::now();
+    TEST_EQ_CLOSE(14.3927, run("() float sum = 0.0; for (int i = 1; i<1000000; ++i) { sum += 1.0/i; } sum;"), 1e-4);
+    auto toc = std::chrono::high_resolution_clock::now();
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
+    printf("Harmonic timing: %dms\n", ms);
+    }
+  };
+
+struct hamming : public compile_fixture
+  {
+  void test()
+    {
+    int max_size = 1000000;
+    std::vector<int64_t> a, b;
+    a.reserve(max_size);
+    b.reserve(max_size);
+    for (int i = 0; i < max_size; ++i)
+      {
+      a.push_back(i);
+      b.push_back(i);
+      }
+    b[max_size / 2] = 100;
+    b[max_size - 7] = 200;
+    auto tic = std::chrono::high_resolution_clock::now();
+    TEST_EQ(2, runpipii("(int* a, int* b, int size) int hamming = 0; for (int i = 0; i < size; ++i) { hamming += a[i] != b[i];} hamming;", a.data(), b.data(), max_size));
+    auto toc = std::chrono::high_resolution_clock::now();
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
+    printf("Hamming distance timing: %dms\n", ms);
+    }
+  };
+
+struct fibonacci : public compile_fixture
+  {
+  void test()
+    {
+    auto tic = std::chrono::high_resolution_clock::now();
+    TEST_EQ(102334155, runi("(int i) int a = 0; int b = 1; for (int j = 0; j < i; ++j) { int c = a+b; a = b; b = c; } a;", 40));
+    auto toc = std::chrono::high_resolution_clock::now();
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
+    printf("Fibonacci timing: %dms\n", ms);
+    }
+  };
+
 COMPILER_END
 
 void run_all_compile_tests()
@@ -869,4 +926,6 @@ void run_all_compile_tests()
   funccall_tests().test();
   rsp_offset_test().test();
   harmonic().test();
+  fibonacci().test();
+  hamming().test();
   }
