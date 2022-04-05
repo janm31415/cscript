@@ -1,6 +1,7 @@
 #include "compiler.h"
 
 #include "utility.h"
+#include "regalloc.h"
 
 #include <variant>
 #include <functional>
@@ -43,22 +44,80 @@ namespace
   std::vector<VM::vmcode::operand> get_registers_for_integer_variables()
     {
     std::vector<VM::vmcode::operand> reg;
-    reg.push_back(VM::vmcode::RCX);
-    reg.push_back(VM::vmcode::RDX);
-    reg.push_back(VM::vmcode::R8);
-    reg.push_back(VM::vmcode::R9);
+    reg.push_back(CALLING_CONVENTION_INT_PAR_1);
+    reg.push_back(CALLING_CONVENTION_INT_PAR_2);
+    reg.push_back(CALLING_CONVENTION_INT_PAR_3);
+    reg.push_back(CALLING_CONVENTION_INT_PAR_4);
     return reg;
     }
 
   std::vector<VM::vmcode::operand> get_registers_for_real_variables()
     {
     std::vector<VM::vmcode::operand> reg;
-    reg.push_back(VM::vmcode::XMM0);
-    reg.push_back(VM::vmcode::XMM1);
-    reg.push_back(VM::vmcode::XMM2);
-    reg.push_back(VM::vmcode::XMM3);
+    reg.push_back(CALLING_CONVENTION_REAL_PAR_1);
+    reg.push_back(CALLING_CONVENTION_REAL_PAR_2);
+    reg.push_back(CALLING_CONVENTION_REAL_PAR_3);
+    reg.push_back(CALLING_CONVENTION_REAL_PAR_4);
     return reg;
     }
+
+
+  enum storage_type
+    {
+    constant,
+    external
+    };
+
+  enum value_type
+    {
+    single,
+    integer,
+    single_array,
+    integer_array,
+    pointer_to_single,
+    pointer_to_integer
+    };
+
+  enum address_type
+    {
+    register_address,
+    memory_address
+    };
+
+  struct variable_type
+    {
+    int64_t address;
+    storage_type st;
+    value_type vt;
+    address_type at;
+    };
+
+  inline variable_type make_variable(int64_t addr, storage_type st, value_type vt, address_type at)
+    {
+    variable_type ret;
+    ret.address = addr;
+    ret.st = st;
+    ret.vt = vt;
+    ret.at = at;
+    return ret;
+    }
+
+  typedef std::map<std::string, variable_type> variable_map;
+
+  struct compile_data
+    {
+    compile_data() : ra(get_registers_for_integer_variables(), get_registers_for_real_variables()),
+      max_stack_index(0), stack_index(0), var_offset(0), label(0)
+      {
+      }
+
+    regalloc ra;
+    int64_t max_stack_index;
+    int64_t stack_index;
+    variable_map vars;
+    int64_t var_offset;
+    uint64_t label;
+    };
 
   enum return_type
     {
@@ -98,10 +157,10 @@ namespace
       {
       case 0: op = FIRST_FREE_REAL_REG; offset = 0; break;
       case 1: op = SECOND_FREE_REAL_REG; offset = 0; break;
-      //case 2: op = VM::vmcode::XMM2; offset = 0; break;
-      //case 3: op = VM::vmcode::XMM3; offset = 0; break;
-      //case 4: op = VM::vmcode::XMM4; offset = 0; break;
-      //case 5: op = VM::vmcode::XMM5; offset = 0; break;
+        //case 2: op = VM::vmcode::XMM2; offset = 0; break;
+        //case 3: op = VM::vmcode::XMM3; offset = 0; break;
+        //case 4: op = VM::vmcode::XMM4; offset = 0; break;
+        //case 5: op = VM::vmcode::XMM5; offset = 0; break;
       default: op = VM::vmcode::MEM_RSP; offset = -(stack_index - 1) * 8; break;
       };
     }
@@ -115,7 +174,7 @@ namespace
       default: op = VM::vmcode::MEM_RSP; offset = -(stack_index - 1) * 8; break;
       };
     }
-  
+
   VM::vmcode::operand reg64_to_reg8(VM::vmcode::operand reg)
     {
     switch (reg)
@@ -1208,11 +1267,27 @@ namespace
         index_to_integer_operand(int_op, int_offset, data.stack_index);
         if (int_offset)
           {
-          code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, -var_id);
-          code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, int_offset, RESERVED_INTEGER_REG);
+          if (it->second.at == memory_address)
+            {
+            code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, -var_id);
+            code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, int_offset, RESERVED_INTEGER_REG);
+            }
+          else
+            {
+            code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, int_offset, (VM::vmcode::operand)var_id);
+            }
           }
         else
-          code.add(VM::vmcode::MOV, int_op, VM::vmcode::MEM_RSP, -var_id);
+          {
+          if (it->second.at == memory_address)
+            {
+            code.add(VM::vmcode::MOV, int_op, VM::vmcode::MEM_RSP, -var_id);
+            }
+          else
+            {
+            code.add(VM::vmcode::MOV, int_op, (VM::vmcode::operand)var_id);
+            }
+          }
         }
       else
         {
@@ -1221,11 +1296,27 @@ namespace
         index_to_real_operand(real_op, real_offset, data.stack_index);
         if (real_offset)
           {
-          code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, -var_id);
-          code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, real_offset, RESERVED_INTEGER_REG);
+          if (it->second.at == memory_address)
+            {
+            code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, -var_id);
+            code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, real_offset, RESERVED_INTEGER_REG);
+            }
+          else
+            {
+            code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, real_offset, (VM::vmcode::operand)var_id);
+            }
           }
         else
-          code.add(VM::vmcode::MOVSD, real_op, VM::vmcode::MEM_RSP, -var_id);
+          {
+          if (it->second.at == memory_address)
+            {
+            code.add(VM::vmcode::MOVSD, real_op, VM::vmcode::MEM_RSP, -var_id);
+            }
+          else
+            {
+            code.add(VM::vmcode::MOVSD, real_op, (VM::vmcode::operand)var_id);
+            }
+          }
         }
       }
     else
@@ -1270,7 +1361,10 @@ namespace
       }
     --data.stack_index;
 
-    code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::MEM_RSP, -var_id);
+    if (it->second.at == memory_address)
+      code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::MEM_RSP, -var_id);
+    else
+      code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, (VM::vmcode::operand)var_id);
     code.add(VM::vmcode::ADD, STACK_BACKUP_REGISTER, FIRST_FREE_INTEGER_REG);
     //r10 contains the pointer address
     //SECOND_FREE_REAL_REG or SECOND_FREE_INTEGER_REG contains the expression value
@@ -1375,6 +1469,8 @@ namespace
     int64_t var_id = it->second.address;
     if (it->second.vt != single_array && it->second.vt != integer_array)
       throw_compile_error(a.line_nr, "I expect " + a.name + " to be array.");
+    if (it->second.at != memory_address)
+      throw_compile_error(a.line_nr, "I expect " + a.name + " to be an array on the stack.");
     if (it->second.vt == single_array && rt == RT_INTEGER)
       {
       convert_integer_to_real(code, data.stack_index);
@@ -1394,7 +1490,7 @@ namespace
       {
       if (rt == RT_REAL)
         {
-        code.add(VM::vmcode::SUB, VM::vmcode::RSP, FIRST_FREE_INTEGER_REG);
+        code.add(VM::vmcode::SUB, VM::vmcode::RSP, FIRST_FREE_INTEGER_REG);        
         code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, -var_id, SECOND_FREE_REAL_REG);
         code.add(VM::vmcode::ADD, VM::vmcode::RSP, FIRST_FREE_INTEGER_REG);
         }
@@ -1512,7 +1608,10 @@ namespace
       }
     --data.stack_index;
 
-    code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::MEM_RSP, -var_id);
+    if (it->second.at == memory_address)
+      code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::MEM_RSP, -var_id);
+    else
+      code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, (VM::vmcode::operand)var_id);
     //r10 contains the pointer address
     //SECOND_FREE_REAL_REG or SECOND_FREE_INTEGER_REG contains the expression value
     switch (a.op.front())
@@ -1833,7 +1932,10 @@ namespace
       }
     else if (it->second.vt == pointer_to_single)
       {
-      code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::MEM_RSP, -var_id); // address to pointer
+      if (it->second.at == memory_address)
+        code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::MEM_RSP, -var_id); // address to pointer
+      else
+        code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, (VM::vmcode::operand)var_id); // address to pointer
       VM::vmcode::operand op;
       int64_t offset;
       index_to_integer_operand(op, offset, data.stack_index);
@@ -1862,7 +1964,10 @@ namespace
       }
     else if (it->second.vt == pointer_to_integer)
       {
-      code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::MEM_RSP, -var_id); // address to pointer
+      if (it->second.at == memory_address)
+        code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::MEM_RSP, -var_id); // address to pointer
+      else
+        code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, (VM::vmcode::operand)var_id); // address to pointer
       VM::vmcode::operand op;
       int64_t offset;
       index_to_integer_operand(op, offset, data.stack_index);
@@ -1894,7 +1999,10 @@ namespace
     if (it->second.vt != pointer_to_single && it->second.vt != pointer_to_integer)
       throw_compile_error(d.line_nr, "I expect a pointer to dereference.");
     int64_t var_id = it->second.address;
-    code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::MEM_RSP, -var_id);
+    if (it->second.at == memory_address)
+      code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::MEM_RSP, -var_id);
+    else
+      code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, (VM::vmcode::operand)var_id);
     if (it->second.vt == pointer_to_single)
       {
       VM::vmcode::operand op;
@@ -2115,7 +2223,10 @@ namespace
         }
       else if (it->second.vt == pointer_to_single)
         {
-        code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::MEM_RSP, -var_id); // address to pointer
+        if (it->second.at == memory_address)
+          code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::MEM_RSP, -var_id); // address to pointer
+        else
+          code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, (VM::vmcode::operand)var_id); // address to pointer
         VM::vmcode::operand op;
         int64_t offset;
         index_to_integer_operand(op, offset, data.stack_index);
@@ -2153,7 +2264,10 @@ namespace
         }
       else if (it->second.vt == pointer_to_integer)
         {
-        code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::MEM_RSP, -var_id); // address to pointer
+        if (it->second.at == memory_address)
+          code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::MEM_RSP, -var_id); // address to pointer
+        else
+          code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, (VM::vmcode::operand)var_id); // address to pointer
         VM::vmcode::operand op;
         int64_t offset;
         index_to_integer_operand(op, offset, data.stack_index);
@@ -2197,7 +2311,10 @@ namespace
       int64_t var_id = it->second.address;
       if (it->second.vt == pointer_to_single)
         {
-        code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::MEM_RSP, -var_id); // address to pointer
+        if (it->second.at == memory_address)
+          code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::MEM_RSP, -var_id); // address to pointer
+        else
+          code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, (VM::vmcode::operand)var_id); // address to pointer
         VM::vmcode::operand op;
         int64_t offset;
         index_to_real_operand(op, offset, data.stack_index);
@@ -2223,7 +2340,10 @@ namespace
         }
       else if (it->second.vt == pointer_to_integer)
         {
-        code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::MEM_RSP, -var_id); // address to pointer
+        if (it->second.at == memory_address)
+          code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::MEM_RSP, -var_id); // address to pointer
+        else
+          code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, (VM::vmcode::operand)var_id); // address to pointer
         VM::vmcode::operand op;
         int64_t offset;
         index_to_integer_operand(op, offset, data.stack_index);
@@ -2537,8 +2657,10 @@ namespace
 
   void compile_int_parameter_pointer(VM::vmcode& code, compile_data& data, const IntParameter& ip, int parameter_id)
     {
-    int64_t var_id = data.var_offset | variable_tag;
-    data.var_offset += 8;
+    auto it = data.vars.find(ip.name);
+    if (it != data.vars.end())
+      throw_compile_error(ip.line_nr, "Variable " + ip.name + " already exists");
+    
     if (parameter_id < 4)
       {
       VM::vmcode::operand op;
@@ -2551,25 +2673,27 @@ namespace
         default:
           throw_compile_error("calling convention error");
         }
-      code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, op);
+      assert(data.ra.is_free_integer_register(op));
+      data.vars.insert(std::make_pair(ip.name, make_variable(op, external, pointer_to_integer, register_address)));
+      data.ra.make_integer_register_unavailable(op);
       }
     else
       {
+      int64_t var_id = data.var_offset | variable_tag;
+      data.var_offset += 8;
       int addr = parameter_id - 4;
       code.add(VM::vmcode::MOV, VM::vmcode::RAX, VM::vmcode::MEM_RSP, rsp_offset + addr * 8 + virtual_machine_rsp_offset);
       code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, VM::vmcode::RAX);
-      }
-    auto it = data.vars.find(ip.name);
-    if (it == data.vars.end())
       data.vars.insert(std::make_pair(ip.name, make_variable(var_id, external, pointer_to_integer, memory_address)));
-    else
-      throw_compile_error(ip.line_nr, "Variable " + ip.name + " already exists");
+      }
     }
 
   void compile_int_parameter_single(VM::vmcode& code, compile_data& data, const IntParameter& ip, int parameter_id)
     {
-    int64_t var_id = data.var_offset | variable_tag;
-    data.var_offset += 8;
+    auto it = data.vars.find(ip.name);
+    if (it != data.vars.end())
+      throw_compile_error(ip.line_nr, "Variable " + ip.name + " already exists");
+
     if (parameter_id < 4)
       {
       VM::vmcode::operand op;
@@ -2582,19 +2706,19 @@ namespace
         default:
           throw_compile_error("calling convention error");
         }
-      code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, op);
+      assert(data.ra.is_free_integer_register(op));
+      data.vars.insert(std::make_pair(ip.name, make_variable(op, constant, integer, register_address)));
+      data.ra.make_integer_register_unavailable(op);      
       }
     else
       {
+      int64_t var_id = data.var_offset | variable_tag;
+      data.var_offset += 8;
       int addr = parameter_id - 4;
       code.add(VM::vmcode::MOV, VM::vmcode::RAX, VM::vmcode::MEM_RSP, rsp_offset + addr * 8 + virtual_machine_rsp_offset);
       code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, VM::vmcode::RAX);
-      }
-    auto it = data.vars.find(ip.name);
-    if (it == data.vars.end())
       data.vars.insert(std::make_pair(ip.name, make_variable(var_id, constant, integer, memory_address)));
-    else
-      throw_compile_error(ip.line_nr, "Variable " + ip.name + " already exists");
+      }
     }
 
   void compile_int_parameter(VM::vmcode& code, compile_data& data, const IntParameter& ip, int parameter_id)
@@ -2639,8 +2763,10 @@ namespace
 
   void compile_float_parameter_single(VM::vmcode& code, compile_data& data, const FloatParameter& fp, int parameter_id)
     {
-    int64_t var_id = data.var_offset | variable_tag;
-    data.var_offset += 8;
+    auto it = data.vars.find(fp.name);
+    if (it != data.vars.end())      
+      throw_compile_error(fp.line_nr, "Variable " + fp.name + " already exists");
+
     if (parameter_id < 4)
       {
       VM::vmcode::operand op;
@@ -2653,19 +2779,19 @@ namespace
         default:
           throw_compile_error("calling convention error");
         }
-      code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, -var_id, op);
+      assert(data.ra.is_free_real_register(op));
+      data.vars.insert(std::make_pair(fp.name, make_variable(op, constant, single, register_address)));
+      data.ra.make_real_register_unavailable(op);
       }
     else
       {
+      int64_t var_id = data.var_offset | variable_tag;
+      data.var_offset += 8;
       int addr = parameter_id - 4;
       code.add(VM::vmcode::MOV, VM::vmcode::RAX, VM::vmcode::MEM_RSP, rsp_offset + addr * 8 + virtual_machine_rsp_offset);
       code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, VM::vmcode::RAX);
-      }
-    auto it = data.vars.find(fp.name);
-    if (it == data.vars.end())
       data.vars.insert(std::make_pair(fp.name, make_variable(var_id, constant, single, memory_address)));
-    else
-      throw_compile_error(fp.line_nr, "Variable " + fp.name + " already exists");
+      }
     }
 
   void compile_float_parameter(VM::vmcode& code, compile_data& data, const FloatParameter& fp, int parameter_id)
@@ -2697,13 +2823,9 @@ namespace
 
   } // anonymous namespace
 
-void compile(VM::vmcode& code, compile_data& data, const Program& prog)
+void compile(VM::vmcode& code, const Program& prog)
   {
-  data.max_stack_index = 0;
-  data.stack_index = 0;
-  data.var_offset = 0;
-  data.label = 0;
-  data.vars.clear();
+  compile_data data;
 
   code.add(VM::vmcode::SUB, VM::vmcode::RSP, VM::vmcode::NUMBER, rsp_offset);
   compile_parameters(code, data, prog.parameters);

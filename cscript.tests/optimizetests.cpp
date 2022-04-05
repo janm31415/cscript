@@ -47,8 +47,7 @@ void test_optimize_expression()
   optimize(prog);
   visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
   VM::vmcode code;
-  compile_data data;
-  compile(code, data, prog);
+  compile(code, prog);
   code.stream(std::cout);
   }
 

@@ -22,7 +22,6 @@ COMPILER_BEGIN
 struct compile_fixture
   {
   typedef float(__cdecl* fun_ptr)(...);
-  compile_data data;
   compile_fixture()
     {
     }
@@ -36,7 +35,7 @@ struct compile_fixture
     if (_optimize)
       optimize(prog);
     VM::vmcode code;
-    compile(code, data, prog);
+    compile(code, prog);
     if (false)
       {
       code.stream(std::cout);
