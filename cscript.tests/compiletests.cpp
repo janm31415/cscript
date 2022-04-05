@@ -864,6 +864,18 @@ struct funccall_tests : public compile_fixture
 
     TEST_EQ(std::fabs(-0.5), run("() fabs(0.5f);", false));
     TEST_EQ(std::fabs(-0.5), run("() fabs(0.5f);", true));
+
+    TEST_EQ(std::tan(0.5), run("() tan(0.5f);", false));
+    TEST_EQ(std::tan(0.5), run("() tan(0.5f);", true));
+
+    TEST_EQ(std::atan(0.5), run("() atan(0.5f);", false));
+    TEST_EQ(std::atan(0.5), run("() atan(0.5f);", true));
+
+    TEST_EQ(std::atan2(0.5, 0.7), run("() atan2(0.5f,0.7);", false));
+    TEST_EQ(std::atan2(0.5, 0.7), run("() atan2(0.5f,0.7);", true));
+
+    TEST_EQ(std::pow(0.5, 0.7), run("() pow(0.5f,0.7);", false));
+    TEST_EQ(std::pow(0.5, 0.7), run("() pow(0.5f,0.7);", true));
     }
   };
 
@@ -882,6 +894,8 @@ struct modulo_test : public compile_fixture
     {
     TEST_EQ(2.0, run("() 5%3;", false));
     TEST_EQ(0.14000000000000012, run("() 3.14%3;", false));
+    TEST_EQ(2.0, run("() 5%3;", true));
+    TEST_EQ(0.14000000000000012, run("() 3.14%3;", true));
     }
   };
 

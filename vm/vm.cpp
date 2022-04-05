@@ -1117,6 +1117,14 @@ namespace
       }
     };
 
+  struct CPowOper
+    {
+    static void apply(double& left, double right)
+      {
+      left = std::pow(left, right);
+      }
+    };
+
   struct SqrtpdOper
     {
     static void apply(double& left, double right)
@@ -2003,7 +2011,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::CPOW:
       {
-      execute_double_operation<SqrtpdOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      execute_double_operation<CPowOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
       }
       case vmcode::DEC:

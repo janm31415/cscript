@@ -1119,10 +1119,10 @@ namespace
     {
     VM::vmcode::operand op1;
     int64_t offset1;
-    index_to_real_operand(op1, offset1, data.stack_index - 1);
+    index_to_real_operand(op1, offset1, data.stack_index);
     VM::vmcode::operand op2;
     int64_t offset2;
-    index_to_real_operand(op2, offset2, data.stack_index);
+    index_to_real_operand(op2, offset2, data.stack_index+1);
     if (offset1)
       {
       if (offset2)
@@ -1144,10 +1144,10 @@ namespace
     {
     VM::vmcode::operand op1;
     int64_t offset1;
-    index_to_real_operand(op1, offset1, data.stack_index - 1);
+    index_to_real_operand(op1, offset1, data.stack_index);
     VM::vmcode::operand op2;
     int64_t offset2;
-    index_to_real_operand(op2, offset2, data.stack_index);
+    index_to_real_operand(op2, offset2, data.stack_index+1);
     if (offset1)
       {
       if (offset2)
