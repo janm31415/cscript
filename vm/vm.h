@@ -76,6 +76,7 @@ struct registers
   double fpstack[16];
   double* fpstackptr; // pointer to top of floating point stack  
   uint64_t stack[256];
+  uint64_t reserved;
   };
 
 struct external_function

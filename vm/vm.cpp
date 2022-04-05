@@ -926,7 +926,7 @@ namespace
       case vmcode::MEM_R13: return (uint64_t*)(regs.r13 + operand_mem);
       case vmcode::MEM_R14: return (uint64_t*)(regs.r14 + operand_mem);
       case vmcode::MEM_R15: return (uint64_t*)(regs.r15 + operand_mem);
-      case vmcode::NUMBER: return nullptr;
+      case vmcode::NUMBER: regs.reserved = operand_mem; return &regs.reserved;
       case vmcode::ST0:  return (uint64_t*)(regs.fpstackptr);
       case vmcode::ST1:  return (uint64_t*)(regs.fpstackptr + 1);
       case vmcode::ST2:  return (uint64_t*)(regs.fpstackptr + 2);
@@ -951,7 +951,7 @@ namespace
       case vmcode::XMM13:return (uint64_t*)(&regs.xmm13);
       case vmcode::XMM14:return (uint64_t*)(&regs.xmm14);
       case vmcode::XMM15:return (uint64_t*)(&regs.xmm15);
-      case vmcode::LABELADDRESS: return nullptr;
+      case vmcode::LABELADDRESS: regs.reserved = operand_mem; return &regs.reserved;
       default: return nullptr;
       }
     }
@@ -1205,10 +1205,8 @@ namespace
     uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
     assert(oprnd1);    
     uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
-    if (oprnd2)
-      TOper::apply(*oprnd1, *oprnd2);
-    else if (operand2 == vmcode::NUMBER || operand2 == vmcode::LABELADDRESS)
-      TOper::apply(*oprnd1, operand2_mem);     
+    assert(oprnd2);
+    TOper::apply(*oprnd1, *oprnd2);    
     }
 
   template <class TOper>
@@ -1218,6 +1216,7 @@ namespace
     uint64_t operand2_mem,
     registers& regs)
     {
+#if 0
     uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
     if (oprnd1)
       {
@@ -1225,6 +1224,13 @@ namespace
       if (oprnd2)
         TOper::apply(*reinterpret_cast<double*>(oprnd1), *reinterpret_cast<double*>(oprnd2));
       }
+#else
+    uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+    uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+    assert(oprnd1);
+    assert(oprnd2);
+    TOper::apply(*reinterpret_cast<double*>(oprnd1), *reinterpret_cast<double*>(oprnd2));
+#endif
     }
 
   template <class TOper>
@@ -1238,17 +1244,9 @@ namespace
     assert(oprnd1);
     uint64_t left = *oprnd1;
     uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
-    if (oprnd2)
-      {
-      TOper::apply(left, *oprnd2);
-      return left;
-      }
-    else if (operand2 == vmcode::NUMBER || operand2 == vmcode::LABELADDRESS)
-      {
-      TOper::apply(left, operand2_mem);
-      return left;
-      }   
-    throw std::logic_error("Invalid bytecode");
+    assert(oprnd2);
+    TOper::apply(left, *oprnd2);
+    return left;          
     }
 
   inline void get_values(int64_t& left_signed, int64_t& right_signed, uint64_t& left_unsigned, uint64_t right_unsigned, vmcode::operand operand1,
@@ -1262,16 +1260,9 @@ namespace
     left_unsigned = *oprnd1;
     left_signed = (int64_t)left_unsigned;
     uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
-    if (oprnd2)
-      {
-      right_unsigned = *oprnd2;
-      right_signed = (int64_t)right_unsigned;
-      }
-    else if (operand2 == vmcode::NUMBER || operand2 == vmcode::LABELADDRESS)
-      {
-      right_unsigned = operand2_mem;
-      right_signed = (int64_t)right_unsigned;
-      }
+    assert(oprnd2);      
+    right_unsigned = *oprnd2;
+    right_signed = (int64_t)right_unsigned;
     }
 
   inline void compare_operation(vmcode::operand operand1,
@@ -1872,460 +1863,6 @@ namespace
       }
     }
 
-  /*
-  template <class T>
-  T _call_external(const external_function& f, registers& regs)
-    {
-    auto args = _get_arguments(f);
-
-    //typedef T(*fun_ptr)(...);
-    //fun_ptr fun = (fun_ptr)f.address;
-
-    T return_value = 0;
-    switch (args.size())
-      {
-      case 0:
-      {
-          typedef T(*fun_ptr)();
-          fun_ptr fun = (fun_ptr)f.address;
-      return_value = fun();
-      break;
-      }
-      case 1:
-      {
-      if (is_floating_point_register(args[0]))
-      {
-          typedef T(*fun_ptr)(double);
-          fun_ptr fun = (fun_ptr)f.address;
-        return_value = fun(get_floating_register_value(args[0], regs));
-      }
-      else
-      {
-          typedef T(*fun_ptr)(uint64_t);
-          fun_ptr fun = (fun_ptr)f.address;
-        return_value = fun(get_integer_register_value(args[0], regs));
-      }
-      break;
-      }
-      case 2:
-      {
-      if (is_floating_point_register(args[0]))
-        {
-        if (is_floating_point_register(args[1]))
-        {
-            typedef T(*fun_ptr)(double, double);
-            fun_ptr fun = (fun_ptr)f.address;
-          return_value = fun(get_floating_register_value(args[0], regs), get_floating_register_value(args[1], regs));
-        }
-        else
-        {
-            typedef T(*fun_ptr)(double, uint64_t);
-            fun_ptr fun = (fun_ptr)f.address;
-          return_value = fun(get_floating_register_value(args[0], regs), get_integer_register_value(args[1], regs));
-        }
-        }
-      else
-        {
-        if (is_floating_point_register(args[1]))
-        {
-            typedef T(*fun_ptr)(uint64_t, double);
-            fun_ptr fun = (fun_ptr)f.address;
-          return_value = fun(get_integer_register_value(args[0], regs), get_floating_register_value(args[1], regs));
-        }
-        else
-            {
-                typedef T(*fun_ptr)(uint64_t, uint64_t);
-                fun_ptr fun = (fun_ptr)f.address;
-          return_value = fun(get_integer_register_value(args[0], regs), get_integer_register_value(args[1], regs));
-            }
-        }
-      break;
-      }
-      case 3:
-      {
-      if (is_floating_point_register(args[0]))
-        {
-        if (is_floating_point_register(args[1]))
-          {
-          if (is_floating_point_register(args[2]))
-          {
-              typedef T(*fun_ptr)(double, double, double);
-              fun_ptr fun = (fun_ptr)f.address;
-            return_value = fun(get_floating_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_floating_register_value(args[2], regs));
-          }
-          else
-          {
-              typedef T(*fun_ptr)(double, double, uint64_t);
-              fun_ptr fun = (fun_ptr)f.address;
-            return_value = fun(get_floating_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_integer_register_value(args[2], regs));
-          }
-          }
-        else
-          {
-          if (is_floating_point_register(args[2]))
-          {
-              typedef T(*fun_ptr)(double, uint64_t, double);
-              fun_ptr fun = (fun_ptr)f.address;
-            return_value = fun(get_floating_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_floating_register_value(args[2], regs));
-          }
-          else
-          {
-              typedef T(*fun_ptr)(double, uint64_t, uint64_t);
-              fun_ptr fun = (fun_ptr)f.address;
-            return_value = fun(get_floating_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_integer_register_value(args[2], regs));
-          }
-          }
-        }
-      else
-        {
-        if (is_floating_point_register(args[1]))
-          {
-          if (is_floating_point_register(args[2]))
-          {
-              typedef T(*fun_ptr)(uint64_t, double, double);
-              fun_ptr fun = (fun_ptr)f.address;
-            return_value = fun(get_integer_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_floating_register_value(args[2], regs));
-          }
-          else
-          {
-              typedef T(*fun_ptr)(uint64_t, double, uint64_t);
-              fun_ptr fun = (fun_ptr)f.address;
-            return_value = fun(get_integer_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_integer_register_value(args[2], regs));
-          }
-          }
-        else
-          {
-          if (is_floating_point_register(args[2]))
-          {
-              typedef T(*fun_ptr)(uint64_t, uint64_t, double);
-              fun_ptr fun = (fun_ptr)f.address;
-            return_value = fun(get_integer_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_floating_register_value(args[2], regs));
-          }
-          else
-          {
-              typedef T(*fun_ptr)(uint64_t, uint64_t, uint64_t);
-              fun_ptr fun = (fun_ptr)f.address;
-            return_value = fun(get_integer_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_integer_register_value(args[2], regs));
-          }
-          }
-        }
-      break;
-      }
-      case 4:
-      {
-      if (is_floating_point_register(args[0]))
-        {
-        if (is_floating_point_register(args[1]))
-          {
-          if (is_floating_point_register(args[2]))
-            {
-            if (is_floating_point_register(args[3]))
-            {
-                typedef T(*fun_ptr)(double, double, double, double);
-                fun_ptr fun = (fun_ptr)f.address;
-              return_value = fun(get_floating_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_floating_register_value(args[2], regs), get_floating_register_value(args[3], regs));
-            }
-            else
-            {
-                typedef T(*fun_ptr)(double, double, double, uint64_t);
-                fun_ptr fun = (fun_ptr)f.address;
-              return_value = fun(get_floating_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_floating_register_value(args[2], regs), get_integer_register_value(args[3], regs));
-            }
-            }
-          else
-            {
-            if (is_floating_point_register(args[3]))
-            {
-                typedef T(*fun_ptr)(double, double, uint64_t, double);
-                fun_ptr fun = (fun_ptr)f.address;
-              return_value = fun(get_floating_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_integer_register_value(args[2], regs), get_floating_register_value(args[3], regs));
-            }
-            else
-            {
-                typedef T(*fun_ptr)(double, double, uint64_t, uint64_t);
-                fun_ptr fun = (fun_ptr)f.address;
-              return_value = fun(get_floating_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_integer_register_value(args[2], regs), get_integer_register_value(args[3], regs));
-            }
-            }
-          }
-        else
-          {
-          if (is_floating_point_register(args[2]))
-            {
-            if (is_floating_point_register(args[3]))
-            {
-                typedef T(*fun_ptr)(double, uint64_t, double, double);
-                fun_ptr fun = (fun_ptr)f.address;
-              return_value = fun(get_floating_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_floating_register_value(args[2], regs), get_floating_register_value(args[3], regs));
-            }
-            else
-            {
-                typedef T(*fun_ptr)(double, uint64_t, double, uint64_t);
-                fun_ptr fun = (fun_ptr)f.address;
-              return_value = fun(get_floating_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_floating_register_value(args[2], regs), get_integer_register_value(args[3], regs));
-            }
-            }
-          else
-            {
-            if (is_floating_point_register(args[3]))
-            {
-                typedef T(*fun_ptr)(double, uint64_t, uint64_t, double);
-                fun_ptr fun = (fun_ptr)f.address;
-              return_value = fun(get_floating_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_integer_register_value(args[2], regs), get_floating_register_value(args[3], regs));
-            }
-            else
-            {
-                typedef T(*fun_ptr)(double, uint64_t, uint64_t, uint64_t);
-                fun_ptr fun = (fun_ptr)f.address;
-              return_value = fun(get_floating_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_integer_register_value(args[2], regs), get_integer_register_value(args[3], regs));
-            }
-            }
-          }
-        }
-      else
-        {
-        if (is_floating_point_register(args[1]))
-          {
-          if (is_floating_point_register(args[2]))
-            {
-            if (is_floating_point_register(args[3]))
-            {
-                typedef T(*fun_ptr)(uint64_t, double, double, double);
-                fun_ptr fun = (fun_ptr)f.address;
-              return_value = fun(get_integer_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_floating_register_value(args[2], regs), get_floating_register_value(args[3], regs));
-            }
-            else
-            {
-                typedef T(*fun_ptr)(uint64_t, double, double, uint64_t);
-                fun_ptr fun = (fun_ptr)f.address;
-              return_value = fun(get_integer_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_floating_register_value(args[2], regs), get_integer_register_value(args[3], regs));
-            }
-            }
-          else
-            {
-            if (is_floating_point_register(args[3]))
-            {
-                typedef T(*fun_ptr)(uint64_t, double, uint64_t, double);
-                fun_ptr fun = (fun_ptr)f.address;
-              return_value = fun(get_integer_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_integer_register_value(args[2], regs), get_floating_register_value(args[3], regs));
-            }
-            else
-            {
-                typedef T(*fun_ptr)(uint64_t, double, uint64_t, uint64_t);
-                fun_ptr fun = (fun_ptr)f.address;
-              return_value = fun(get_integer_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_integer_register_value(args[2], regs), get_integer_register_value(args[3], regs));
-            }
-            }
-          }
-        else
-          {
-          if (is_floating_point_register(args[2]))
-            {
-            if (is_floating_point_register(args[3]))
-            {
-                typedef T(*fun_ptr)(uint64_t, uint64_t, double, double);
-                fun_ptr fun = (fun_ptr)f.address;
-              return_value = fun(get_integer_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_floating_register_value(args[2], regs), get_floating_register_value(args[3], regs));
-            }
-            else
-            {
-                typedef T(*fun_ptr)(uint64_t, uint64_t, double, uint64_t);
-                fun_ptr fun = (fun_ptr)f.address;
-              return_value = fun(get_integer_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_floating_register_value(args[2], regs), get_integer_register_value(args[3], regs));
-            }
-            }
-          else
-            {
-            if (is_floating_point_register(args[3]))
-            {
-                typedef T(*fun_ptr)(uint64_t, uint64_t, uint64_t, double);
-                fun_ptr fun = (fun_ptr)f.address;
-              return_value = fun(get_integer_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_integer_register_value(args[2], regs), get_floating_register_value(args[3], regs));
-            }
-            else
-            {
-                typedef T(*fun_ptr)(uint64_t, uint64_t, uint64_t, uint64_t);
-                fun_ptr fun = (fun_ptr)f.address;
-              return_value = fun(get_integer_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_integer_register_value(args[2], regs), get_integer_register_value(args[3], regs));
-            }
-            }
-          }
-        }
-      break;
-      }
-      default:
-      {
-      throw std::logic_error("Cannot deal with external functions that need this many arguments");
-      }
-      }
-    return return_value;
-    }
-
-  template <>
-  void _call_external<void>(const external_function& f, registers& regs)
-    {
-    auto args = _get_arguments(f);
-
-    typedef void(*fun_ptr)(...);
-    fun_ptr fun = (fun_ptr)f.address;
-
-
-    switch (args.size())
-      {
-      case 0:
-      {
-      fun();
-      break;
-      }
-      case 1:
-      {
-      if (is_floating_point_register(args[0]))
-        fun(get_floating_register_value(args[0], regs));
-      else
-        fun(get_integer_register_value(args[0], regs));
-      break;
-      }
-      case 2:
-      {
-      if (is_floating_point_register(args[0]))
-        {
-        if (is_floating_point_register(args[1]))
-          fun(get_floating_register_value(args[0], regs), get_floating_register_value(args[1], regs));
-        else
-          fun(get_floating_register_value(args[0], regs), get_integer_register_value(args[1], regs));
-        }
-      else
-        {
-        if (is_floating_point_register(args[1]))
-          fun(get_integer_register_value(args[0], regs), get_floating_register_value(args[1], regs));
-        else
-          fun(get_integer_register_value(args[0], regs), get_integer_register_value(args[1], regs));
-        }
-      break;
-      }
-      case 3:
-      {
-      if (is_floating_point_register(args[0]))
-        {
-        if (is_floating_point_register(args[1]))
-          {
-          if (is_floating_point_register(args[2]))
-            fun(get_floating_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_floating_register_value(args[2], regs));
-          else
-            fun(get_floating_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_integer_register_value(args[2], regs));
-          }
-        else
-          {
-          if (is_floating_point_register(args[2]))
-            fun(get_floating_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_floating_register_value(args[2], regs));
-          else
-            fun(get_floating_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_integer_register_value(args[2], regs));
-          }
-        }
-      else
-        {
-        if (is_floating_point_register(args[1]))
-          {
-          if (is_floating_point_register(args[2]))
-            fun(get_integer_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_floating_register_value(args[2], regs));
-          else
-            fun(get_integer_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_integer_register_value(args[2], regs));
-          }
-        else
-          {
-          if (is_floating_point_register(args[2]))
-            fun(get_integer_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_floating_register_value(args[2], regs));
-          else
-            fun(get_integer_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_integer_register_value(args[2], regs));
-          }
-        }
-      break;
-      }
-      case 4:
-      {
-      if (is_floating_point_register(args[0]))
-        {
-        if (is_floating_point_register(args[1]))
-          {
-          if (is_floating_point_register(args[2]))
-            {
-            if (is_floating_point_register(args[3]))
-              fun(get_floating_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_floating_register_value(args[2], regs), get_floating_register_value(args[3], regs));
-            else
-              fun(get_floating_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_floating_register_value(args[2], regs), get_integer_register_value(args[3], regs));
-            }
-          else
-            {
-            if (is_floating_point_register(args[3]))
-              fun(get_floating_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_integer_register_value(args[2], regs), get_floating_register_value(args[3], regs));
-            else
-              fun(get_floating_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_integer_register_value(args[2], regs), get_integer_register_value(args[3], regs));
-            }
-          }
-        else
-          {
-          if (is_floating_point_register(args[2]))
-            {
-            if (is_floating_point_register(args[3]))
-              fun(get_floating_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_floating_register_value(args[2], regs), get_floating_register_value(args[3], regs));
-            else
-              fun(get_floating_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_floating_register_value(args[2], regs), get_integer_register_value(args[3], regs));
-            }
-          else
-            {
-            if (is_floating_point_register(args[3]))
-              fun(get_floating_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_integer_register_value(args[2], regs), get_floating_register_value(args[3], regs));
-            else
-              fun(get_floating_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_integer_register_value(args[2], regs), get_integer_register_value(args[3], regs));
-            }
-          }
-        }
-      else
-        {
-        if (is_floating_point_register(args[1]))
-          {
-          if (is_floating_point_register(args[2]))
-            {
-            if (is_floating_point_register(args[3]))
-              fun(get_integer_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_floating_register_value(args[2], regs), get_floating_register_value(args[3], regs));
-            else
-              fun(get_integer_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_floating_register_value(args[2], regs), get_integer_register_value(args[3], regs));
-            }
-          else
-            {
-            if (is_floating_point_register(args[3]))
-              fun(get_integer_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_integer_register_value(args[2], regs), get_floating_register_value(args[3], regs));
-            else
-              fun(get_integer_register_value(args[0], regs), get_floating_register_value(args[1], regs), get_integer_register_value(args[2], regs), get_integer_register_value(args[3], regs));
-            }
-          }
-        else
-          {
-          if (is_floating_point_register(args[2]))
-            {
-            if (is_floating_point_register(args[3]))
-              fun(get_integer_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_floating_register_value(args[2], regs), get_floating_register_value(args[3], regs));
-            else
-              fun(get_integer_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_floating_register_value(args[2], regs), get_integer_register_value(args[3], regs));
-            }
-          else
-            {
-            if (is_floating_point_register(args[3]))
-              fun(get_integer_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_integer_register_value(args[2], regs), get_floating_register_value(args[3], regs));
-            else
-              fun(get_integer_register_value(args[0], regs), get_integer_register_value(args[1], regs), get_integer_register_value(args[2], regs), get_integer_register_value(args[3], regs));
-            }
-          }
-        }
-      break;
-      }
-      default:
-      {
-      throw std::logic_error("Cannot deal with external functions that need this many arguments");
-      }
-      }
-    }
-*/
   void call_external(const external_function& f, registers& regs)
     {
     switch (f.return_type)
