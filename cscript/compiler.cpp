@@ -202,8 +202,9 @@ namespace
       {
       if (real_offset)
         {
-        code.add(VM::vmcode::CVTSI2SD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, int_offset);
-        code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, real_offset, RESERVED_REAL_REG);
+        //code.add(VM::vmcode::CVTSI2SD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, int_offset);
+        //code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, real_offset, RESERVED_REAL_REG);
+        code.add(VM::vmcode::CVTSI2SD, VM::vmcode::MEM_RSP, real_offset, VM::vmcode::MEM_RSP, int_offset);
         }
       else
         code.add(VM::vmcode::CVTSI2SD, real_op, VM::vmcode::MEM_RSP, int_offset);
@@ -225,7 +226,7 @@ namespace
     if (real_offset)
       {
       assert(int_offset);
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, real_offset);
+      code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, real_offset);
       code.add(VM::vmcode::CVTTSD2SI, RESERVED_INTEGER_REG, RESERVED_REAL_REG);
       code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, int_offset, RESERVED_INTEGER_REG);
       }
@@ -252,12 +253,12 @@ namespace
     index_to_real_operand(op2, offset2, data.stack_index);
     if (offset1)
       {
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
+      code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
       op1 = RESERVED_REAL_REG;
       }
     if (offset2)
       {
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, offset2);
+      code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, offset2);
       op2 = RESERVED_REAL_REG_2;
       }
     code.add(VM::vmcode::CMPEQPD, op1, op2);
@@ -289,8 +290,9 @@ namespace
     index_to_integer_operand(op2, offset2, data.stack_index);
     if (offset1)
       {
-      code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset1);
-      code.add(VM::vmcode::CMP, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset2);
+      //code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset1);
+      //code.add(VM::vmcode::CMP, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset2);
+      code.add(VM::vmcode::CMP, VM::vmcode::MEM_RSP, offset1, VM::vmcode::MEM_RSP, offset2);
       }
     else if (offset2)
       {
@@ -324,12 +326,12 @@ namespace
     index_to_real_operand(op2, offset2, data.stack_index);
     if (offset1)
       {
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
+      code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
       op1 = RESERVED_REAL_REG;
       }
     if (offset2)
       {
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, offset2);
+      code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, offset2);
       op2 = RESERVED_REAL_REG_2;
       }
     code.add(VM::vmcode::CMPEQPD, op1, op2);
@@ -363,8 +365,9 @@ namespace
     index_to_integer_operand(op2, offset2, data.stack_index);
     if (offset1)
       {
-      code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset1);
-      code.add(VM::vmcode::CMP, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset2);
+      //code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset1);
+      //code.add(VM::vmcode::CMP, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset2);
+      code.add(VM::vmcode::CMP, VM::vmcode::MEM_RSP, offset1, VM::vmcode::MEM_RSP, offset2);
       }
     else if (offset2)
       {
@@ -397,12 +400,12 @@ namespace
     index_to_real_operand(op2, offset2, data.stack_index);
     if (offset1)
       {
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
+      code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
       op1 = RESERVED_REAL_REG;
       }
     if (offset2)
       {
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, offset2);
+      code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, offset2);
       op2 = RESERVED_REAL_REG_2;
       }
     code.add(VM::vmcode::CMPLTPD, op1, op2);
@@ -431,8 +434,9 @@ namespace
     index_to_integer_operand(op2, offset2, data.stack_index);
     if (offset1)
       {
-      code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset1);
-      code.add(VM::vmcode::CMP, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset2);
+      //code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset1);
+      //code.add(VM::vmcode::CMP, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset2);
+      code.add(VM::vmcode::CMP, VM::vmcode::MEM_RSP, offset1, VM::vmcode::MEM_RSP, offset2);
       }
     else if (offset2)
       {
@@ -465,12 +469,12 @@ namespace
     index_to_real_operand(op2, offset2, data.stack_index);
     if (offset1)
       {
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
+      code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
       op1 = RESERVED_REAL_REG;
       }
     if (offset2)
       {
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, offset2);
+      code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, offset2);
       op2 = RESERVED_REAL_REG_2;
       }
     code.add(VM::vmcode::CMPLEPD, op1, op2);
@@ -503,8 +507,9 @@ namespace
     index_to_integer_operand(op2, offset2, data.stack_index);
     if (offset1)
       {
-      code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset1);
-      code.add(VM::vmcode::CMP, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset2);
+      //code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset1);
+      //code.add(VM::vmcode::CMP, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset2);
+      code.add(VM::vmcode::CMP, VM::vmcode::MEM_RSP, offset1, VM::vmcode::MEM_RSP, offset2);
       }
     else if (offset2)
       {
@@ -538,12 +543,12 @@ namespace
     index_to_real_operand(op2, offset2, data.stack_index);
     if (offset1)
       {
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
+      code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
       op1 = RESERVED_REAL_REG;
       }
     if (offset2)
       {
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, offset2);
+      code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, offset2);
       op2 = RESERVED_REAL_REG_2;
       }
     code.add(VM::vmcode::CMPLTPD, op2, op1);
@@ -574,8 +579,9 @@ namespace
     index_to_integer_operand(op2, offset2, data.stack_index);
     if (offset1)
       {
-      code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset1);
-      code.add(VM::vmcode::CMP, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset2);
+      //code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset1);
+      //code.add(VM::vmcode::CMP, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset2);
+      code.add(VM::vmcode::CMP, VM::vmcode::MEM_RSP, offset1, VM::vmcode::MEM_RSP, offset2);
       }
     else if (offset2)
       {
@@ -609,12 +615,12 @@ namespace
     index_to_real_operand(op2, offset2, data.stack_index);
     if (offset1)
       {
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
+      code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
       op1 = RESERVED_REAL_REG;
       }
     if (offset2)
       {
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, offset2);
+      code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, offset2);
       op2 = RESERVED_REAL_REG_2;
       }
     code.add(VM::vmcode::CMPLEPD, op2, op1);
@@ -646,8 +652,9 @@ namespace
     index_to_integer_operand(op2, offset2, data.stack_index);
     if (offset1)
       {
-      code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset1);
-      code.add(VM::vmcode::CMP, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset2);
+      //code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset1);
+      //code.add(VM::vmcode::CMP, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset2);
+      code.add(VM::vmcode::CMP, VM::vmcode::MEM_RSP, offset1, VM::vmcode::MEM_RSP, offset2);
       }
     else if (offset2)
       {
@@ -680,19 +687,35 @@ namespace
     index_to_real_operand(op2, offset2, data.stack_index);
     if (offset1)
       {
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
+      if (offset2)
+        code.add(VM::vmcode::ADDSD, VM::vmcode::MEM_RSP, offset1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::ADDSD, VM::vmcode::MEM_RSP, offset1, op2);
+      }
+    else
+      {
+      if (offset2)
+        code.add(VM::vmcode::ADDSD, op1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::ADDSD, op1, op2);
+      }
+    /*
+    if (offset1)
+      {
+      code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
       op1 = RESERVED_REAL_REG;
       }
     if (offset2)
       {
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, offset2);
+      code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, offset2);
       op2 = RESERVED_REAL_REG_2;
       }
     code.add(VM::vmcode::ADDSD, op1, op2);
     if (offset1)
       {
-      code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, offset1, op1);
+      code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset1, op1);
       }
+    */
     rt = RT_REAL;
     }
 
@@ -704,6 +727,21 @@ namespace
     VM::vmcode::operand op2;
     int64_t offset2;
     index_to_integer_operand(op2, offset2, data.stack_index);
+    if (offset1)
+      {
+      if (offset2)
+        code.add(VM::vmcode::ADD, VM::vmcode::MEM_RSP, offset1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::ADD, VM::vmcode::MEM_RSP, offset1, op2);
+      }
+    else
+      {
+      if (offset2)
+        code.add(VM::vmcode::ADD, op1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::ADD, op1, op2);
+      }
+    /*
     if (offset1)
       {
       code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset1);
@@ -719,6 +757,7 @@ namespace
       {
       code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset1, RESERVED_INTEGER_REG);
       }
+    */
     rt = RT_INTEGER;
     }
 
@@ -732,19 +771,35 @@ namespace
     index_to_real_operand(op2, offset2, data.stack_index);
     if (offset1)
       {
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
+      if (offset2)
+        code.add(VM::vmcode::DIVSD, VM::vmcode::MEM_RSP, offset1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::DIVSD, VM::vmcode::MEM_RSP, offset1, op2);
+      }
+    else
+      {
+      if (offset2)
+        code.add(VM::vmcode::DIVSD, op1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::DIVSD, op1, op2);
+      }
+    /*
+    if (offset1)
+      {
+      code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
       op1 = RESERVED_REAL_REG;
       }
     if (offset2)
       {
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, offset2);
+      code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, offset2);
       op2 = RESERVED_REAL_REG_2;
       }
     code.add(VM::vmcode::DIVSD, op1, op2);
     if (offset1)
       {
-      code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, offset1, op1);
+      code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset1, op1);
       }
+    */
     rt = RT_REAL;
     }
 
@@ -757,6 +812,21 @@ namespace
     VM::vmcode::operand op2;
     int64_t offset2;
     index_to_integer_operand(op2, offset2, data.stack_index);
+    if (offset1)
+      {
+      if (offset2)
+        code.add(VM::vmcode::IDIV2, VM::vmcode::MEM_RSP, offset1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::IDIV2, VM::vmcode::MEM_RSP, offset1, op2);
+      }
+    else
+      {
+      if (offset2)
+        code.add(VM::vmcode::IDIV2, op1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::IDIV2, op1, op2);
+      }
+    /*
     if (op1 == VM::vmcode::RAX)
       {
       if (offset2)
@@ -787,6 +857,7 @@ namespace
         code.add(VM::vmcode::MOV, op1, VM::vmcode::RAX);
       code.add(VM::vmcode::MOV, VM::vmcode::RAX, VM::vmcode::MEM_RSP, -data.stack_index * 8);
       }
+      */
     rt = RT_INTEGER;
     }
 
@@ -800,19 +871,35 @@ namespace
     index_to_real_operand(op2, offset2, data.stack_index);
     if (offset1)
       {
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
+      if (offset2)
+        code.add(VM::vmcode::SUBSD, VM::vmcode::MEM_RSP, offset1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::SUBSD, VM::vmcode::MEM_RSP, offset1, op2);
+      }
+    else
+      {
+      if (offset2)
+        code.add(VM::vmcode::SUBSD, op1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::SUBSD, op1, op2);
+      }
+    /*
+    if (offset1)
+      {
+      code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
       op1 = RESERVED_REAL_REG;
       }
     if (offset2)
       {
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, offset2);
+      code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, offset2);
       op2 = RESERVED_REAL_REG_2;
       }
     code.add(VM::vmcode::SUBSD, op1, op2);
     if (offset1)
       {
-      code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, offset1, op1);
+      code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset1, op1);
       }
+    */
     rt = RT_REAL;
     }
 
@@ -824,6 +911,21 @@ namespace
     VM::vmcode::operand op2;
     int64_t offset2;
     index_to_integer_operand(op2, offset2, data.stack_index);
+    if (offset1)
+      {
+      if (offset2)
+        code.add(VM::vmcode::SUB, VM::vmcode::MEM_RSP, offset1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::SUB, VM::vmcode::MEM_RSP, offset1, op2);
+      }
+    else
+      {
+      if (offset2)
+        code.add(VM::vmcode::SUB, op1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::SUB, op1, op2);
+      }
+    /*
     if (offset1)
       {
       code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset1);
@@ -839,6 +941,7 @@ namespace
       {
       code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset1, RESERVED_INTEGER_REG);
       }
+    */
     rt = RT_INTEGER;
     }
 
@@ -852,19 +955,35 @@ namespace
     index_to_real_operand(op2, offset2, data.stack_index);
     if (offset1)
       {
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
+      if (offset2)
+        code.add(VM::vmcode::MULSD, VM::vmcode::MEM_RSP, offset1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::MULSD, VM::vmcode::MEM_RSP, offset1, op2);
+      }
+    else
+      {
+      if (offset2)
+        code.add(VM::vmcode::MULSD, op1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::MULSD, op1, op2);
+      }
+    /*
+    if (offset1)
+      {
+      code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
       op1 = RESERVED_REAL_REG;
       }
     if (offset2)
       {
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, offset2);
+      code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, offset2);
       op2 = RESERVED_REAL_REG_2;
       }
     code.add(VM::vmcode::MULSD, op1, op2);
     if (offset1)
       {
-      code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, offset1, op1);
+      code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset1, op1);
       }
+    */
     rt = RT_REAL;
     }
 
@@ -876,6 +995,21 @@ namespace
     VM::vmcode::operand op2;
     int64_t offset2;
     index_to_integer_operand(op2, offset2, data.stack_index);
+    if (offset1)
+      {
+      if (offset2)
+        code.add(VM::vmcode::IMUL, VM::vmcode::MEM_RSP, offset1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::IMUL, VM::vmcode::MEM_RSP, offset1, op2);
+      }
+    else
+      {
+      if (offset2)
+        code.add(VM::vmcode::IMUL, op1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::IMUL, op1, op2);
+      }
+    /*
     if (offset1)
       {
       code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset1);
@@ -891,6 +1025,7 @@ namespace
       {
       code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset1, RESERVED_INTEGER_REG);
       }
+    */
     rt = RT_INTEGER;
     }
 
@@ -901,15 +1036,15 @@ namespace
     index_to_real_operand(op1, offset1, data.stack_index);
     if (offset1)
       {
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
+      code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
       op1 = RESERVED_REAL_REG;
       }
     code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::NUMBER, 0x8000000000000000);
-    code.add(VM::vmcode::MOVQ, RESERVED_REAL_REG_2, RESERVED_INTEGER_REG);
+    code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, RESERVED_INTEGER_REG);
     code.add(VM::vmcode::XORPD, op1, RESERVED_REAL_REG_2);
     if (offset1)
       {
-      code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, offset1, op1);
+      code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset1, op1);
       }
     }
 
@@ -920,9 +1055,10 @@ namespace
     index_to_integer_operand(op1, offset1, data.stack_index);
     if (offset1)
       {
-      code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset1);
-      code.add(VM::vmcode::NEG, RESERVED_INTEGER_REG);
-      code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset1, RESERVED_INTEGER_REG);
+      //code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset1);
+      //code.add(VM::vmcode::NEG, RESERVED_INTEGER_REG);
+      //code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset1, RESERVED_INTEGER_REG);
+      code.add(VM::vmcode::NEG, VM::vmcode::MEM_RSP, offset1);
       }
     else
       code.add(VM::vmcode::NEG, op1);
@@ -933,49 +1069,19 @@ namespace
     VM::vmcode::operand op;
     int64_t offset;
     index_to_real_operand(op, offset, data.stack_index);
+    //if (offset)
+    //  {
+    //  code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset);
+    //  op = RESERVED_REAL_REG;
+    //  }
     if (offset)
-      {
-      code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset);
-      op = RESERVED_REAL_REG;
-      }
-    code.add(VM::vmcode::SQRTPD, op, op);
-    if (offset)
-      {
-      code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, offset, RESERVED_REAL_REG);
-      }
-    }
-
-  void compile_sin(VM::vmcode& code, compile_data& data)
-    {
-    VM::vmcode::operand op, op_dummy;
-    int64_t offset;
-    index_to_real_operand(op, offset, data.stack_index);
-    if (offset)
-      {
-      code.add(VM::vmcode::FLD, VM::vmcode::MEM_RSP, offset);
-      }
+      code.add(VM::vmcode::SQRTPD, VM::vmcode::MEM_RSP, offset, VM::vmcode::MEM_RSP, offset);
     else
-      {
-      int j = 0;
-      while (!offset)
-        {
-        ++j;
-        index_to_real_operand(op_dummy, offset, data.stack_index + j);
-        }
-      data.stack_index += j;
-      update_data(data);
-      data.stack_index -= j;
-      code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, offset, op);
-      code.add(VM::vmcode::FLD, VM::vmcode::MEM_RSP, offset);
-      }
-
-    code.add(VM::vmcode::FSIN);
-    code.add(VM::vmcode::FSTP, VM::vmcode::MEM_RSP, offset);
-
-    if (op != VM::vmcode::MEM_RSP)
-      {
-      code.add(VM::vmcode::MOVSD, op, VM::vmcode::MEM_RSP, offset);
-      }
+      code.add(VM::vmcode::SQRTPD, op, op);
+    //if (offset)
+    //  {
+    //  code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset, RESERVED_REAL_REG);
+    //  }
     }
 
   struct sin_functor
@@ -1062,7 +1168,7 @@ namespace
       data.stack_index += j;
       update_data(data);
       data.stack_index -= j;
-      code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, offset, op);
+      code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset, op);
       code.add(VM::vmcode::FLD, VM::vmcode::MEM_RSP, offset);
       }
 
@@ -1072,7 +1178,7 @@ namespace
 
     if (op != VM::vmcode::MEM_RSP)
       {
-      code.add(VM::vmcode::MOVSD, op, VM::vmcode::MEM_RSP, offset);
+      code.add(VM::vmcode::MOV, op, VM::vmcode::MEM_RSP, offset);
       }
     }
 
@@ -1244,9 +1350,9 @@ namespace
         if (init)
           {
           if (float_offset)
-            code.add(VM::vmcode::MOVSD, reg, RESERVED_INTEGER_REG);
+            code.add(VM::vmcode::MOV, reg, RESERVED_INTEGER_REG);
           else
-            code.add(VM::vmcode::MOVSD, reg, float_op);
+            code.add(VM::vmcode::MOV, reg, float_op);
           }
         data.vars.insert(std::make_pair(make_f.name, make_variable(reg, constant, single, register_address)));
         }
@@ -1258,7 +1364,7 @@ namespace
           if (float_offset)
             code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, RESERVED_INTEGER_REG);
           else
-            code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, -var_id, float_op);
+            code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, float_op);
           }
         data.vars.insert(std::make_pair(make_f.name, make_variable(var_id, constant, single, memory_address)));
         data.var_offset += 8;
@@ -1337,11 +1443,11 @@ namespace
           {
           if (it->second.at == memory_address)
             {
-            code.add(VM::vmcode::MOVSD, real_op, VM::vmcode::MEM_RSP, -var_id);
+            code.add(VM::vmcode::MOV, real_op, VM::vmcode::MEM_RSP, -var_id);
             }
           else
             {
-            code.add(VM::vmcode::MOVSD, real_op, (VM::vmcode::operand)var_id);
+            code.add(VM::vmcode::MOV, real_op, (VM::vmcode::operand)var_id);
             }
           }
         }
@@ -1401,7 +1507,7 @@ namespace
       {
       if (rt == RT_REAL)
         {
-        code.add(VM::vmcode::MOVSD, STACK_MEM_BACKUP_REGISTER, SECOND_FREE_REAL_REG);
+        code.add(VM::vmcode::MOV, STACK_MEM_BACKUP_REGISTER, SECOND_FREE_REAL_REG);
         }
       else
         {
@@ -1413,9 +1519,9 @@ namespace
       {
       if (rt == RT_REAL)
         {
-        code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, STACK_MEM_BACKUP_REGISTER);
+        code.add(VM::vmcode::MOV, RESERVED_REAL_REG, STACK_MEM_BACKUP_REGISTER);
         code.add(VM::vmcode::ADDSD, RESERVED_REAL_REG, SECOND_FREE_REAL_REG);
-        code.add(VM::vmcode::MOVSD, STACK_MEM_BACKUP_REGISTER, RESERVED_REAL_REG);
+        code.add(VM::vmcode::MOV, STACK_MEM_BACKUP_REGISTER, RESERVED_REAL_REG);
         }
       else
         {
@@ -1427,9 +1533,9 @@ namespace
       {
       if (rt == RT_REAL)
         {
-        code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, STACK_MEM_BACKUP_REGISTER);
+        code.add(VM::vmcode::MOV, RESERVED_REAL_REG, STACK_MEM_BACKUP_REGISTER);
         code.add(VM::vmcode::SUBSD, RESERVED_REAL_REG, SECOND_FREE_REAL_REG);
-        code.add(VM::vmcode::MOVSD, STACK_MEM_BACKUP_REGISTER, RESERVED_REAL_REG);
+        code.add(VM::vmcode::MOV, STACK_MEM_BACKUP_REGISTER, RESERVED_REAL_REG);
         }
       else
         {
@@ -1441,9 +1547,9 @@ namespace
       {
       if (rt == RT_REAL)
         {
-        code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, STACK_MEM_BACKUP_REGISTER);
+        code.add(VM::vmcode::MOV, RESERVED_REAL_REG, STACK_MEM_BACKUP_REGISTER);
         code.add(VM::vmcode::MULSD, RESERVED_REAL_REG, SECOND_FREE_REAL_REG);
-        code.add(VM::vmcode::MOVSD, STACK_MEM_BACKUP_REGISTER, RESERVED_REAL_REG);
+        code.add(VM::vmcode::MOV, STACK_MEM_BACKUP_REGISTER, RESERVED_REAL_REG);
         }
       else
         {
@@ -1456,15 +1562,15 @@ namespace
       {
       if (rt == RT_REAL)
         {
-        code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, STACK_MEM_BACKUP_REGISTER);
+        code.add(VM::vmcode::MOV, RESERVED_REAL_REG, STACK_MEM_BACKUP_REGISTER);
         code.add(VM::vmcode::DIVSD, RESERVED_REAL_REG, SECOND_FREE_REAL_REG);
-        code.add(VM::vmcode::MOVSD, STACK_MEM_BACKUP_REGISTER, RESERVED_REAL_REG);
+        code.add(VM::vmcode::MOV, STACK_MEM_BACKUP_REGISTER, RESERVED_REAL_REG);
         }
       else
         {
-        code.add(VM::vmcode::MOV, VM::vmcode::RAX, STACK_MEM_BACKUP_REGISTER);
-        code.add(VM::vmcode::IDIV2, SECOND_FREE_INTEGER_REG);
-        code.add(VM::vmcode::MOV, STACK_MEM_BACKUP_REGISTER, VM::vmcode::RAX);
+        //code.add(VM::vmcode::MOV, VM::vmcode::RAX, STACK_MEM_BACKUP_REGISTER);
+        code.add(VM::vmcode::IDIV2, STACK_MEM_BACKUP_REGISTER, SECOND_FREE_INTEGER_REG);
+        //code.add(VM::vmcode::MOV, STACK_MEM_BACKUP_REGISTER, VM::vmcode::RAX);
         }
       break;
       }
@@ -1518,7 +1624,7 @@ namespace
       if (rt == RT_REAL)
         {
         code.add(VM::vmcode::SUB, VM::vmcode::RSP, FIRST_FREE_INTEGER_REG);
-        code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, -var_id, SECOND_FREE_REAL_REG);
+        code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, SECOND_FREE_REAL_REG);
         code.add(VM::vmcode::ADD, VM::vmcode::RSP, FIRST_FREE_INTEGER_REG);
         }
       else
@@ -1534,9 +1640,9 @@ namespace
       if (rt == RT_REAL)
         {
         code.add(VM::vmcode::SUB, VM::vmcode::RSP, FIRST_FREE_INTEGER_REG);
-        code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, -var_id);
+        code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, -var_id);
         code.add(VM::vmcode::ADDSD, RESERVED_REAL_REG, SECOND_FREE_REAL_REG);
-        code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, -var_id, RESERVED_REAL_REG);
+        code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, RESERVED_REAL_REG);
         code.add(VM::vmcode::ADD, VM::vmcode::RSP, FIRST_FREE_INTEGER_REG);
         }
       else
@@ -1552,9 +1658,9 @@ namespace
       if (rt == RT_REAL)
         {
         code.add(VM::vmcode::SUB, VM::vmcode::RSP, FIRST_FREE_INTEGER_REG);
-        code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, -var_id);
+        code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, -var_id);
         code.add(VM::vmcode::SUBSD, RESERVED_REAL_REG, SECOND_FREE_REAL_REG);
-        code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, -var_id, RESERVED_REAL_REG);
+        code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, RESERVED_REAL_REG);
         code.add(VM::vmcode::ADD, VM::vmcode::RSP, FIRST_FREE_INTEGER_REG);
         }
       else
@@ -1570,9 +1676,9 @@ namespace
       if (rt == RT_REAL)
         {
         code.add(VM::vmcode::SUB, VM::vmcode::RSP, FIRST_FREE_INTEGER_REG);
-        code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, -var_id);
+        code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, -var_id);
         code.add(VM::vmcode::MULSD, RESERVED_REAL_REG, SECOND_FREE_REAL_REG);
-        code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, -var_id, RESERVED_REAL_REG);
+        code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, RESERVED_REAL_REG);
         code.add(VM::vmcode::ADD, VM::vmcode::RSP, FIRST_FREE_INTEGER_REG);
         }
       else
@@ -1589,18 +1695,18 @@ namespace
       if (rt == RT_REAL)
         {
         code.add(VM::vmcode::SUB, VM::vmcode::RSP, FIRST_FREE_INTEGER_REG);
-        code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, -var_id);
+        code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, -var_id);
         code.add(VM::vmcode::DIVSD, RESERVED_REAL_REG, SECOND_FREE_REAL_REG);
-        code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, -var_id, RESERVED_REAL_REG);
+        code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, RESERVED_REAL_REG);
         code.add(VM::vmcode::ADD, VM::vmcode::RSP, FIRST_FREE_INTEGER_REG);
         }
       else
         {
         code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::RSP);
         code.add(VM::vmcode::SUB, STACK_BACKUP_REGISTER, FIRST_FREE_INTEGER_REG);
-        code.add(VM::vmcode::MOV, VM::vmcode::RAX, STACK_MEM_BACKUP_REGISTER, -var_id);
-        code.add(VM::vmcode::IDIV2, SECOND_FREE_INTEGER_REG);
-        code.add(VM::vmcode::MOV, STACK_MEM_BACKUP_REGISTER, -var_id, VM::vmcode::RAX);
+        //code.add(VM::vmcode::MOV, VM::vmcode::RAX, STACK_MEM_BACKUP_REGISTER, -var_id);
+        code.add(VM::vmcode::IDIV2, STACK_MEM_BACKUP_REGISTER, -var_id, SECOND_FREE_INTEGER_REG);
+        //code.add(VM::vmcode::MOV, STACK_MEM_BACKUP_REGISTER, -var_id, VM::vmcode::RAX);
         }
       break;
       }
@@ -1647,7 +1753,7 @@ namespace
       {
       if (rt == RT_REAL)
         {
-        code.add(VM::vmcode::MOVSD, STACK_MEM_BACKUP_REGISTER, SECOND_FREE_REAL_REG);
+        code.add(VM::vmcode::MOV, STACK_MEM_BACKUP_REGISTER, SECOND_FREE_REAL_REG);
         }
       else
         {
@@ -1659,9 +1765,9 @@ namespace
       {
       if (rt == RT_REAL)
         {
-        code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, STACK_MEM_BACKUP_REGISTER);
+        code.add(VM::vmcode::MOV, RESERVED_REAL_REG, STACK_MEM_BACKUP_REGISTER);
         code.add(VM::vmcode::ADDSD, RESERVED_REAL_REG, SECOND_FREE_REAL_REG);
-        code.add(VM::vmcode::MOVSD, STACK_MEM_BACKUP_REGISTER, RESERVED_REAL_REG);
+        code.add(VM::vmcode::MOV, STACK_MEM_BACKUP_REGISTER, RESERVED_REAL_REG);
         }
       else
         {
@@ -1673,9 +1779,9 @@ namespace
       {
       if (rt == RT_REAL)
         {
-        code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, STACK_MEM_BACKUP_REGISTER);
+        code.add(VM::vmcode::MOV, RESERVED_REAL_REG, STACK_MEM_BACKUP_REGISTER);
         code.add(VM::vmcode::SUBSD, RESERVED_REAL_REG, SECOND_FREE_REAL_REG);
-        code.add(VM::vmcode::MOVSD, STACK_MEM_BACKUP_REGISTER, RESERVED_REAL_REG);
+        code.add(VM::vmcode::MOV, STACK_MEM_BACKUP_REGISTER, RESERVED_REAL_REG);
         }
       else
         {
@@ -1687,9 +1793,9 @@ namespace
       {
       if (rt == RT_REAL)
         {
-        code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, STACK_MEM_BACKUP_REGISTER);
+        code.add(VM::vmcode::MOV, RESERVED_REAL_REG, STACK_MEM_BACKUP_REGISTER);
         code.add(VM::vmcode::MULSD, RESERVED_REAL_REG, SECOND_FREE_REAL_REG);
-        code.add(VM::vmcode::MOVSD, STACK_MEM_BACKUP_REGISTER, RESERVED_REAL_REG);
+        code.add(VM::vmcode::MOV, STACK_MEM_BACKUP_REGISTER, RESERVED_REAL_REG);
         }
       else
         {
@@ -1702,15 +1808,15 @@ namespace
       {
       if (rt == RT_REAL)
         {
-        code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, STACK_MEM_BACKUP_REGISTER);
+        code.add(VM::vmcode::MOV, RESERVED_REAL_REG, STACK_MEM_BACKUP_REGISTER);
         code.add(VM::vmcode::DIVSD, RESERVED_REAL_REG, SECOND_FREE_REAL_REG);
-        code.add(VM::vmcode::MOVSD, STACK_MEM_BACKUP_REGISTER, RESERVED_REAL_REG);
+        code.add(VM::vmcode::MOV, STACK_MEM_BACKUP_REGISTER, RESERVED_REAL_REG);
         }
       else
         {
-        code.add(VM::vmcode::MOV, VM::vmcode::RAX, STACK_MEM_BACKUP_REGISTER);
-        code.add(VM::vmcode::IDIV2, SECOND_FREE_INTEGER_REG);
-        code.add(VM::vmcode::MOV, STACK_MEM_BACKUP_REGISTER, VM::vmcode::RAX);
+        //code.add(VM::vmcode::MOV, VM::vmcode::RAX, STACK_MEM_BACKUP_REGISTER);
+        code.add(VM::vmcode::IDIV2, STACK_MEM_BACKUP_REGISTER, SECOND_FREE_INTEGER_REG);
+        //code.add(VM::vmcode::MOV, STACK_MEM_BACKUP_REGISTER, VM::vmcode::RAX);
         }
       break;
       }
@@ -1758,15 +1864,15 @@ namespace
             }
           else
             {
-            code.add(VM::vmcode::MOVSD, (VM::vmcode::operand)var_id, VM::vmcode::MEM_RSP, real_offset);
+            code.add(VM::vmcode::MOV, (VM::vmcode::operand)var_id, VM::vmcode::MEM_RSP, real_offset);
             }
           }
         else
           {
           if (it->second.at == memory_address)
-            code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, -var_id, real_op);
+            code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, real_op);
           else
-            code.add(VM::vmcode::MOVSD, (VM::vmcode::operand)var_id, real_op);
+            code.add(VM::vmcode::MOV, (VM::vmcode::operand)var_id, real_op);
           }
         }
       else
@@ -1798,12 +1904,12 @@ namespace
           {
           if (real_offset)
             {
-            code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, real_offset);
+            code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, real_offset);
             real_op = RESERVED_REAL_REG_2;
             }
-          code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, -var_id);
+          code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, -var_id);
           code.add(VM::vmcode::ADDSD, RESERVED_REAL_REG, real_op);
-          code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, -var_id, RESERVED_REAL_REG);
+          code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, RESERVED_REAL_REG);
           }
         else
           {
@@ -1821,7 +1927,7 @@ namespace
           {
           if (real_offset)
             {
-            code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, real_offset);
+            code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, real_offset);
             real_op = RESERVED_REAL_REG_2;
             }
           code.add(VM::vmcode::ADDSD, (VM::vmcode::operand)var_id, real_op);
@@ -1850,12 +1956,12 @@ namespace
           {
           if (real_offset)
             {
-            code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, real_offset);
+            code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, real_offset);
             real_op = RESERVED_REAL_REG_2;
             }
-          code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, -var_id);
+          code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, -var_id);
           code.add(VM::vmcode::SUBSD, RESERVED_REAL_REG, real_op);
-          code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, -var_id, RESERVED_REAL_REG);
+          code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, RESERVED_REAL_REG);
           }
         else
           {
@@ -1873,7 +1979,7 @@ namespace
           {
           if (real_offset)
             {
-            code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, real_offset);
+            code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, real_offset);
             real_op = RESERVED_REAL_REG_2;
             }
           code.add(VM::vmcode::SUBSD, (VM::vmcode::operand)var_id, real_op);
@@ -1900,12 +2006,12 @@ namespace
           {
           if (real_offset)
             {
-            code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, real_offset);
+            code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, real_offset);
             real_op = RESERVED_REAL_REG_2;
             }
-          code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, -var_id);
+          code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, -var_id);
           code.add(VM::vmcode::MULSD, RESERVED_REAL_REG, real_op);
-          code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, -var_id, RESERVED_REAL_REG);
+          code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, RESERVED_REAL_REG);
           }
         else
           {
@@ -1924,7 +2030,7 @@ namespace
           {
           if (real_offset)
             {
-            code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, real_offset);
+            code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, real_offset);
             real_op = RESERVED_REAL_REG_2;
             }
           code.add(VM::vmcode::MULSD, (VM::vmcode::operand)var_id, real_op);
@@ -1949,21 +2055,21 @@ namespace
           {
           if (real_offset)
             {
-            code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, real_offset);
+            code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, real_offset);
             real_op = RESERVED_REAL_REG_2;
             }
-          code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, -var_id);
+          code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, -var_id);
           code.add(VM::vmcode::DIVSD, RESERVED_REAL_REG, real_op);
-          code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, -var_id, RESERVED_REAL_REG);
+          code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, RESERVED_REAL_REG);
           }
         else
           {
           if (int_op == VM::vmcode::RAX)
             {
             code.add(VM::vmcode::MOV, SECOND_FREE_INTEGER_REG, VM::vmcode::RAX);
-            code.add(VM::vmcode::MOV, VM::vmcode::RAX, VM::vmcode::MEM_RSP, -var_id);
-            code.add(VM::vmcode::IDIV2, SECOND_FREE_INTEGER_REG);
-            code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, VM::vmcode::RAX);
+            //code.add(VM::vmcode::MOV, VM::vmcode::RAX, VM::vmcode::MEM_RSP, -var_id);
+            code.add(VM::vmcode::IDIV2, VM::vmcode::MEM_RSP, -var_id, SECOND_FREE_INTEGER_REG);
+            //code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, VM::vmcode::RAX);
             }
           else
             {
@@ -1977,7 +2083,7 @@ namespace
           {
           if (real_offset)
             {
-            code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, real_offset);
+            code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, real_offset);
             real_op = RESERVED_REAL_REG_2;
             }
           code.add(VM::vmcode::DIVSD, (VM::vmcode::operand)var_id, real_op);
@@ -1987,9 +2093,9 @@ namespace
           if (int_op == VM::vmcode::RAX)
             {
             code.add(VM::vmcode::MOV, SECOND_FREE_INTEGER_REG, VM::vmcode::RAX);
-            code.add(VM::vmcode::MOV, VM::vmcode::RAX, (VM::vmcode::operand)var_id);
-            code.add(VM::vmcode::IDIV2, SECOND_FREE_INTEGER_REG);
-            code.add(VM::vmcode::MOV, (VM::vmcode::operand)var_id, VM::vmcode::RAX);
+            //code.add(VM::vmcode::MOV, VM::vmcode::RAX, (VM::vmcode::operand)var_id);
+            code.add(VM::vmcode::IDIV2, (VM::vmcode::operand)var_id, SECOND_FREE_INTEGER_REG);
+            //code.add(VM::vmcode::MOV, (VM::vmcode::operand)var_id, VM::vmcode::RAX);
             }
           else
             {
@@ -2063,7 +2169,7 @@ namespace
       if (offset)
         code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset, RESERVED_INTEGER_REG);
       else
-        code.add(VM::vmcode::MOVQ, op, RESERVED_INTEGER_REG);
+        code.add(VM::vmcode::MOV, op, RESERVED_INTEGER_REG);
       rt = RT_REAL;
       }
     else if (it->second.vt == integer_array)
@@ -2118,7 +2224,7 @@ namespace
         }
       else
         {
-        code.add(VM::vmcode::MOVSD, op, STACK_MEM_BACKUP_REGISTER);
+        code.add(VM::vmcode::MOV, op, STACK_MEM_BACKUP_REGISTER);
         }
       rt = RT_REAL;
       }
@@ -2175,7 +2281,7 @@ namespace
         }
       else
         {
-        code.add(VM::vmcode::MOVSD, op, STACK_MEM_BACKUP_REGISTER);
+        code.add(VM::vmcode::MOV, op, STACK_MEM_BACKUP_REGISTER);
         }
       rt = RT_REAL;
       }
@@ -2210,7 +2316,7 @@ namespace
       if (f)
         {
         code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::NUMBER, *(reinterpret_cast<uint64_t*>(&f)));
-        code.add(VM::vmcode::MOVQ, op, RESERVED_INTEGER_REG);
+        code.add(VM::vmcode::MOV, op, RESERVED_INTEGER_REG);
         }
       else
         {
@@ -2311,26 +2417,26 @@ namespace
           if (offset)
             {
             op = RESERVED_REAL_REG;
-            code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, -var_id);
+            code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, -var_id);
             }
           else
-            code.add(VM::vmcode::MOVSD, op, VM::vmcode::MEM_RSP, -var_id);
+            code.add(VM::vmcode::MOV, op, VM::vmcode::MEM_RSP, -var_id);
           double f = 1.0;
           code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::NUMBER, *(reinterpret_cast<uint64_t*>(&f)));
-          code.add(VM::vmcode::MOVQ, RESERVED_REAL_REG_2, RESERVED_INTEGER_REG);
+          code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, RESERVED_INTEGER_REG);
           if (lvo.name == "++")
             code.add(VM::vmcode::ADDSD, op, RESERVED_REAL_REG_2);
           else if (lvo.name == "--")
             code.add(VM::vmcode::SUBSD, op, RESERVED_REAL_REG_2);
           else
             throw_compile_error(lvo.line_nr, "operator " + lvo.name + " is unknown");
-          code.add(VM::vmcode::MOVSD, VM::vmcode::MEM_RSP, -var_id, op);
+          code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, op);
           }
         else
           {
           double f = 1.0;
           code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::NUMBER, *(reinterpret_cast<uint64_t*>(&f)));
-          code.add(VM::vmcode::MOVQ, RESERVED_REAL_REG_2, RESERVED_INTEGER_REG);
+          code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, RESERVED_INTEGER_REG);
           if (lvo.name == "++")
             code.add(VM::vmcode::ADDSD, (VM::vmcode::operand)var_id, RESERVED_REAL_REG_2);
           else if (lvo.name == "--")
@@ -2341,7 +2447,7 @@ namespace
           int64_t offset;
           index_to_real_operand(op, offset, data.stack_index);
           if (offset == 0 && op == FIRST_FREE_REAL_REG)
-            code.add(VM::vmcode::MOVSD, FIRST_FREE_REAL_REG, (VM::vmcode::operand)var_id); // send through the output to the output register
+            code.add(VM::vmcode::MOV, FIRST_FREE_REAL_REG, (VM::vmcode::operand)var_id); // send through the output to the output register
           }
         }
       }
@@ -2379,13 +2485,13 @@ namespace
         if (offset)
           {
           op = RESERVED_REAL_REG;
-          code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, STACK_MEM_BACKUP_REGISTER, -var_id);
+          code.add(VM::vmcode::MOV, RESERVED_REAL_REG, STACK_MEM_BACKUP_REGISTER, -var_id);
           }
         else
-          code.add(VM::vmcode::MOVSD, op, STACK_MEM_BACKUP_REGISTER, -var_id);
+          code.add(VM::vmcode::MOV, op, STACK_MEM_BACKUP_REGISTER, -var_id);
         double f = 1.0;
         code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::NUMBER, *(reinterpret_cast<uint64_t*>(&f)));
-        code.add(VM::vmcode::MOVQ, RESERVED_REAL_REG_2, RESERVED_INTEGER_REG);
+        code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, RESERVED_INTEGER_REG);
         if (lvo.name == "++")
           code.add(VM::vmcode::ADDSD, op, RESERVED_REAL_REG_2);
         else if (lvo.name == "--")
@@ -2393,7 +2499,7 @@ namespace
         else
           throw_compile_error(lvo.line_nr, "operator " + lvo.name + " is unknown");
 
-        code.add(VM::vmcode::MOVSD, STACK_MEM_BACKUP_REGISTER, -var_id, op);
+        code.add(VM::vmcode::MOV, STACK_MEM_BACKUP_REGISTER, -var_id, op);
         rt = RT_REAL;
         }
       else if (it->second.vt == integer_array)
@@ -2450,13 +2556,13 @@ namespace
         if (offset)
           {
           op = RESERVED_REAL_REG;
-          code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, STACK_MEM_BACKUP_REGISTER);
+          code.add(VM::vmcode::MOV, RESERVED_REAL_REG, STACK_MEM_BACKUP_REGISTER);
           }
         else
-          code.add(VM::vmcode::MOVSD, op, STACK_MEM_BACKUP_REGISTER);
+          code.add(VM::vmcode::MOV, op, STACK_MEM_BACKUP_REGISTER);
         double f = 1.0;
         code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::NUMBER, *(reinterpret_cast<uint64_t*>(&f)));
-        code.add(VM::vmcode::MOVQ, RESERVED_REAL_REG_2, RESERVED_INTEGER_REG);
+        code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, RESERVED_INTEGER_REG);
         if (lvo.name == "++")
           code.add(VM::vmcode::ADDSD, op, RESERVED_REAL_REG_2);
         else if (lvo.name == "--")
@@ -2464,7 +2570,7 @@ namespace
         else
           throw_compile_error(lvo.line_nr, "operator " + lvo.name + " is unknown");
 
-        code.add(VM::vmcode::MOVSD, STACK_MEM_BACKUP_REGISTER, op);
+        code.add(VM::vmcode::MOV, STACK_MEM_BACKUP_REGISTER, op);
         rt = RT_REAL;
         }
       else if (it->second.vt == pointer_to_integer)
@@ -2526,13 +2632,13 @@ namespace
         if (offset)
           {
           op = RESERVED_REAL_REG;
-          code.add(VM::vmcode::MOVSD, RESERVED_REAL_REG, STACK_MEM_BACKUP_REGISTER);
+          code.add(VM::vmcode::MOV, RESERVED_REAL_REG, STACK_MEM_BACKUP_REGISTER);
           }
         else
-          code.add(VM::vmcode::MOVSD, op, STACK_MEM_BACKUP_REGISTER);
+          code.add(VM::vmcode::MOV, op, STACK_MEM_BACKUP_REGISTER);
         double f = 1.0;
         code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::NUMBER, *(reinterpret_cast<uint64_t*>(&f)));
-        code.add(VM::vmcode::MOVQ, RESERVED_REAL_REG_2, RESERVED_INTEGER_REG);
+        code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, RESERVED_INTEGER_REG);
         if (lvo.name == "++")
           code.add(VM::vmcode::ADDSD, op, RESERVED_REAL_REG_2);
         else if (lvo.name == "--")
@@ -2540,7 +2646,7 @@ namespace
         else
           throw_compile_error(lvo.line_nr, "operator " + lvo.name + " is unknown");
 
-        code.add(VM::vmcode::MOVSD, STACK_MEM_BACKUP_REGISTER, op);
+        code.add(VM::vmcode::MOV, STACK_MEM_BACKUP_REGISTER, op);
         rt = RT_REAL;
         }
       else if (it->second.vt == pointer_to_integer)
@@ -3043,7 +3149,7 @@ void compile(VM::vmcode& code, const Program& prog)
     }
   else if (FIRST_FREE_REAL_REG != VM::vmcode::XMM0)
     {
-    code.add(VM::vmcode::MOVSD, VM::vmcode::XMM0, FIRST_FREE_REAL_REG);
+    code.add(VM::vmcode::MOV, VM::vmcode::XMM0, FIRST_FREE_REAL_REG);
     }
   code.add(VM::vmcode::ADD, VM::vmcode::RSP, VM::vmcode::NUMBER, rsp_offset);
   code.add(VM::vmcode::RET);

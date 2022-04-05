@@ -48,6 +48,7 @@ namespace
       case vmcode::CVTTSD2SI:return 2;
       case vmcode::DEC: return 1;
       case vmcode::DIV: return 1;
+      case vmcode::DIV2: return 2;
       case vmcode::DIVSD: return 2;
       case vmcode::EXTERN: return 0;
       case vmcode::F2XM1:return 0;
@@ -81,7 +82,7 @@ namespace
       case vmcode::LABEL:return 0;
       case vmcode::LABEL_ALIGNED:return 0;
       case vmcode::IDIV:return 1;
-      case vmcode::IDIV2:return 1;
+      case vmcode::IDIV2:return 2;
       case vmcode::IMUL:return 2;
       case vmcode::INC: return 1;
       case vmcode::JE: return 1;
@@ -2696,10 +2697,14 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::DIV2:
       {
+      //uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      //uint64_t divider = *oprnd1;
+      //uint64_t result = regs.rax / divider;      
+      //regs.rax = result;      
       uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
-      uint64_t divider = *oprnd1;
-      uint64_t result = regs.rax / divider;      
-      regs.rax = result;      
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+      uint64_t result = *oprnd1 / *oprnd2;
+      *oprnd1 = (uint64_t)result;
       break;
       }
       case vmcode::DIVSD:
@@ -2931,9 +2936,9 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       case vmcode::IDIV2:
       {
       uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
-      int64_t divider = (int64_t)*oprnd1;
-      int64_t result = (int64_t)regs.rax / divider;      
-      regs.rax = result;      
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+      int64_t result = (int64_t)*oprnd1 / (int64_t)*oprnd2;
+      *oprnd1 = (uint64_t)result;
       break;
       }
       case vmcode::IMUL:
