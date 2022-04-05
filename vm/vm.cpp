@@ -103,6 +103,8 @@ namespace
       case vmcode::JGES:return 1;
       case vmcode::JNES:return 1;
       case vmcode::JMPS:return 1;
+      case vmcode::MOD: return 2;
+      case vmcode::MODSD: return 2;
       case vmcode::MOV: return 2;
       case vmcode::MOVMSKPD: return 2;
       case vmcode::MUL: return 1;
@@ -960,18 +962,6 @@ namespace
       {
       left += right;
       }
-    static void apply(uint64_t& left, uint8_t right)
-      {
-      left += (uint64_t)right;
-      }
-    static void apply(uint8_t& left, uint8_t right)
-      {
-      left += right;
-      }
-    static void apply(uint8_t& left, uint64_t right)
-      {
-      left += (uint8_t)right;
-      }
     };
 
   struct AndOper
@@ -980,17 +970,13 @@ namespace
       {
       left &= right;
       }
-    static void apply(uint64_t& left, uint8_t right)
+    };
+
+  struct ModOper
+    {
+    static void apply(uint64_t& left, uint64_t right)
       {
-      left &= (uint64_t)right;
-      }
-    static void apply(uint8_t& left, uint8_t right)
-      {
-      left &= right;
-      }
-    static void apply(uint8_t& left, uint64_t right)
-      {
-      left &= (uint8_t)right;
+      left %= right;
       }
     };
 
@@ -1000,18 +986,6 @@ namespace
       {
       left = right;
       }
-    static void apply(uint64_t& left, uint8_t right)
-      {
-      left = (uint64_t)right;
-      }
-    static void apply(uint8_t& left, uint8_t right)
-      {
-      left = right;
-      }
-    static void apply(uint8_t& left, uint64_t right)
-      {
-      left = (uint8_t)right;
-      }
     };
 
   struct OrOper
@@ -1020,18 +994,6 @@ namespace
       {
       left |= right;
       }
-    static void apply(uint64_t& left, uint8_t right)
-      {
-      left |= (uint64_t)right;
-      }
-    static void apply(uint8_t& left, uint8_t right)
-      {
-      left |= right;
-      }
-    static void apply(uint8_t& left, uint64_t right)
-      {
-      left |= (uint8_t)right;
-      }
     };
 
   struct ShlOper
@@ -1039,18 +1001,6 @@ namespace
     static void apply(uint64_t& left, uint64_t right)
       {
       left <<= right;
-      }
-    static void apply(uint64_t& left, uint8_t right)
-      {
-      left <<= (uint64_t)right;
-      }
-    static void apply(uint8_t& left, uint8_t right)
-      {
-      left <<= right;
-      }
-    static void apply(uint8_t& left, uint64_t right)
-      {
-      left <<= (uint8_t)right;
       }
     };
 
@@ -1062,24 +1012,6 @@ namespace
       l >>= right;
       left = (uint64_t)l;
       }
-    static void apply(uint64_t& left, uint8_t right)
-      {
-      int64_t l = (int64_t)left;
-      l >>= (uint64_t)right;
-      left = (uint64_t)l;
-      }
-    static void apply(uint8_t& left, uint8_t right)
-      {
-      int8_t l = (int8_t)left;
-      l >>= right;
-      left = (uint8_t)l;
-      }
-    static void apply(uint8_t& left, uint64_t right)
-      {
-      int8_t l = (int8_t)left;
-      l >>= (uint8_t)right;
-      left = (uint8_t)l;
-      }
     };
 
   struct ShrOper
@@ -1087,18 +1019,6 @@ namespace
     static void apply(uint64_t& left, uint64_t right)
       {
       left >>= right;
-      }
-    static void apply(uint64_t& left, uint8_t right)
-      {
-      left >>= (uint64_t)right;
-      }
-    static void apply(uint8_t& left, uint8_t right)
-      {
-      left >>= right;
-      }
-    static void apply(uint8_t& left, uint64_t right)
-      {
-      left >>= (uint8_t)right;
       }
     };
 
@@ -1108,18 +1028,6 @@ namespace
       {
       left -= right;
       }
-    static void apply(uint64_t& left, uint8_t right)
-      {
-      left -= (uint64_t)right;
-      }
-    static void apply(uint8_t& left, uint8_t right)
-      {
-      left -= right;
-      }
-    static void apply(uint8_t& left, uint64_t right)
-      {
-      left -= (uint8_t)right;
-      }
     };
 
   struct XorOper
@@ -1127,18 +1035,6 @@ namespace
     static void apply(uint64_t& left, uint64_t right)
       {
       left ^= right;
-      }
-    static void apply(uint64_t& left, uint8_t right)
-      {
-      left ^= (uint64_t)right;
-      }
-    static void apply(uint8_t& left, uint8_t right)
-      {
-      left ^= right;
-      }
-    static void apply(uint8_t& left, uint64_t right)
-      {
-      left ^= (uint8_t)right;
       }
     };
 
@@ -1155,6 +1051,14 @@ namespace
     static void apply(double& left, double right)
       {
       left /= right;
+      }
+    };
+
+  struct ModsdOper
+    {
+    static void apply(double& left, double right)
+      {
+      left = fmod(left, right);
       }
     };
 
@@ -2478,6 +2382,16 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
         bytecode_ptr = (const uint8_t*)(*oprnd1);
         sz = 0;
         }
+      break;
+      }
+      case vmcode::MOD:
+      {
+      execute_operation<ModOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
+      case vmcode::MODSD:
+      {
+      execute_double_operation<ModsdOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
       }
       case vmcode::MOVMSKPD:

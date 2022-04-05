@@ -338,6 +338,27 @@ struct compile_fixture
     return res;
     }
 
+  double runpii(const std::string& script, int64_t* i1, int64_t i2, bool _optimize = true, bool _peephole = true)
+    {
+    double res = std::numeric_limits<double>::quiet_NaN();
+    auto code = get_vmcode(script, _optimize, _peephole);
+    uint64_t size;
+    uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
+    VM::registers reg;
+    reg.rcx = (uint64_t)i1;
+    reg.rdx = (uint64_t)i2;
+    try {
+      VM::run_bytecode(f, size, reg);
+      res = reg.xmm0;
+      }
+    catch (std::logic_error e)
+      {
+      std::cout << e.what() << "\n";
+      }
+    VM::free_bytecode(f, size);
+    return res;
+    }
+
   double runpipii(const std::string& script, int64_t* i1, int64_t* i2, int64_t i3, bool _optimize = true, bool _peephole = true)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
@@ -855,6 +876,15 @@ struct rsp_offset_test : public compile_fixture
     }
   };
 
+struct modulo_test : public compile_fixture
+  {
+  void test()
+    {
+    TEST_EQ(2.0, run("() 5%3;", false));
+    TEST_EQ(0.14000000000000012, run("() 3.14%3;", false));
+    }
+  };
+
 struct harmonic : public compile_fixture
   {
   void test()
@@ -902,6 +932,31 @@ struct fibonacci : public compile_fixture
     }
   };
 
+struct qsorter : public compile_fixture
+  {
+  void test()
+    {
+    uint64_t max_size = 1000;
+    uint32_t x = 0x76543513;
+    std::vector<int64_t> a;
+    a.resize(max_size);
+    for (auto& v : a)
+      {
+      x ^= x << 13;
+      x ^= x >> 17;
+      x ^= x << 5;
+      v = x % max_size;
+      }
+    auto tic = std::chrono::high_resolution_clock::now();
+    auto result = runpii(R"((int* a, int size)
+
+)", a.data(), max_size);
+    auto toc = std::chrono::high_resolution_clock::now();
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
+    printf("qsort timing: %dms\n", ms);
+    }
+  };
+
 COMPILER_END
 
 void run_all_compile_tests()
@@ -925,7 +980,9 @@ void run_all_compile_tests()
   optimize_tests().test();
   funccall_tests().test();
   rsp_offset_test().test();
-  harmonic().test();
-  fibonacci().test();
-  hamming().test();
+  modulo_test().test();
+  //harmonic().test();
+  //fibonacci().test();
+  //hamming().test();
+  //qsorter().test();
   }

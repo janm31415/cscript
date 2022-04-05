@@ -229,6 +229,8 @@ namespace
       case vmcode::IDIV2: return "idiv2";
       case vmcode::IMUL: return "imul";
       case vmcode::INC: return "inc";
+      case vmcode::MOD: return "mod";
+      case vmcode::MODSD: return "modsd";
       case vmcode::MOV: return "mov";
       case vmcode::MOVMSKPD: return "movmskpd";   
       case vmcode::MUL: return "mul";
@@ -559,6 +561,8 @@ std::string vmcode::operation_to_string(operation oper)
     case vmcode::JGES:return std::string("JGES");
     case vmcode::JNES:return std::string("JNES");
     case vmcode::JMPS:return std::string("JMPS");
+    case vmcode::MOD: return std::string("MOD");
+    case vmcode::MODSD: return std::string("MODSD");
     case vmcode::MOV: return std::string("MOV");
     case vmcode::MOVMSKPD: return std::string("MOVMSKPD");   
     case vmcode::MUL: return std::string("MUL");

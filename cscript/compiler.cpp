@@ -634,6 +634,56 @@ namespace
     rt = RT_INTEGER;
     }
 
+  void compile_mod(VM::vmcode& code, compile_data& data)
+    {
+    VM::vmcode::operand op1;
+    int64_t offset1;
+    index_to_real_operand(op1, offset1, data.stack_index - 1);
+    VM::vmcode::operand op2;
+    int64_t offset2;
+    index_to_real_operand(op2, offset2, data.stack_index);
+    if (offset1)
+      {
+      if (offset2)
+        code.add(VM::vmcode::MODSD, VM::vmcode::MEM_RSP, offset1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::MODSD, VM::vmcode::MEM_RSP, offset1, op2);
+      }
+    else
+      {
+      if (offset2)
+        code.add(VM::vmcode::MODSD, op1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::MODSD, op1, op2);
+      }
+    rt = RT_REAL;
+    }
+
+  void compile_modi(VM::vmcode& code, compile_data& data)
+    {
+    VM::vmcode::operand op1;
+    int64_t offset1;
+    index_to_integer_operand(op1, offset1, data.stack_index - 1);
+    VM::vmcode::operand op2;
+    int64_t offset2;
+    index_to_integer_operand(op2, offset2, data.stack_index);
+    if (offset1)
+      {
+      if (offset2)
+        code.add(VM::vmcode::MOD, VM::vmcode::MEM_RSP, offset1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::MOD, VM::vmcode::MEM_RSP, offset1, op2);
+      }
+    else
+      {
+      if (offset2)
+        code.add(VM::vmcode::MOD, op1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::MOD, op1, op2);
+      }
+    rt = RT_INTEGER;
+    }
+
   void compile_add(VM::vmcode& code, compile_data& data)
     {
     VM::vmcode::operand op1;
@@ -1121,6 +1171,8 @@ namespace
       {"*i", compile_muli},
       {"/", compile_div},
       {"/i", compile_divi},
+      {"%", compile_mod},
+      {"%i", compile_modi},
       {"<", compile_less},
       {"<i", compile_lessi},
       {"<=", compile_leq},

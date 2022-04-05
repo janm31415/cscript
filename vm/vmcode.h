@@ -85,6 +85,8 @@ class vmcode
       JNES, // JNE short      
       LABEL,
       LABEL_ALIGNED,
+      MOD,
+      MODSD,
       MOV,         
       MOVMSKPD,         
       MUL,

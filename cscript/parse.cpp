@@ -360,7 +360,7 @@ T parse_multiop(tokens& tokes, std::function<U(tokens&)> make, std::vector<std::
   return node;
   }
 
-Term make_term(tokens& tokes) { return parse_multiop<Term, Factor>(tokes, make_factor, { "*", "/" }); }
+Term make_term(tokens& tokes) { return parse_multiop<Term, Factor>(tokes, make_factor, { "*", "/", "%" }); }
 Relop make_relop(tokens& tokes) { return parse_multiop<Relop, Term>(tokes, make_term, { "+", "-" }); }
 
 Expression make_expression(tokens& tokes)

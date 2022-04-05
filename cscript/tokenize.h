@@ -46,7 +46,8 @@ struct token
     T_DIV,
     T_SEMICOLON,
     T_COMMA,
-    T_AMPERSAND
+    T_AMPERSAND,
+    T_PERCENT
     };
 
   e_type type;

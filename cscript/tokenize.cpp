@@ -132,6 +132,13 @@ tokens tokenize(const std::string& str)
       ++s;
       break;
       }
+      case '%':
+      {
+      _treat_buffer(buff, tokens, line_nr);
+      tokens.emplace_back(token::T_PERCENT, "%", line_nr);
+      ++s;
+      break;
+      }
       case '+':
       {
       _treat_buffer(buff, tokens, line_nr);
