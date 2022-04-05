@@ -73,8 +73,6 @@ struct registers
   double xmm13;
   double xmm14;
   double xmm15;
-  double fpstack[16];
-  double* fpstackptr; // pointer to top of floating point stack  
   uint64_t stack[256];
   uint64_t reserved;
   };

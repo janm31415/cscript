@@ -61,34 +61,7 @@ namespace
       case vmcode::DIV: return 1;
       case vmcode::DIV2: return 2;
       case vmcode::DIVSD: return 2;
-      case vmcode::EXTERN: return 0;
-      case vmcode::F2XM1:return 0;
-      case vmcode::FABS: return 0;
-      case vmcode::FADD: return 2;
-      case vmcode::FADDP: return 0;
-      case vmcode::FMULP: return 0;
-      case vmcode::FPREM: return 0;
-      case vmcode::FISTPQ: return 1;
-      case vmcode::FILD:return 1;
-      case vmcode::FLD: return 1;
-      case vmcode::FLD1:return 0;
-      case vmcode::FLDPI: return 0;
-      case vmcode::FLDL2E:return 0;
-      case vmcode::FLDLN2:return 0;
-      case vmcode::FMUL:return 2;
-      case vmcode::FSIN:return 0;
-      case vmcode::FCOS:return 0;
-      case vmcode::FPATAN:return 0;
-      case vmcode::FPTAN: return 0;
-      case vmcode::FRNDINT:return 0;
-      case vmcode::FSCALE: return 0;
-      case vmcode::FSQRT:return 0;
-      case vmcode::FSTP: return 1;
-      case vmcode::FSUB: return 2;
-      case vmcode::FSUBP: return 0;
-      case vmcode::FSUBRP:return 0;
-      case vmcode::FXCH: return 0;
-      case vmcode::FYL2X: return 0;
+      case vmcode::EXTERN: return 0;     
       case vmcode::GLOBAL:return 0;
       case vmcode::LABEL:return 0;
       case vmcode::LABEL_ALIGNED:return 0;
@@ -221,15 +194,7 @@ namespace
       case  vmcode::R12:
       case  vmcode::R13:
       case  vmcode::R14:
-      case  vmcode::R15:
-      case  vmcode::ST0:
-      case  vmcode::ST1:
-      case  vmcode::ST2:
-      case  vmcode::ST3:
-      case  vmcode::ST4:
-      case  vmcode::ST5:
-      case  vmcode::ST6:
-      case  vmcode::ST7:
+      case  vmcode::R15:   
       case  vmcode::XMM0:
       case  vmcode::XMM1:
       case  vmcode::XMM2:
@@ -893,7 +858,6 @@ registers::registers()
   {
   rbp = (uint64_t)(&stack[0]);
   rsp = (uint64_t)(&stack[256]);
-  fpstackptr = &fpstack[16];
   eflags = 0;
   }
 
@@ -938,14 +902,6 @@ namespace
       case vmcode::MEM_R14: return (uint64_t*)(regs.r14 + operand_mem);
       case vmcode::MEM_R15: return (uint64_t*)(regs.r15 + operand_mem);
       case vmcode::NUMBER: regs.reserved = operand_mem; return &regs.reserved;
-      case vmcode::ST0:  return (uint64_t*)(regs.fpstackptr);
-      case vmcode::ST1:  return (uint64_t*)(regs.fpstackptr + 1);
-      case vmcode::ST2:  return (uint64_t*)(regs.fpstackptr + 2);
-      case vmcode::ST3:  return (uint64_t*)(regs.fpstackptr + 3);
-      case vmcode::ST4:  return (uint64_t*)(regs.fpstackptr + 4);
-      case vmcode::ST5:  return (uint64_t*)(regs.fpstackptr + 5);
-      case vmcode::ST6:  return (uint64_t*)(regs.fpstackptr + 6);
-      case vmcode::ST7:  return (uint64_t*)(regs.fpstackptr + 7);
       case vmcode::XMM0: return (uint64_t*)(&regs.xmm0);
       case vmcode::XMM1: return (uint64_t*)(&regs.xmm1);
       case vmcode::XMM2: return (uint64_t*)(&regs.xmm2);
@@ -2088,218 +2044,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       {
       execute_double_operation<DivsdOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
-      }
-      case vmcode::F2XM1:
-      {
-      double v = std::pow(2.0, *regs.fpstackptr) - 1.0;
-      *regs.fpstackptr = v;
-      break;
-      }
-      case vmcode::FABS:
-      {
-      *regs.fpstackptr = std::abs(*regs.fpstackptr);
-      break;
-      }
-      case vmcode::FADD:
-      {
-      if (operand2 == vmcode::EMPTY)
-        {
-        uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
-        double v = *reinterpret_cast<double*>(oprnd1);
-        *regs.fpstackptr += v;
-        }
-      else
-        {
-        double* oprnd1 = (double*)get_address_64bit(operand1, operand1_mem, regs);
-        double* oprnd2 = (double*)get_address_64bit(operand2, operand2_mem, regs);
-        *oprnd1 += *oprnd2;
-        }
-      break;
-      }
-      case vmcode::FADDP:
-      {
-      double tmp = *(regs.fpstackptr);
-      regs.fpstackptr += 1;
-      *regs.fpstackptr += tmp;
-      break;
-      }
-      case vmcode::FILD:
-      {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
-      regs.fpstackptr -= 1;
-      *regs.fpstackptr = (double)((int64_t)(*oprnd1));
-      break;
-      }
-      case vmcode::FISTPQ:
-      {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
-      *oprnd1 = (int64_t)(*regs.fpstackptr);
-      regs.fpstackptr += 1;
-      break;
-      }
-      case vmcode::FLD:
-      {
-      double* oprnd1 = (double*)get_address_64bit(operand1, operand1_mem, regs);
-      regs.fpstackptr -= 1;
-      *regs.fpstackptr = *oprnd1;
-      break;
-      }
-      case vmcode::FLD1:
-      {
-      regs.fpstackptr -= 1;
-      *regs.fpstackptr = 1.0;
-      break;
-      }
-      case vmcode::FLDL2E:
-      {
-      regs.fpstackptr -= 1;
-      *regs.fpstackptr = 1.0 / std::log(2.0);
-      break;
-      }
-      case vmcode::FLDLN2:
-      {
-      regs.fpstackptr -= 1;
-      *regs.fpstackptr = std::log(2.0);
-      break;
-      }
-      case vmcode::FLDPI:
-      {
-      regs.fpstackptr -= 1;
-      *regs.fpstackptr = 3.141592653589793238462643383;
-      break;
-      }
-      case vmcode::FMULP:
-      {
-      double tmp = *(regs.fpstackptr);
-      regs.fpstackptr += 1;
-      *regs.fpstackptr *= tmp;
-      break;
-      }
-      case vmcode::FMUL:
-      {
-      if (operand2 == vmcode::EMPTY)
-        {
-        uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
-        double v = *reinterpret_cast<double*>(oprnd1);
-        *regs.fpstackptr *= v;
-        }
-      else
-        {
-        double* oprnd1 = (double*)get_address_64bit(operand1, operand1_mem, regs);
-        double* oprnd2 = (double*)get_address_64bit(operand2, operand2_mem, regs);
-        *oprnd1 *= *oprnd2;
-        }
-      break;
-      }
-      case vmcode::FSIN:
-      {
-      *regs.fpstackptr = std::sin(*regs.fpstackptr);
-      break;
-      }
-      case vmcode::FCOS:
-      {
-      *regs.fpstackptr = std::cos(*regs.fpstackptr);
-      break;
-      }
-      case vmcode::FPATAN:
-      {
-      double y = *(regs.fpstackptr + 1);
-      double x = *(regs.fpstackptr);
-      regs.fpstackptr += 1;
-      *regs.fpstackptr = std::atan2(y, x);
-      break;
-      }
-      case vmcode::FPREM:
-      {
-      double y = *(regs.fpstackptr + 1);
-      double x = *(regs.fpstackptr);
-      *(regs.fpstackptr) = fmod(x, y);
-      break;
-      }
-      case vmcode::FPTAN:
-      {
-      *regs.fpstackptr = std::tan(*regs.fpstackptr);
-      regs.fpstackptr -= 1;
-      *regs.fpstackptr = 1.0;
-      break;
-      }
-      case vmcode::FRNDINT:
-      {
-      *regs.fpstackptr = std::round(*regs.fpstackptr);
-      break;
-      }
-      case vmcode::FSCALE:
-      {
-      double s = std::trunc(*(regs.fpstackptr + 1));
-      *regs.fpstackptr *= std::pow(2.0, s);
-      break;
-      }
-      case vmcode::FSQRT:
-      {
-      *regs.fpstackptr = std::sqrt(*regs.fpstackptr);
-      break;
-      }
-      case vmcode::FSTP:
-      {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
-      *oprnd1 = *reinterpret_cast<uint64_t*>(regs.fpstackptr);
-      regs.fpstackptr += 1;
-      break;
-      }
-      case vmcode::FSUB:
-      {
-      if (operand2 == vmcode::EMPTY)
-        {
-        uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
-        double v = *reinterpret_cast<double*>(oprnd1);
-        *regs.fpstackptr -= v;
-        }
-      else
-        {
-        double* oprnd1 = (double*)get_address_64bit(operand1, operand1_mem, regs);
-        double* oprnd2 = (double*)get_address_64bit(operand2, operand2_mem, regs);
-        *oprnd1 -= *oprnd2;
-        }
-      break;
-      }
-      case vmcode::FSUBP:
-      {
-      double tmp = *(regs.fpstackptr);
-      regs.fpstackptr += 1;
-      *regs.fpstackptr -= tmp;
-      break;
-      }
-      case vmcode::FSUBRP:
-      {
-      double tmp = *(regs.fpstackptr);
-      regs.fpstackptr += 1;
-      *regs.fpstackptr = tmp - *regs.fpstackptr;
-      break;
-      }
-      case vmcode::FXCH:
-      {
-      double* oprnd1 = (double*)get_address_64bit(operand1, operand1_mem, regs);
-      if (oprnd1)
-        {
-        double tmp = *(regs.fpstackptr);
-        *(regs.fpstackptr) = *oprnd1;
-        *oprnd1 = tmp;
-        }
-      else
-        {
-        double tmp = *(regs.fpstackptr);
-        *(regs.fpstackptr) = *(regs.fpstackptr + 1);
-        *(regs.fpstackptr + 1) = tmp;
-        }
-      break;
-      }
-      case vmcode::FYL2X:
-      {
-      double tmp = std::log2(*(regs.fpstackptr));
-      regs.fpstackptr += 1;
-      *regs.fpstackptr *= tmp;
-      break;
-      }
+      }  
       case vmcode::IDIV:
       {
       uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
