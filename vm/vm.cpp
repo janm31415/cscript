@@ -46,6 +46,17 @@ namespace
       case vmcode::CQO: return 0;
       case vmcode::CVTSI2SD: return 2;
       case vmcode::CVTTSD2SI:return 2;
+      case vmcode::CSQRT:return 2;
+      case vmcode::CSIN:return 2;
+      case vmcode::CCOS:return 2;
+      case vmcode::CEXP:return 2;
+      case vmcode::CLOG:return 2;
+      case vmcode::CLOG2:return 2;
+      case vmcode::CABS:return 2;
+      case vmcode::CTAN:return 2;
+      case vmcode::CATAN:return 2;
+      case vmcode::CATAN2:return 2;
+      case vmcode::CPOW:return 2;
       case vmcode::DEC: return 1;
       case vmcode::DIV: return 1;
       case vmcode::DIV2: return 2;
@@ -1077,6 +1088,78 @@ namespace
       left -= right;
       }
     };
+ 
+  struct CSinOper
+    {
+    static void apply(double& left, double right)
+      {
+      left = std::sin(right);
+      }
+    };
+
+  struct CCosOper
+    {
+    static void apply(double& left, double right)
+      {
+      left = std::cos(right);
+      }
+    };
+
+  struct CExpOper
+    {
+    static void apply(double& left, double right)
+      {
+      left = std::exp(right);
+      }
+    };
+
+  struct CLogOper
+    {
+    static void apply(double& left, double right)
+      {
+      left = std::log(right);
+      }
+    };
+
+  struct CLog2Oper
+    {
+    static void apply(double& left, double right)
+      {
+      left = std::log2(right);
+      }
+    };
+
+  struct CAbsOper
+    {
+    static void apply(double& left, double right)
+      {
+      left = std::abs(right);
+      }
+    };
+
+  struct CTanOper
+    {
+    static void apply(double& left, double right)
+      {
+      left = std::tan(right);
+      }
+    };
+
+  struct CAtanOper
+    {
+    static void apply(double& left, double right)
+      {
+      left = std::atan(right);
+      }
+    };
+
+  struct CAtan2Oper
+    {
+    static void apply(double& left, double right)
+      {
+      left = std::atan2(left, right);
+      }
+    };
 
   struct SqrtpdOper
     {
@@ -1910,6 +1993,61 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
       double v = *reinterpret_cast<double*>(oprnd2);
       *oprnd1 = (int64_t)v;
+      break;
+      }
+      case vmcode::CSQRT:
+      {
+      execute_double_operation<SqrtpdOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
+      case vmcode::CSIN:
+      {
+      execute_double_operation<CSinOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
+      case vmcode::CCOS:
+      {
+      execute_double_operation<CCosOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
+      case vmcode::CEXP:
+      {
+      execute_double_operation<CExpOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
+      case vmcode::CLOG:
+      {
+      execute_double_operation<CLogOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
+      case vmcode::CLOG2:
+      {
+      execute_double_operation<CLog2Oper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
+      case vmcode::CABS:
+      {
+      execute_double_operation<CAbsOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
+      case vmcode::CTAN:
+      {
+      execute_double_operation<CTanOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
+      case vmcode::CATAN:
+      {
+      execute_double_operation<CAtanOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
+      case vmcode::CATAN2:
+      {
+      execute_double_operation<CAtan2Oper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
+      case vmcode::CPOW:
+      {
+      execute_double_operation<SqrtpdOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
       }
       case vmcode::DEC:

@@ -194,6 +194,17 @@ namespace
       case vmcode::CQO: return "cqo";
       case vmcode::CVTSI2SD: return "cvtsi2sd";
       case vmcode::CVTTSD2SI: return "cvttsd2si";
+      case vmcode::CSQRT:return std::string("csqrt");
+      case vmcode::CSIN:return std::string("csin");
+      case vmcode::CCOS:return std::string("ccos");
+      case vmcode::CEXP:return std::string("cexp");
+      case vmcode::CLOG:return std::string("clog");
+      case vmcode::CLOG2:return std::string("clog2");
+      case vmcode::CABS:return std::string("cabs");
+      case vmcode::CTAN:return std::string("ctan");
+      case vmcode::CATAN:return std::string("catan");
+      case vmcode::CATAN2:return std::string("catan2");
+      case vmcode::CPOW:return std::string("cpow");
       case vmcode::DEC: return "dec";
       case vmcode::DIV: return "div";
       case vmcode::DIV2: return "div2";
@@ -232,7 +243,7 @@ namespace
       case vmcode::MOD: return "mod";
       case vmcode::MODSD: return "modsd";
       case vmcode::MOV: return "mov";
-      case vmcode::MOVMSKPD: return "movmskpd";   
+      case vmcode::MOVMSKPD: return "movmskpd";
       case vmcode::MUL: return "mul";
       case vmcode::MULSD: return "mulsd";
       case vmcode::NEG: return "neg";
@@ -265,7 +276,7 @@ namespace
   std::string _operand2string(vmcode::operand op, uint64_t mem, const std::string& text)
     {
     switch (op)
-      {     
+      {
       case vmcode::RAX: return "rax";
       case vmcode::RBX: return "rbx";
       case vmcode::RCX: return "rcx";
@@ -502,24 +513,35 @@ std::string vmcode::operation_to_string(operation oper)
     case vmcode::CMPLTPD: return std::string("CMPLTPD");
     case vmcode::CMPLEPD: return std::string("CMPLEPD");
     case vmcode::CQO: return std::string("CQO");
-    case vmcode::CVTSI2SD: return std::string("CVTSI2SD");    
+    case vmcode::CVTSI2SD: return std::string("CVTSI2SD");
     case vmcode::CVTTSD2SI:return std::string("CVTTSD2SI");
+    case vmcode::CSQRT:return std::string("CSQRT");
+    case vmcode::CSIN:return std::string("CSIN");
+    case vmcode::CCOS:return std::string("CCOS");
+    case vmcode::CEXP:return std::string("CEXP");
+    case vmcode::CLOG:return std::string("CLOG");
+    case vmcode::CLOG2:return std::string("CLOG2");
+    case vmcode::CABS:return std::string("CABS");
+    case vmcode::CTAN:return std::string("CTAN");
+    case vmcode::CATAN:return std::string("CATAN");
+    case vmcode::CATAN2:return std::string("CATAN2");
+    case vmcode::CPOW:return std::string("CPOW");
     case vmcode::DEC: return std::string("DEC");
     case vmcode::DIV: return std::string("DIV");
     case vmcode::DIV2: return std::string("DIV2");
-    case vmcode::DIVSD: return std::string("DIVSD");   
+    case vmcode::DIVSD: return std::string("DIVSD");
     case vmcode::EXTERN: return std::string("EXTERN");
     case vmcode::F2XM1:return std::string("F2XM1");
     case vmcode::FABS: return std::string("FABS");
-    case vmcode::FADD: return std::string("FADD");   
+    case vmcode::FADD: return std::string("FADD");
     case vmcode::FADDP: return std::string("FADDP");
-    case vmcode::FISTPQ:return std::string("FISTPQ");  
+    case vmcode::FISTPQ:return std::string("FISTPQ");
     case vmcode::FILD:return std::string("FILD");
     case vmcode::FLD: return std::string("FLD");
-    case vmcode::FLD1:return std::string("FLD1");  
+    case vmcode::FLD1:return std::string("FLD1");
     case vmcode::FLDPI: return std::string("FLDPI");
     case vmcode::FLDL2E:return std::string("FLDL2E");
-    case vmcode::FLDLN2:return std::string("FLDLN2"); 
+    case vmcode::FLDLN2:return std::string("FLDLN2");
     case vmcode::FMUL:return std::string("FMUL");
     case vmcode::FMULP:return std::string("FMULP");
     case vmcode::FSIN:return std::string("FSIN");
@@ -564,7 +586,7 @@ std::string vmcode::operation_to_string(operation oper)
     case vmcode::MOD: return std::string("MOD");
     case vmcode::MODSD: return std::string("MODSD");
     case vmcode::MOV: return std::string("MOV");
-    case vmcode::MOVMSKPD: return std::string("MOVMSKPD");   
+    case vmcode::MOVMSKPD: return std::string("MOVMSKPD");
     case vmcode::MUL: return std::string("MUL");
     case vmcode::MULSD:return std::string("MULSD");
     case vmcode::NEG:return std::string("NEG");
@@ -587,7 +609,7 @@ std::string vmcode::operation_to_string(operation oper)
     case vmcode::SUB: return std::string("SUB");
     case vmcode::SUBSD: return std::string("SUBSD");
     case vmcode::TEST: return std::string("TEST");
-    case vmcode::UCOMISD:return std::string("UCOMISD");    
+    case vmcode::UCOMISD:return std::string("UCOMISD");
     case vmcode::XOR: return std::string("XOR");
     case vmcode::XORPD: return std::string("XORPD");
     }
@@ -598,7 +620,7 @@ std::string vmcode::operand_to_string(operand op)
   {
   switch (op)
     {
-    case vmcode::EMPTY: return std::string("EMPTY");   
+    case vmcode::EMPTY: return std::string("EMPTY");
     case vmcode::RAX: return std::string("RAX");
     case vmcode::RBX: return std::string("RBX");
     case vmcode::RCX: return std::string("RCX");
@@ -614,7 +636,7 @@ std::string vmcode::operand_to_string(operand op)
     case vmcode::R12: return std::string("R12");
     case vmcode::R13: return std::string("R13");
     case vmcode::R14: return std::string("R14");
-    case vmcode::R15: return std::string("R15");  
+    case vmcode::R15: return std::string("R15");
     case vmcode::MEM_RAX: return std::string("MEM_RAX");
     case vmcode::MEM_RBX: return std::string("MEM_RBX");
     case vmcode::MEM_RCX: return std::string("MEM_RCX");
@@ -630,7 +652,7 @@ std::string vmcode::operand_to_string(operand op)
     case vmcode::MEM_R12: return std::string("MEM_R12");
     case vmcode::MEM_R13: return std::string("MEM_R13");
     case vmcode::MEM_R14: return std::string("MEM_R14");
-    case vmcode::MEM_R15: return std::string("MEM_R15");    
+    case vmcode::MEM_R15: return std::string("MEM_R15");
     case vmcode::NUMBER: return std::string("NUMBER");
     case vmcode::ST0:  return std::string("ST0");
     case vmcode::ST1:  return std::string("ST1");
@@ -655,7 +677,7 @@ std::string vmcode::operand_to_string(operand op)
     case vmcode::XMM12:return std::string("XMM12");
     case vmcode::XMM13:return std::string("XMM13");
     case vmcode::XMM14:return std::string("XMM14");
-    case vmcode::XMM15:return std::string("XMM15");   
+    case vmcode::XMM15:return std::string("XMM15");
     case vmcode::LABELADDRESS: return std::string("LABELADDRESS");
     }
   return std::string();

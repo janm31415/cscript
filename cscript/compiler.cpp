@@ -942,23 +942,6 @@ namespace
       else
         code.add(VM::vmcode::MULSD, op1, op2);
       }
-    /*
-    if (offset1)
-      {
-      code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset1);
-      op1 = RESERVED_REAL_REG;
-      }
-    if (offset2)
-      {
-      code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, offset2);
-      op2 = RESERVED_REAL_REG_2;
-      }
-    code.add(VM::vmcode::MULSD, op1, op2);
-    if (offset1)
-      {
-      code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset1, op1);
-      }
-    */
     rt = RT_REAL;
     }
 
@@ -983,24 +966,7 @@ namespace
         code.add(VM::vmcode::IMUL, op1, VM::vmcode::MEM_RSP, offset2);
       else
         code.add(VM::vmcode::IMUL, op1, op2);
-      }
-    /*
-    if (offset1)
-      {
-      code.add(VM::vmcode::MOV, RESERVED_INTEGER_REG, VM::vmcode::MEM_RSP, offset1);
-      op1 = RESERVED_INTEGER_REG;
-      }
-    if (offset2)
-      {
-      code.add(VM::vmcode::IMUL, op1, VM::vmcode::MEM_RSP, offset2);
-      }
-    else
-      code.add(VM::vmcode::IMUL, op1, op2);
-    if (offset1)
-      {
-      code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset1, RESERVED_INTEGER_REG);
-      }
-    */
+      }    
     rt = RT_INTEGER;
     }
 
@@ -1021,6 +987,7 @@ namespace
       {
       code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset1, op1);
       }
+    rt = RT_REAL;
     }
 
   void change_sign_integer(VM::vmcode& code, compile_data& data)
@@ -1037,6 +1004,7 @@ namespace
       }
     else
       code.add(VM::vmcode::NEG, op1);
+    rt = RT_INTEGER;
     }
 
   void compile_sqrt(VM::vmcode& code, compile_data& data)
@@ -1044,122 +1012,161 @@ namespace
     VM::vmcode::operand op;
     int64_t offset;
     index_to_real_operand(op, offset, data.stack_index);
-    //if (offset)
-    //  {
-    //  code.add(VM::vmcode::MOV, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, offset);
-    //  op = RESERVED_REAL_REG;
-    //  }
     if (offset)
       code.add(VM::vmcode::SQRTPD, VM::vmcode::MEM_RSP, offset, VM::vmcode::MEM_RSP, offset);
     else
       code.add(VM::vmcode::SQRTPD, op, op);
-    //if (offset)
-    //  {
-    //  code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset, RESERVED_REAL_REG);
-    //  }
+    rt = RT_REAL;
     }
 
-  struct sin_functor
+  void compile_sin(VM::vmcode& code, compile_data& data)
     {
-    void operator () (VM::vmcode& code)
-      {
-      code.add(VM::vmcode::FSIN);
-      }
-    };
-
-  struct cos_functor
-    {
-    void operator () (VM::vmcode& code)
-      {
-      code.add(VM::vmcode::FCOS);
-      }
-    };
-
-  struct exp_functor
-    {
-    void operator () (VM::vmcode& code)
-      {
-      code.add(VM::vmcode::FLDL2E);
-      code.add(VM::vmcode::FMULP, VM::vmcode::ST1, VM::vmcode::ST0);
-      code.add(VM::vmcode::FLD1);
-      code.add(VM::vmcode::FSCALE);
-      code.add(VM::vmcode::FXCH);
-      code.add(VM::vmcode::FLD1);
-      code.add(VM::vmcode::FXCH);
-      code.add(VM::vmcode::FPREM);
-      code.add(VM::vmcode::F2XM1);
-      code.add(VM::vmcode::FADDP, VM::vmcode::ST1, VM::vmcode::ST0);
-      code.add(VM::vmcode::FMULP, VM::vmcode::ST1, VM::vmcode::ST0);
-      }
-    };
-
-  struct log_functor
-    {
-    void operator () (VM::vmcode& code)
-      {
-      code.add(VM::vmcode::FLDLN2);
-      code.add(VM::vmcode::FXCH);
-      code.add(VM::vmcode::FYL2X);
-      }
-    };
-
-  struct log2_functor
-    {
-    void operator () (VM::vmcode& code)
-      {
-      code.add(VM::vmcode::FLD1);
-      code.add(VM::vmcode::FXCH);
-      code.add(VM::vmcode::FYL2X);
-      }
-    };
-
-  struct fabs_functor
-    {
-    void operator () (VM::vmcode& code)
-      {
-      code.add(VM::vmcode::FABS);
-      }
-    };
-
-  template <class T>
-  void compile_fpu_fun1(VM::vmcode& code, compile_data& data)
-    {
-    VM::vmcode::operand op, op_dummy;
+    VM::vmcode::operand op;
     int64_t offset;
     index_to_real_operand(op, offset, data.stack_index);
     if (offset)
+      code.add(VM::vmcode::CSIN, VM::vmcode::MEM_RSP, offset, VM::vmcode::MEM_RSP, offset);
+    else
+      code.add(VM::vmcode::CSIN, op, op);
+    rt = RT_REAL;
+    }
+
+  void compile_cos(VM::vmcode& code, compile_data& data)
+    {
+    VM::vmcode::operand op;
+    int64_t offset;
+    index_to_real_operand(op, offset, data.stack_index);
+    if (offset)
+      code.add(VM::vmcode::CCOS, VM::vmcode::MEM_RSP, offset, VM::vmcode::MEM_RSP, offset);
+    else
+      code.add(VM::vmcode::CCOS, op, op);
+    rt = RT_REAL;
+    }
+
+  void compile_exp(VM::vmcode& code, compile_data& data)
+    {
+    VM::vmcode::operand op;
+    int64_t offset;
+    index_to_real_operand(op, offset, data.stack_index);
+    if (offset)
+      code.add(VM::vmcode::CEXP, VM::vmcode::MEM_RSP, offset, VM::vmcode::MEM_RSP, offset);
+    else
+      code.add(VM::vmcode::CEXP, op, op);
+    rt = RT_REAL;
+    }
+
+  void compile_log(VM::vmcode& code, compile_data& data)
+    {
+    VM::vmcode::operand op;
+    int64_t offset;
+    index_to_real_operand(op, offset, data.stack_index);
+    if (offset)
+      code.add(VM::vmcode::CLOG, VM::vmcode::MEM_RSP, offset, VM::vmcode::MEM_RSP, offset);
+    else
+      code.add(VM::vmcode::CLOG, op, op);
+    rt = RT_REAL;
+    }
+
+  void compile_log2(VM::vmcode& code, compile_data& data)
+    {
+    VM::vmcode::operand op;
+    int64_t offset;
+    index_to_real_operand(op, offset, data.stack_index);
+    if (offset)
+      code.add(VM::vmcode::CLOG2, VM::vmcode::MEM_RSP, offset, VM::vmcode::MEM_RSP, offset);
+    else
+      code.add(VM::vmcode::CLOG2, op, op);
+    rt = RT_REAL;
+    }
+
+  void compile_fabs(VM::vmcode& code, compile_data& data)
+    {
+    VM::vmcode::operand op;
+    int64_t offset;
+    index_to_real_operand(op, offset, data.stack_index);
+    if (offset)
+      code.add(VM::vmcode::CABS, VM::vmcode::MEM_RSP, offset, VM::vmcode::MEM_RSP, offset);
+    else
+      code.add(VM::vmcode::CABS, op, op);
+    rt = RT_REAL;
+    }
+
+  void compile_tan(VM::vmcode& code, compile_data& data)
+    {
+    VM::vmcode::operand op;
+    int64_t offset;
+    index_to_real_operand(op, offset, data.stack_index);
+    if (offset)
+      code.add(VM::vmcode::CTAN, VM::vmcode::MEM_RSP, offset, VM::vmcode::MEM_RSP, offset);
+    else
+      code.add(VM::vmcode::CTAN, op, op);
+    rt = RT_REAL;
+    }
+
+  void compile_atan(VM::vmcode& code, compile_data& data)
+    {
+    VM::vmcode::operand op;
+    int64_t offset;
+    index_to_real_operand(op, offset, data.stack_index);
+    if (offset)
+      code.add(VM::vmcode::CATAN, VM::vmcode::MEM_RSP, offset, VM::vmcode::MEM_RSP, offset);
+    else
+      code.add(VM::vmcode::CATAN, op, op);
+    rt = RT_REAL;
+    }
+
+  void compile_atan2(VM::vmcode& code, compile_data& data)
+    {
+    VM::vmcode::operand op1;
+    int64_t offset1;
+    index_to_real_operand(op1, offset1, data.stack_index - 1);
+    VM::vmcode::operand op2;
+    int64_t offset2;
+    index_to_real_operand(op2, offset2, data.stack_index);
+    if (offset1)
       {
-      code.add(VM::vmcode::FLD, VM::vmcode::MEM_RSP, offset);
+      if (offset2)
+        code.add(VM::vmcode::CATAN2, VM::vmcode::MEM_RSP, offset1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::CATAN2, VM::vmcode::MEM_RSP, offset1, op2);
       }
     else
       {
-      index_to_integer_operand(op_dummy, offset, data.stack_index); // take integer operand for faster offset
-      int j = 0;
-      while (!offset)
-        {
-        ++j;
-        index_to_integer_operand(op_dummy, offset, data.stack_index + j);
-        }
-      data.stack_index += j;
-      update_data(data);
-      data.stack_index -= j;
-      code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset, op);
-      code.add(VM::vmcode::FLD, VM::vmcode::MEM_RSP, offset);
+      if (offset2)
+        code.add(VM::vmcode::CATAN2, op1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::CATAN2, op1, op2);
       }
+    rt = RT_REAL;      
+    }
 
-    T()(code);
-
-    code.add(VM::vmcode::FSTP, VM::vmcode::MEM_RSP, offset);
-
-    if (op != VM::vmcode::MEM_RSP)
+  void compile_pow(VM::vmcode& code, compile_data& data)
+    {
+    VM::vmcode::operand op1;
+    int64_t offset1;
+    index_to_real_operand(op1, offset1, data.stack_index - 1);
+    VM::vmcode::operand op2;
+    int64_t offset2;
+    index_to_real_operand(op2, offset2, data.stack_index);
+    if (offset1)
       {
-      code.add(VM::vmcode::MOV, op, VM::vmcode::MEM_RSP, offset);
+      if (offset2)
+        code.add(VM::vmcode::CPOW, VM::vmcode::MEM_RSP, offset1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::CPOW, VM::vmcode::MEM_RSP, offset1, op2);
       }
+    else
+      {
+      if (offset2)
+        code.add(VM::vmcode::CPOW, op1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::CPOW, op1, op2);
+      }
+    rt = RT_REAL;
     }
 
   typedef std::function<void(VM::vmcode&, compile_data&)> c_func;
   typedef std::map<std::string, c_func> c_funcs_t;
-
 
   c_funcs_t c_funcs =
     {
@@ -1186,12 +1193,16 @@ namespace
       {"!=", compile_neq},
       {"!=i", compile_neqi},
       {"sqrt", compile_sqrt},
-      {"sin", compile_fpu_fun1<sin_functor>},
-      {"cos", compile_fpu_fun1<cos_functor>},
-      {"exp", compile_fpu_fun1<exp_functor>},
-      {"log", compile_fpu_fun1<log_functor>},
-      {"log2", compile_fpu_fun1<log2_functor>},
-      {"fabs", compile_fpu_fun1<fabs_functor>}
+      {"sin", compile_sin},
+      {"cos", compile_cos},
+      {"exp", compile_exp},
+      {"log", compile_log},
+      {"log2", compile_log2},
+      {"fabs", compile_fabs},
+      {"tan", compile_tan},
+      {"atan", compile_atan},
+      {"atan2", compile_atan2},
+      {"pow", compile_pow}
     };
 
   void compile_make_int_array(VM::vmcode& code, compile_data& data, const Int& make_i)
