@@ -803,9 +803,9 @@ struct optimize_tests : public compile_fixture
   {
   void test()
     {
-    TEST_EQ(0, run("() int i = 0;", false));
-    TEST_EQ(0, run("() float f = 0.0;", false));
-    TEST_EQ(0, run("() float f = 0;", false));
+    TEST_EQ(0, run("() int i = 0; i;", false));
+    TEST_EQ(0, run("() float f = 0.0; f;", false));
+    TEST_EQ(0, run("() float f = 0; f;", false));
     }
   };
 
