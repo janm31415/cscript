@@ -2892,6 +2892,12 @@ namespace
     code.add(VM::vmcode::LABEL, label_to_string(end_label));
     }
 
+  void compile_seperated_statements(VM::vmcode& code, compile_data& data, const CommaSeparatedStatements& stms)
+    {
+    for (const auto& stm : stms.statements)
+      compile_statement(code, data, stm);
+    }
+
   void compile_statement(VM::vmcode& code, compile_data& data, const Statement& stm)
     {
     if (std::holds_alternative<Expression>(stm))
@@ -2917,6 +2923,10 @@ namespace
     else if (std::holds_alternative<If>(stm))
       {
       compile_if(code, data, std::get<If>(stm));
+      }
+    else if (std::holds_alternative<CommaSeparatedStatements>(stm))
+      {
+      compile_seperated_statements(code, data, std::get<CommaSeparatedStatements>(stm));
       }
     else if (std::holds_alternative<Nop>(stm))
       {

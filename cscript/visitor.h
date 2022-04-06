@@ -191,6 +191,12 @@ struct base_visitor
       operator ()(dim);
     _postvisit(i);
     }
+  void operator()(CommaSeparatedStatements& i)
+    {
+    _previsit(i);
+    visitor<Statements, T>::visit(i.statements, (T*)this);
+    _postvisit(i);
+    }
 
   void operator()(value_t& i)
     {
@@ -260,6 +266,7 @@ struct base_visitor
   virtual void _previsit(IntParameter&) {}
   virtual void _previsit(FloatParameter&) {}
   virtual void _previsit(Assignment&) {}
+  virtual void _previsit(CommaSeparatedStatements&) {}
   virtual void _previsit(value_t&) {}
   virtual void _previsit(FuncCall&) {}
   virtual void _previsit(Variable&) {}
@@ -283,6 +290,7 @@ struct base_visitor
   virtual void _postvisit(IntParameter&) {}
   virtual void _postvisit(FloatParameter&) {}
   virtual void _postvisit(Assignment&) {}
+  virtual void _postvisit(CommaSeparatedStatements&) {}
   virtual void _postvisit(value_t&) {}
   virtual void _postvisit(FuncCall&) {}
   virtual void _postvisit(Variable&) {}

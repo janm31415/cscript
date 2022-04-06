@@ -27,6 +27,7 @@ class LValue;
 class LValueOperator;
 class Int;
 class Float;
+class CommaSeparatedStatements;
 
 template<typename T>
 class Precedence { public: std::vector<T> operands; std::vector<std::string> fops; int line_nr; };
@@ -46,8 +47,9 @@ class Dereference { public: std::string name; int line_nr; };
 class LValueOperator { public: std::string name; std::shared_ptr<LValue> lvalue;  int line_nr; };
 class LValue { public: std::variant<Variable, ArrayCall, Dereference> lvalue; int line_nr; };
 class Nop {};
-typedef std::variant<Nop, Expression, For, If, Int, Float, Assignment> Statement;
+typedef std::variant<Nop, Expression, For, If, Int, Float, Assignment, CommaSeparatedStatements> Statement;
 typedef std::vector<Statement> Statements;
+class CommaSeparatedStatements { public: Statements statements; };
 class FuncCall { public: std::string name; std::vector<Expression> exprs; int line_nr; };
 class Factor { public: char sign = '+'; std::variant<value_t, Expression, FuncCall, Variable, ArrayCall, Dereference, LValueOperator> factor; int line_nr; };
 class For { public: Statements init_cond_inc; Statements statements; int line_nr; };

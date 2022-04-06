@@ -234,48 +234,78 @@ If make_if(tokens& tokes)
   return i;
   }
 
-Int make_int(tokens& tokes)
+CommaSeparatedStatements make_int(tokens& tokes)
   {
-  Int i;
-  i.line_nr = current_line(tokes);
-  require(tokes, "int");
-  i.name = take(tokes).value;
-  if (current_type(tokes) == token::T_LEFT_SQUARE_BRACKET)
+  CommaSeparatedStatements stms;
+  bool done = false;
+  bool first_time = true;
+  while (!done)
     {
-    advance(tokes);
-    i.dims.push_back(make_expression(tokes));
-    require(tokes, "]");
+    Int i;
+    i.line_nr = current_line(tokes);
+    if (first_time)
+      require(tokes, "int");
+    i.name = take(tokes).value;
+    if (current_type(tokes) == token::T_LEFT_SQUARE_BRACKET)
+      {
+      advance(tokes);
+      i.dims.push_back(make_expression(tokes));
+      require(tokes, "]");
+      }
+    if (current_type(tokes) == token::T_LEFT_SQUARE_BRACKET)
+      throw_parse_error(i.line_nr, "only single dimension arrays are allowed");
+    if (current(tokes) == "=")
+      {
+      advance(tokes);
+      i.expr = make_expression(tokes);
+      }
+    stms.statements.push_back(i);
+    if (current(tokes) != ",")
+      {
+      done = true;
+      }
+    else
+      require(tokes, ",");
+    first_time = false;
     }
-  if (current_type(tokes) == token::T_LEFT_SQUARE_BRACKET)
-    throw_parse_error(i.line_nr, "only single dimension arrays are allowed");
-  if (current(tokes) == "=")
-    {
-    advance(tokes);
-    i.expr = make_expression(tokes);
-    }
-  return i;
+  return stms;
   }
 
-Float make_float(tokens& tokes)
+CommaSeparatedStatements make_float(tokens& tokes)
   {
-  Float f;
-  f.line_nr = current_line(tokes);
-  require(tokes, "float");
-  f.name = take(tokes).value;
-  if (current_type(tokes) == token::T_LEFT_SQUARE_BRACKET)
+  CommaSeparatedStatements stms;
+  bool done = false;
+  bool first_time = true;
+  while (!done)
     {
-    advance(tokes);
-    f.dims.push_back(make_expression(tokes));
-    require(tokes, "]");
+    Float f;
+    f.line_nr = current_line(tokes);
+    if (first_time)
+      require(tokes, "float");
+    f.name = take(tokes).value;
+    if (current_type(tokes) == token::T_LEFT_SQUARE_BRACKET)
+      {
+      advance(tokes);
+      f.dims.push_back(make_expression(tokes));
+      require(tokes, "]");
+      }
+    if (current_type(tokes) == token::T_LEFT_SQUARE_BRACKET)
+      throw_parse_error(f.line_nr, "only single dimension arrays are allowed");
+    if (current(tokes) == "=")
+      {
+      advance(tokes);
+      f.expr = make_expression(tokes);
+      }
+    stms.statements.push_back(f);
+    if (current(tokes) != ",")
+      {
+      done = true;
+      }
+    else
+      require(tokes, ",");
+    first_time = false;
     }
-  if (current_type(tokes) == token::T_LEFT_SQUARE_BRACKET)
-    throw_parse_error(f.line_nr, "only single dimension arrays are allowed");
-  if (current(tokes) == "=")
-    {
-    advance(tokes);
-    f.expr = make_expression(tokes);
-    }
-  return f;
+  return stms;
   }
 
 

@@ -52,7 +52,7 @@ namespace
     auto tokens = tokenize("float sum = 0.0; for (int i = 1; i < 50; i += 1) { sum += 1.0/i; } sum;");
     auto prog = make_program(tokens);
     TEST_EQ(int(3), (int)prog.statements.size());
-    TEST_ASSERT(std::holds_alternative<Float>(prog.statements[0]));
+    TEST_ASSERT(std::holds_alternative<CommaSeparatedStatements>(prog.statements[0]));
     TEST_ASSERT(std::holds_alternative<For>(prog.statements[1]));
     TEST_ASSERT(std::holds_alternative<Expression>(prog.statements[2]));
     }
@@ -62,6 +62,18 @@ namespace
     auto tokens = tokenize("int i = 3; (++i);");
     auto prog = make_program(tokens);
     TEST_EQ(int(2), (int)prog.statements.size());
+    }
+
+  void test_parse_multiple_var_init()
+    {
+    auto tokens = tokenize("int i, j, k=5;");
+    auto prog = make_program(tokens);
+    TEST_EQ(int(1), (int)prog.statements.size());
+    TEST_ASSERT(std::holds_alternative<CommaSeparatedStatements>(prog.statements[0]));
+    tokens = tokenize("float i, j=sqrt(3), k;");
+    prog = make_program(tokens);
+    TEST_EQ(int(1), (int)prog.statements.size());
+    TEST_ASSERT(std::holds_alternative<CommaSeparatedStatements>(prog.statements[0]));
     }
   }
 
@@ -76,4 +88,5 @@ void run_all_parse_tests()
   test_parse_for();
   test_parse_harmonic();
   test_parse_inc();
+  test_parse_multiple_var_init();
   }

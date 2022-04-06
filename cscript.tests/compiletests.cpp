@@ -1100,10 +1100,10 @@ void run_all_compile_tests()
     modulo_test().test(optimize, peephole);
     if_test().test(optimize, peephole);
     dead_code_test().test(optimize, peephole);
-    //harmonic().test(optimize, peephole);
-    //fibonacci().test(optimize, peephole);
-    //hamming().test(optimize, peephole);
-    //qsorter().test(optimize, peephole);
+    harmonic().test(optimize, peephole);
+    fibonacci().test(optimize, peephole);
+    hamming().test(optimize, peephole);
+    qsorter().test(optimize, peephole);
     }
   test_strength_reduction().test();
   }
