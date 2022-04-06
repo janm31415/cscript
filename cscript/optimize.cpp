@@ -48,7 +48,7 @@ namespace
     {
     if (is_i(v[0]) && is_i(v[1]))
       return i(v[0]) % i(v[1]);
-    return fmod(to_d(v[0]),to_d(v[1]));
+    return fmod(to_d(v[0]), to_d(v[1]));
     }
 
   value_t c_equal(values v)
@@ -160,7 +160,7 @@ namespace
     return std::pow(to_d(v[0]), to_d(v[1]));
     }
 
-    c_funcs_t c_funcs =
+  c_funcs_t c_funcs =
     {
       {"+", c_add},
       {"-", c_sub},
@@ -418,6 +418,133 @@ namespace
       }
     };
 
+
+  struct strength_reduction : public base_visitor<simplify_assignment>
+    {
+    strength_reduction() {}
+    virtual ~strength_reduction() {}
+    /*
+      FOR
+    INT j
+      EXPR
+        RELOP
+          TERM
+            FACTOR
+              VAR lo
+    EXPR <=
+      RELOP
+        TERM
+          FACTOR
+            VAR j
+      RELOP -
+        TERM
+          FACTOR
+            VAR hi
+        TERM
+          FACTOR
+            1
+    */
+    virtual void _postvisit(Expression& expr)
+      {
+      if (expr.fops.size() == 1)
+        {
+        if (expr.fops[0] == "<=")
+          {
+          if (expr.operands[0].operands.size() == 2)
+            {
+            if (expr.operands[0].fops[0] == "+")
+              {
+              if (is_one(expr.operands[0].operands[0])) // 1 + a <= can be replaced by a <
+                {
+                expr.fops[0] = "<";
+                expr.operands[0].operands.erase(expr.operands[0].operands.begin());
+                expr.operands[0].fops.clear();
+                return;
+                }
+              if (is_one(expr.operands[0].operands[1])) // a + 1 <= can be replaced by a <
+                {
+                expr.fops[0] = "<";
+                expr.operands[0].operands.pop_back();
+                expr.operands[0].fops.clear();
+                return;
+                }
+              }
+            }
+          if (expr.operands[1].operands.size() == 2)
+            {
+            if (expr.operands[1].fops[0] == "+")
+              {
+              if (is_minus_one(expr.operands[1].operands[0])) // <= -1 + a can be replaced by < a
+                {
+                expr.fops[0] = "<";
+                expr.operands[1].operands.erase(expr.operands[1].operands.begin());
+                expr.operands[1].fops.clear();
+                return;
+                }
+              }
+            if (expr.operands[1].fops[0] == "-")
+              {
+              if (is_one(expr.operands[1].operands[1])) // <= a - 1 can be replaced by < a
+                {
+                expr.fops[0] = "<";
+                expr.operands[1].operands.pop_back();
+                expr.operands[1].fops.clear();
+                return;
+                }
+              }
+            }
+          }
+
+        if (expr.fops[0] == ">=")
+          {
+          if (expr.operands[0].operands.size() == 2)
+            {
+            if (expr.operands[0].fops[0] == "+")
+              {
+              if (is_minus_one(expr.operands[0].operands[0])) // -1 + a >= can be replaced by a >
+                {
+                expr.fops[0] = ">";
+                expr.operands[0].operands.erase(expr.operands[0].operands.begin());
+                expr.operands[0].fops.clear();
+                return;
+                }
+              }
+            if (expr.operands[0].fops[0] == "-")
+              {
+              if (is_one(expr.operands[0].operands[1])) // a - 1 >= can be replaced by a >
+                {
+                expr.fops[0] = ">";
+                expr.operands[0].operands.pop_back();
+                expr.operands[0].fops.clear();
+                return;
+                }
+              }
+            }
+          if (expr.operands[1].operands.size() == 2)
+            {
+            if (expr.operands[1].fops[0] == "+")
+              {
+              if (is_one(expr.operands[1].operands[0])) // >= 1 + a can be replaced by > a
+                {
+                expr.fops[0] = ">";
+                expr.operands[1].operands.erase(expr.operands[1].operands.begin());
+                expr.operands[1].fops.clear();
+                return;
+                }
+              }
+            if (is_one(expr.operands[1].operands[1])) // >= a + 1 can be replaced by > a
+              {
+              expr.fops[0] = ">";
+              expr.operands[1].operands.pop_back();
+              expr.operands[1].fops.clear();
+              return;
+              }
+            }
+          }
+        }
+
+      }
+    };
   } // anonymous namespace
 
 void optimize(Program& prog)
@@ -426,6 +553,8 @@ void optimize(Program& prog)
   visitor<Program, simplify_constant_expressions>::visit(prog, &sce);
   simplify_assignment sa;
   visitor<Program, simplify_assignment>::visit(prog, &sa);
+  strength_reduction sr;
+  visitor<Program, strength_reduction>::visit(prog, &sr);
   }
 
 COMPILER_END

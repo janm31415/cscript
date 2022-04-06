@@ -52,6 +52,12 @@ bool is_one(const Term& expr);
 bool is_one(const Factor& expr);
 bool is_one(const value_t& expr);
 
+bool is_minus_one(const Expression& expr);
+bool is_minus_one(const Relop& expr);
+bool is_minus_one(const Term& expr);
+bool is_minus_one(const Factor& expr);
+bool is_minus_one(const value_t& expr);
+
 bool is_zero(const Expression& expr);
 bool is_zero(const Relop& expr);
 bool is_zero(const Term& expr);

@@ -938,7 +938,7 @@ struct qsorter : public compile_fixture
   {
   void test(bool optimize = false, bool peephole = true)
     {
-    uint64_t max_size = 100;
+    uint64_t max_size = 10000;
     uint32_t x = 0x76543513;
     std::vector<int64_t> a, st;
     a.resize(max_size);
@@ -1006,6 +1006,34 @@ struct qsorter : public compile_fixture
     auto toc = std::chrono::high_resolution_clock::now();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
     printf("qsort timing: %dms\n", ms);
+    bool array_is_sorted = true;
+    for (uint64_t i = 0; i < max_size-1; ++i)
+      array_is_sorted &= a[i]<=a[i+1];
+    TEST_ASSERT(array_is_sorted);
+    }
+  };
+
+struct test_strength_reduction : public compile_fixture
+  {
+  void test()
+    {
+    TEST_EQ(1, runii("(int a, int b) a <= b-1;", 2, 3));
+    TEST_EQ(0, runii("(int a, int b) a <= b-1;", 2, 2));
+    TEST_EQ(1, runii("(int a, int b) a <= -1+b;", 2, 3));
+    TEST_EQ(0, runii("(int a, int b) a <= -1+b;", 2, 2));
+    TEST_EQ(1, runii("(int a, int b) a+1 <= b;", 2, 3));
+    TEST_EQ(0, runii("(int a, int b) a+1 <= b;", 2, 2));
+    TEST_EQ(1, runii("(int a, int b) 1+a <= b;", 2, 3));
+    TEST_EQ(0, runii("(int a, int b) 1+a <= b;", 2, 2));
+
+    TEST_EQ(1, runii("(int a, int b) a >= b+1;", 3, 2));
+    TEST_EQ(0, runii("(int a, int b) a >= b+1;", 2, 2));
+    TEST_EQ(1, runii("(int a, int b) a >= 1+b;", 3, 2));
+    TEST_EQ(0, runii("(int a, int b) a >= 1+b;", 2, 2));
+    TEST_EQ(1, runii("(int a, int b) a-1 >= b;", 3, 2));
+    TEST_EQ(0, runii("(int a, int b) a-1 >= b;", 2, 2));
+    TEST_EQ(1, runii("(int a, int b) -1+a >= b;", 3, 2));
+    TEST_EQ(0, runii("(int a, int b) -1+a >= b;", 2, 2));
     }
   };
 
@@ -1041,6 +1069,7 @@ void run_all_compile_tests()
     //harmonic().test(optimize, peephole);
     //fibonacci().test(optimize, peephole);
     //hamming().test(optimize, peephole);
-    qsorter().test(optimize, peephole);
+    //qsorter().test(optimize, peephole);
     }
+  test_strength_reduction().test();
   }

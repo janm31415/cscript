@@ -252,6 +252,33 @@ bool is_one(const value_t& expr)
   return to_d(expr) == 1.0;
   }
 
+bool is_minus_one(const Expression& expr)
+  {
+  return (expr.operands.size() == 1) && is_minus_one(expr.operands.front());
+  }
+
+bool is_minus_one(const Relop& expr)
+  {
+  return (expr.operands.size() == 1) && is_minus_one(expr.operands.front());
+  }
+
+bool is_minus_one(const Term& expr)
+  {
+  return (expr.operands.size() == 1) && is_minus_one(expr.operands.front());
+  }
+
+bool is_minus_one(const Factor& expr)
+  {
+  if (std::holds_alternative<value_t>(expr.factor))
+    return is_minus_one(std::get<value_t>(expr.factor));
+  return false;
+  }
+
+bool is_minus_one(const value_t& expr)
+  {
+  return to_d(expr) == -1.0;
+  }
+
 
 bool is_zero(const Expression& expr)
   {

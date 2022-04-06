@@ -14,7 +14,7 @@ namespace
     {
     switch (op)
       {
-      case VM::vmcode::CMP: 
+      case VM::vmcode::CMP:
       case VM::vmcode::TEST:
         return true;
       default: return false;
@@ -30,7 +30,7 @@ namespace
         return instr.operand1 == instr.operand2 && instr.operand1_mem == instr.operand2_mem;
       case VM::vmcode::MOV:
       case VM::vmcode::CVTSI2SD:
-      case VM::vmcode::CVTTSD2SI:      
+      case VM::vmcode::CVTTSD2SI:
       case VM::vmcode::SETE:
       case VM::vmcode::SETNE:
       case VM::vmcode::SETL:
@@ -117,6 +117,68 @@ namespace
     return it;
     }
 
+  bool operations_duplicate_has_no_effect(VM::vmcode::instruction instr)
+    {
+    switch (instr.oper)
+      {
+      case VM::vmcode::AND:
+      case VM::vmcode::OR:
+      case VM::vmcode::CMP:
+      case VM::vmcode::CMPEQPD:
+      case VM::vmcode::CMPLTPD:
+      case VM::vmcode::CMPLEPD:
+      case VM::vmcode::TEST:
+      case VM::vmcode::MOV:
+      case VM::vmcode::SETE:
+      case VM::vmcode::SETNE:
+      case VM::vmcode::SETL:
+      case VM::vmcode::SETG:
+      case VM::vmcode::SETLE:
+      case VM::vmcode::SETGE:
+      case VM::vmcode::CVTSI2SD:
+      case VM::vmcode::CVTTSD2SI:
+      case VM::vmcode::CABS:
+      case VM::vmcode::JMP:
+      case VM::vmcode::JA:
+      case VM::vmcode::JB:
+      case VM::vmcode::JE:
+      case VM::vmcode::JL:
+      case VM::vmcode::JLE:
+      case VM::vmcode::JG:
+      case VM::vmcode::JGE:
+      case VM::vmcode::JNE:
+      case VM::vmcode::JMPS:
+      case VM::vmcode::JAS:
+      case VM::vmcode::JBS:
+      case VM::vmcode::JES:
+      case VM::vmcode::JLS:
+      case VM::vmcode::JLES:
+      case VM::vmcode::JGS:
+      case VM::vmcode::JGES:
+      case VM::vmcode::JNES:
+        return true;
+      default:
+        return false;
+      }
+    return false;
+    }
+
+  std::vector<VM::vmcode::instruction>::iterator remove_duplicates(std::vector<VM::vmcode::instruction>::iterator it, std::vector<VM::vmcode::instruction>& vec)
+    {
+    if (!operations_duplicate_has_no_effect(it->oper))
+      return it;
+    auto it2 = it;
+    ++it2;
+    if (it2 == vec.end())
+      return it;
+    if (it2->oper == it->oper && it2->operand1 == it->operand1 && it2->operand1_mem == it->operand1_mem &&
+      it2->operand2 == it->operand2 && it2->operand2_mem == it->operand2_mem)
+      {
+      it = vec.erase(it);
+      }
+    return it;
+    }
+
   void peephole(std::vector<VM::vmcode::instruction>& vec)
     {
     auto it = vec.begin();
@@ -124,6 +186,7 @@ namespace
       {
       it = peephole_mov_1(it, vec);
       it = peephole_mov_2(it, vec);
+      it = remove_duplicates(it, vec);
       ++it;
       }
     }
