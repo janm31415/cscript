@@ -6,6 +6,7 @@
 #include <string>
 #include <stdexcept>
 #include <cmath>
+#include <set>
 
 #include "defines.h"
 
@@ -442,6 +443,7 @@ namespace
   struct type_variables : public base_visitor<type_variables>
     {
     std::map<std::string, value_type> variable_to_type_map;
+    std::set<std::string> variables_that_change_value;
 
     type_variables() {}
     virtual ~type_variables() {}
@@ -476,6 +478,139 @@ namespace
         variable_to_type_map[f.name] = pointer_to_single;
       else
         variable_to_type_map[f.name] = single;
+      }
+
+    virtual void _postvisit(Assignment& a)
+      {
+      variables_that_change_value.insert(a.name);
+      }
+
+    virtual void _postvisit(LValue& a)
+      {
+      if (std::holds_alternative<Variable>(a.lvalue))
+        {
+        variables_that_change_value.insert(std::get<Variable>(a.lvalue).name);
+        }      
+      if (std::holds_alternative<ArrayCall>(a.lvalue))
+        {
+        variables_that_change_value.insert(std::get<ArrayCall>(a.lvalue).name);
+        }
+      if (std::holds_alternative<Dereference>(a.lvalue))
+        {
+        variables_that_change_value.insert(std::get<Dereference>(a.lvalue).name);
+        }
+      }
+    };
+
+  struct replace_constant_variables : public base_visitor<replace_constant_variables>
+    {
+    std::map<std::string, value_type>* p_variable_to_type_map;
+    std::set<std::string>* p_variables_that_change_value;
+
+    std::map<std::string, double> variable_to_value_map;
+
+    replace_constant_variables() {}
+    virtual ~replace_constant_variables() {}
+
+    /*
+    virtual void _postvisit(Int& i)
+      {
+      auto it = p_variables_that_change_value->find(i.name);
+      if (it == p_variables_that_change_value->end() && i.dims.empty())
+        {
+        if (i.expr.operands.empty())          
+          {
+          variable_to_value_map[i.name] = 0.0;
+          }
+        else if (is_constant(i.expr))
+          {
+          value_t v = get_constant_value(i.expr);
+          variable_to_value_map[i.name] = to_d(v);
+          }
+        }
+      }
+
+    virtual void _postvisit(Float& f)
+      {
+      auto it = p_variables_that_change_value->find(f.name);
+      if (it == p_variables_that_change_value->end() && f.dims.empty())
+        {
+        if (f.expr.operands.empty())
+          {
+          variable_to_value_map[f.name] = 0.0;
+          }
+        else if (is_constant(f.expr))
+          {
+          value_t v = get_constant_value(f.expr);
+          variable_to_value_map[f.name] = to_d(v);
+          }
+        }
+      }
+
+    virtual void _postvisit(Variable& v)
+      {
+      auto it = variable_to_value_map.find(v.name);
+      if (it != variable_to_value_map.end())
+        {
+
+        }
+      }
+      */
+
+    virtual void _postvisit(Factor& f)
+      {
+      if (std::holds_alternative<Variable>(f.factor))
+        {
+        auto& v = std::get<Variable>(f.factor);
+        auto it = variable_to_value_map.find(v.name);
+        if (it != variable_to_value_map.end())
+          {
+          value_t val = it->second;
+          f.factor = val;
+          }
+        }
+      }
+
+    virtual void _postvisit(Statement& stm)
+      {
+      if (std::holds_alternative<Int>(stm))
+        {
+        Int& i = std::get<Int>(stm);
+        auto it = p_variables_that_change_value->find(i.name);
+        if (it == p_variables_that_change_value->end() && i.dims.empty())
+          {
+          if (i.expr.operands.empty())
+            {
+            variable_to_value_map[i.name] = 0.0;
+            stm = Nop();
+            }
+          else if (is_constant(i.expr))
+            {
+            value_t v = get_constant_value(i.expr);
+            variable_to_value_map[i.name] = to_d(v);
+            stm = Nop();
+            }
+          }        
+        }
+      else if (std::holds_alternative<Float>(stm))
+        {
+        Float& f = std::get<Float>(stm);
+        auto it = p_variables_that_change_value->find(f.name);
+        if (it == p_variables_that_change_value->end() && f.dims.empty())
+          {
+          if (f.expr.operands.empty())
+            {
+            variable_to_value_map[f.name] = 0.0;
+            stm = Nop();
+            }
+          else if (is_constant(f.expr))
+            {
+            value_t v = get_constant_value(f.expr);
+            variable_to_value_map[f.name] = to_d(v);
+            stm = Nop();
+            }
+          }        
+        }
       }
     };
 
@@ -765,12 +900,18 @@ namespace
 
 void optimize(Program& prog)
   {
-  simplify_constant_expressions sce;
-  visitor<Program, simplify_constant_expressions>::visit(prog, &sce);
-  simplify_assignment sa;
-  visitor<Program, simplify_assignment>::visit(prog, &sa);
   type_variables tv;
   visitor<Program, type_variables>::visit(prog, &tv);
+  simplify_constant_expressions sce;
+  visitor<Program, simplify_constant_expressions>::visit(prog, &sce);
+  replace_constant_variables rcv;
+  rcv.p_variable_to_type_map = &tv.variable_to_type_map;
+  rcv.p_variables_that_change_value = &tv.variables_that_change_value;
+  visitor<Program, replace_constant_variables>::visit(prog, &rcv);
+  simplify_constant_expressions sce2; // 2nd time
+  visitor<Program, simplify_constant_expressions>::visit(prog, &sce2);
+  simplify_assignment sa;
+  visitor<Program, simplify_assignment>::visit(prog, &sa);
   strength_reduction sr;
   sr.p_variable_to_type_map = &tv.variable_to_type_map;
   visitor<Program, strength_reduction>::visit(prog, &sr);

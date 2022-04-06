@@ -57,6 +57,7 @@ namespace
       case vmcode::CATAN:return 2;
       case vmcode::CATAN2:return 2;
       case vmcode::CPOW:return 2;
+      case vmcode::SWAP:return 2;
       case vmcode::DEC: return 1;
       case vmcode::DIV: return 1;
       case vmcode::DIV2: return 2;
@@ -2012,6 +2013,17 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       case vmcode::CPOW:
       {
       execute_double_operation<CPowOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
+      case vmcode::SWAP:
+      {
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+      assert(oprnd1);
+      assert(oprnd2);
+      uint64_t tmp = *oprnd1;
+      *oprnd1 = *oprnd2;
+      *oprnd2 = tmp;
       break;
       }
       case vmcode::DEC:

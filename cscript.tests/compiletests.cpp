@@ -959,7 +959,7 @@ struct qsorter : public compile_fixture
       // push initial values of l and h to stack
       stack[++top] = lo;
       stack[++top] = hi;
-      for (; top >= 0; )
+      while (top >= 0)
         {
         hi = stack[top];
         --top;
@@ -1063,7 +1063,7 @@ void run_all_compile_tests()
   {
   using namespace COMPILER;
 
-  for (int i = 0; i < 0; ++i)
+  for (int i = 0; i < 4; ++i)
     {
     bool optimize = i/2 == 0;
     bool peephole = i%2 == 0;

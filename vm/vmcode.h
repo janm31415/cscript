@@ -39,6 +39,7 @@ class vmcode
       CATAN,
       CATAN2,
       CPOW,
+      SWAP,
       DEC,
       DIV,
       DIV2, // same as DIV but without remainder to rdx

@@ -224,5 +224,5 @@ void run_all_optimize_tests()
   //test_optimize_add_zero();
   //test_optimize_mul_zero();
   //test_optimize_div_one();
-  test_optimize_constant_variables();
+  //test_optimize_constant_variables();
   }

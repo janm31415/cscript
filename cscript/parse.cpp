@@ -180,7 +180,6 @@ LValueOperator make_increment_decrement_call(const std::string& name, tokens& to
   fn.name = name;
   fn.line_nr = current_line(tokes);
   fn.lvalue = std::make_shared<LValue>(make_lvalue(tokes));
-  //fn.lvalue.reset(new LValue(make_lvalue(tokes)));
   return fn;
   }
 
@@ -195,6 +194,21 @@ For make_for(tokens& tokes)
   f.init_cond_inc.push_back(make_statement(tokes));
   require(tokes, ";");
   f.init_cond_inc.push_back(make_statement(tokes));
+  require(tokes, ")");
+  require(tokes, "{");
+  f.statements = make_statements(tokes, "}");
+  return f;
+  }
+
+For make_while(tokens& tokes)
+  {
+  For f;
+  f.line_nr = tokes.back().line_nr;
+  require(tokes, "while");
+  require(tokes, "(");
+  f.init_cond_inc.push_back(Nop());
+  f.init_cond_inc.push_back(make_statement(tokes));
+  f.init_cond_inc.push_back(Nop());
   require(tokes, ")");
   require(tokes, "{");
   f.statements = make_statements(tokes, "}");
@@ -394,6 +408,7 @@ Statement make_statement(tokens& tokes)
   static const std::map<std::string, std::function<Statement(tokens&)>> commands =
     {
     {"for",   make_for},
+    {"while", make_while},
     {"if",    make_if},
     {"int",   make_int},
     {"float", make_float}

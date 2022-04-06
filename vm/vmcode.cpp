@@ -205,6 +205,7 @@ namespace
       case vmcode::CATAN:return std::string("catan");
       case vmcode::CATAN2:return std::string("catan2");
       case vmcode::CPOW:return std::string("cpow");
+      case vmcode::SWAP:return std::string("swap");
       case vmcode::DEC: return "dec";
       case vmcode::DIV: return "div";
       case vmcode::DIV2: return "div2";
@@ -491,6 +492,7 @@ std::string vmcode::operation_to_string(operation oper)
     case vmcode::CATAN:return std::string("CATAN");
     case vmcode::CATAN2:return std::string("CATAN2");
     case vmcode::CPOW:return std::string("CPOW");
+    case vmcode::SWAP:return std::string("SWAP");
     case vmcode::DEC: return std::string("DEC");
     case vmcode::DIV: return std::string("DIV");
     case vmcode::DIV2: return std::string("DIV2");
