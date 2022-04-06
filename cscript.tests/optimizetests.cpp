@@ -213,7 +213,7 @@ void test_optimize_constant_variables()
 void test_optimize_unused_variables()
   {
   pretty_print_visitor ppv;
-  auto tokens = tokenize("() int x = 1; int y = 2; float r; float g; float b; float z;x;");
+  auto tokens = tokenize("() int x = 1, y = 2; float r, g, b, z;x;");
   auto prog = make_program(tokens);
   visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
   optimize(prog);
