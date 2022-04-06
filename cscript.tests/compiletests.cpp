@@ -1053,7 +1053,7 @@ struct test_strength_reduction : public compile_fixture
     TEST_EQ(0, runii("(int a, int b) 1+a > b;", 2, 3));
     TEST_EQ(1, runii("(int a, int b) 1+a > b;", 3, 3));
 
-    TEST_EQ(0, runff("(float a, float b) a <= b-1;", 2.8, 3.5));
+    TEST_EQ(0, runff("(float a, float b) a <= b-1;", 2.8, 3.5));    
     }
   };
 
@@ -1063,7 +1063,7 @@ void run_all_compile_tests()
   {
   using namespace COMPILER;
 
-  for (int i = 0; i < 4; ++i)
+  for (int i = 0; i < 0; ++i)
     {
     bool optimize = i/2 == 0;
     bool peephole = i%2 == 0;

@@ -97,10 +97,30 @@ struct visitor<Statements, T>
   };
 
 template <class T>
+struct visitor<Parameter, T>
+  {
+  static void visit(Parameter& p, T* v)
+    {
+    std::visit(*v, p);
+    }
+  };
+
+template <class T>
+struct visitor<Parameters, T>
+  {
+  static void visit(Parameters& pars, T* v)
+    {
+    for (auto& p : pars)
+      visitor<Parameter, T>::visit(p, v);
+    }
+  };
+
+template <class T>
 struct visitor<Program, T>
   {
   static void visit(Program& prog, T* v)
     {
+    visitor<Parameters, T>::visit(prog.parameters, v);
     visitor<Statements, T>::visit(prog.statements, v);
     }
   };
@@ -151,6 +171,16 @@ struct base_visitor
     operator ()(i.expr);
     for (auto& dim : i.dims)
       operator ()(dim);
+    _postvisit(i);
+    }
+  void operator()(IntParameter& i)
+    {
+    _previsit(i);   
+    _postvisit(i);
+    }
+  void operator()(FloatParameter& i)
+    {
+    _previsit(i);
     _postvisit(i);
     }
   void operator()(Assignment& i)
@@ -227,6 +257,8 @@ struct base_visitor
   virtual void _previsit(If&) {}
   virtual void _previsit(Int&) {}
   virtual void _previsit(Float&) {}
+  virtual void _previsit(IntParameter&) {}
+  virtual void _previsit(FloatParameter&) {}
   virtual void _previsit(Assignment&) {}
   virtual void _previsit(value_t&) {}
   virtual void _previsit(FuncCall&) {}
@@ -248,6 +280,8 @@ struct base_visitor
   virtual void _postvisit(If&) {}
   virtual void _postvisit(Int&) {}
   virtual void _postvisit(Float&) {}
+  virtual void _postvisit(IntParameter&) {}
+  virtual void _postvisit(FloatParameter&) {}
   virtual void _postvisit(Assignment&) {}
   virtual void _postvisit(value_t&) {}
   virtual void _postvisit(FuncCall&) {}

@@ -415,6 +415,25 @@ namespace
           r.operands.push_back(t);
           expr.operands.push_back(r);
           stm = expr;
+          return;
+          }
+        
+        if ((a.op == "+=" || a.op == "-=") && is_zero(a.expr))
+          {
+          stm = Nop();
+          return;
+          }
+        
+        if (a.op == "*=" && is_zero(a.expr))
+          {
+          a.op = "=";
+          return;
+          }
+
+        if (a.op == "/=" && is_one(a.expr))
+          {
+          stm = Nop();
+          return;
           }
         }
       }
