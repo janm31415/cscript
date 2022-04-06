@@ -1034,6 +1034,26 @@ struct test_strength_reduction : public compile_fixture
     TEST_EQ(0, runii("(int a, int b) a-1 >= b;", 2, 2));
     TEST_EQ(1, runii("(int a, int b) -1+a >= b;", 3, 2));
     TEST_EQ(0, runii("(int a, int b) -1+a >= b;", 2, 2));
+
+    TEST_EQ(0, runii("(int a, int b) a < b+1;", 3, 2));
+    TEST_EQ(1, runii("(int a, int b) a < b+1;", 3, 3));
+    TEST_EQ(0, runii("(int a, int b) a < 1+b;", 3, 2));
+    TEST_EQ(1, runii("(int a, int b) a < 1+b;", 3, 3));
+    TEST_EQ(0, runii("(int a, int b) a-1 < b;", 3, 2));
+    TEST_EQ(1, runii("(int a, int b) a-1 < b;", 3, 3));
+    TEST_EQ(0, runii("(int a, int b) -1+a < b;", 3, 2));
+    TEST_EQ(1, runii("(int a, int b) -1+a < b;", 3, 3));
+
+    TEST_EQ(0, runii("(int a, int b) a > b-1;", 2, 3));
+    TEST_EQ(1, runii("(int a, int b) a > b-1;", 3, 3));
+    TEST_EQ(0, runii("(int a, int b) a > -1+b;", 2, 3));
+    TEST_EQ(1, runii("(int a, int b) a > -1+b;", 3, 3));
+    TEST_EQ(0, runii("(int a, int b) a+1 > b;", 2, 3));
+    TEST_EQ(1, runii("(int a, int b) a+1 > b;", 3, 3));
+    TEST_EQ(0, runii("(int a, int b) 1+a > b;", 2, 3));
+    TEST_EQ(1, runii("(int a, int b) 1+a > b;", 3, 3));
+
+    TEST_EQ(0, runff("(float a, float b) a <= b-1;", 2.8, 3.5));
     }
   };
 
@@ -1066,10 +1086,10 @@ void run_all_compile_tests()
     rsp_offset_test().test(optimize, peephole);
     modulo_test().test(optimize, peephole);
     if_test().test(optimize, peephole);
-    //harmonic().test(optimize, peephole);
-    //fibonacci().test(optimize, peephole);
-    //hamming().test(optimize, peephole);
-    //qsorter().test(optimize, peephole);
+    harmonic().test(optimize, peephole);
+    fibonacci().test(optimize, peephole);
+    hamming().test(optimize, peephole);
+    qsorter().test(optimize, peephole);
     }
   test_strength_reduction().test();
   }

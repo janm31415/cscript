@@ -37,3 +37,25 @@
 #define REGISTER_FOR_REAL_VARIABLE_2 VM::vmcode::XMM9
 #define REGISTER_FOR_REAL_VARIABLE_3 VM::vmcode::XMM10
 #define REGISTER_FOR_REAL_VARIABLE_4 VM::vmcode::XMM11
+
+enum storage_type
+  {
+  constant,
+  external
+  };
+
+enum address_type
+  {
+  register_address,
+  memory_address
+  };
+
+enum value_type
+  {
+  single,
+  integer,
+  single_array,
+  integer_array,
+  pointer_to_single,
+  pointer_to_integer
+  };

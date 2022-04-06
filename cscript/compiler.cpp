@@ -42,29 +42,6 @@ namespace
     return reg;
     }
 
-
-  enum storage_type
-    {
-    constant,
-    external
-    };
-
-  enum value_type
-    {
-    single,
-    integer,
-    single_array,
-    integer_array,
-    pointer_to_single,
-    pointer_to_integer
-    };
-
-  enum address_type
-    {
-    register_address,
-    memory_address
-    };
-
   struct variable_type
     {
     int64_t address;

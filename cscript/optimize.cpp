@@ -7,6 +7,8 @@
 #include <stdexcept>
 #include <cmath>
 
+#include "defines.h"
+
 COMPILER_BEGIN
 
 namespace
@@ -418,39 +420,140 @@ namespace
       }
     };
 
-
-  struct strength_reduction : public base_visitor<simplify_assignment>
+  struct type_variables : public base_visitor<type_variables>
     {
-    strength_reduction() {}
+    std::map<std::string, value_type> variable_to_type_map;
+
+    type_variables() {}
+    virtual ~type_variables() {}
+
+    virtual void _postvisit(Int& i) 
+      {
+      if (!i.dims.empty())
+        variable_to_type_map[i.name] = integer_array;
+      else
+        variable_to_type_map[i.name] = integer;
+      }
+
+    virtual void _postvisit(Float& f)
+      {
+      if (!f.dims.empty())
+        variable_to_type_map[f.name] = single_array;
+      else
+        variable_to_type_map[f.name] = single;
+      }
+
+    virtual void _postvisit(IntParameter& i)
+      {
+      if (i.pointer)
+        variable_to_type_map[i.name] = pointer_to_integer;
+      else
+        variable_to_type_map[i.name] = integer;
+      }
+
+    virtual void _postvisit(FloatParameter& f)
+      {
+      if (f.pointer)
+        variable_to_type_map[f.name] = pointer_to_single;
+      else
+        variable_to_type_map[f.name] = single;
+      }
+    };
+
+  struct strength_reduction : public base_visitor<strength_reduction>
+    {
+    std::map<std::string, value_type>* p_variable_to_type_map;
+
+    strength_reduction() : p_variable_to_type_map(nullptr) {}
     virtual ~strength_reduction() {}
-    /*
-      FOR
-    INT j
-      EXPR
-        RELOP
-          TERM
-            FACTOR
-              VAR lo
-    EXPR <=
-      RELOP
-        TERM
-          FACTOR
-            VAR j
-      RELOP -
-        TERM
-          FACTOR
-            VAR hi
-        TERM
-          FACTOR
-            1
-    */
+
+    bool named_variable_is_integer(const std::string& name)
+      {
+      auto it = p_variable_to_type_map->find(name);
+      assert(it != p_variable_to_type_map->end());
+      switch (it->second)
+        {
+        case single: return false;
+        case integer: return true;
+        case single_array: return false;
+        case integer_array: return true;
+        case pointer_to_single: return false;
+        case pointer_to_integer: return true;
+        }
+      return false;
+      }
+
+    bool result_is_integer(const LValue& expr)
+      {
+      if (std::holds_alternative<Variable>(expr.lvalue))
+        {
+        return named_variable_is_integer(std::get<Variable>(expr.lvalue).name);
+        }
+      if (std::holds_alternative<Dereference>(expr.lvalue))
+        {
+        return named_variable_is_integer(std::get<Dereference>(expr.lvalue).name);
+        }
+      if (std::holds_alternative<ArrayCall>(expr.lvalue))
+        {
+        return named_variable_is_integer(std::get<ArrayCall>(expr.lvalue).name);
+        }
+      return false;
+      }
+
+    bool result_is_integer(const Factor& expr)
+      {
+      if (std::holds_alternative<value_t>(expr.factor))
+        {
+        auto val = std::get<value_t>(expr.factor);
+        return std::holds_alternative<int64_t>(val);
+        }
+      if (std::holds_alternative<Variable>(expr.factor))
+        {
+        return named_variable_is_integer(std::get<Variable>(expr.factor).name);
+        }
+      if (std::holds_alternative<Dereference>(expr.factor))
+        {
+        return named_variable_is_integer(std::get<Dereference>(expr.factor).name);     
+        }
+      if (std::holds_alternative<ArrayCall>(expr.factor))
+        {
+        return named_variable_is_integer(std::get<ArrayCall>(expr.factor).name);
+        }
+      if (std::holds_alternative<LValueOperator>(expr.factor))
+        {
+        return result_is_integer(*std::get<LValueOperator>(expr.factor).lvalue);
+        }
+      return false;
+      }
+
+    bool result_is_integer(const Term& expr)
+      {
+      for (const auto& op : expr.operands)
+        {
+        if (!result_is_integer(op))
+          return false;
+        }
+      return true;
+      }
+
+    bool result_is_integer(const Relop& expr)
+      {
+      for (const auto& op : expr.operands)
+        {
+        if (!result_is_integer(op))
+          return false;        
+        }
+      return true;
+      }
+    
     virtual void _postvisit(Expression& expr)
       {
+      assert(p_variable_to_type_map);
       if (expr.fops.size() == 1)
         {
         if (expr.fops[0] == "<=")
           {
-          if (expr.operands[0].operands.size() == 2)
+          if (expr.operands[0].operands.size() == 2 && result_is_integer(expr.operands[1]))
             {
             if (expr.operands[0].fops[0] == "+")
               {
@@ -470,7 +573,7 @@ namespace
                 }
               }
             }
-          if (expr.operands[1].operands.size() == 2)
+          if (expr.operands[1].operands.size() == 2 && result_is_integer(expr.operands[0]))
             {
             if (expr.operands[1].fops[0] == "+")
               {
@@ -497,7 +600,7 @@ namespace
 
         if (expr.fops[0] == ">=")
           {
-          if (expr.operands[0].operands.size() == 2)
+          if (expr.operands[0].operands.size() == 2 && result_is_integer(expr.operands[1]))
             {
             if (expr.operands[0].fops[0] == "+")
               {
@@ -520,7 +623,7 @@ namespace
                 }
               }
             }
-          if (expr.operands[1].operands.size() == 2)
+          if (expr.operands[1].operands.size() == 2 && result_is_integer(expr.operands[0]))
             {
             if (expr.operands[1].fops[0] == "+")
               {
@@ -541,6 +644,100 @@ namespace
               }
             }
           }
+
+        if (expr.fops[0] == "<")
+          {
+          if (expr.operands[0].operands.size() == 2 && result_is_integer(expr.operands[1]))
+            {
+            if (expr.operands[0].fops[0] == "+")
+              {
+              if (is_minus_one(expr.operands[0].operands[0])) // -1 + a < can be replaced by a <=
+                {
+                expr.fops[0] = "<=";
+                expr.operands[0].operands.erase(expr.operands[0].operands.begin());
+                expr.operands[0].fops.clear();
+                return;
+                }
+              }
+            if (expr.operands[0].fops[0] == "-")
+              {
+              if (is_one(expr.operands[0].operands[1])) // a - 1 < can be replaced by a <=
+                {
+                expr.fops[0] = "<=";
+                expr.operands[0].operands.pop_back();
+                expr.operands[0].fops.clear();
+                return;
+                }
+              }
+            }
+          if (expr.operands[1].operands.size() == 2 && result_is_integer(expr.operands[0]))
+            {
+            if (expr.operands[1].fops[0] == "+")
+              {
+              if (is_one(expr.operands[1].operands[0])) // < 1 + a can be replaced by <= a
+                {
+                expr.fops[0] = "<=";
+                expr.operands[1].operands.erase(expr.operands[1].operands.begin());
+                expr.operands[1].fops.clear();
+                return;
+                }
+              if (is_one(expr.operands[1].operands[1])) // < a + 1 can be replaced by <= a
+                {
+                expr.fops[0] = "<=";
+                expr.operands[1].operands.pop_back();
+                expr.operands[1].fops.clear();
+                return;
+                }
+              }
+            }
+          }
+
+        if (expr.fops[0] == ">")
+          {
+          if (expr.operands[0].operands.size() == 2 && result_is_integer(expr.operands[1]))
+            {
+            if (expr.operands[0].fops[0] == "+")
+              {
+              if (is_one(expr.operands[0].operands[0])) // 1 + a > can be replaced by a >=
+                {
+                expr.fops[0] = ">=";
+                expr.operands[0].operands.erase(expr.operands[0].operands.begin());
+                expr.operands[0].fops.clear();
+                return;
+                }
+              if (is_one(expr.operands[0].operands[1])) // a + 1 > can be replaced by a >=
+                {
+                expr.fops[0] = ">=";
+                expr.operands[0].operands.pop_back();
+                expr.operands[0].fops.clear();
+                return;
+                }
+              }
+            }
+          if (expr.operands[1].operands.size() == 2 && result_is_integer(expr.operands[0]))
+            {
+            if (expr.operands[1].fops[0] == "+")
+              {
+              if (is_minus_one(expr.operands[1].operands[0])) // > -1 + a can be replaced by >= a
+                {
+                expr.fops[0] = ">=";
+                expr.operands[1].operands.erase(expr.operands[1].operands.begin());
+                expr.operands[1].fops.clear();
+                return;
+                }
+              }
+            if (expr.operands[1].fops[0] == "-")
+              {
+              if (is_one(expr.operands[1].operands[1])) // > a - 1 can be replaced by >= a
+                {
+                expr.fops[0] = ">=";
+                expr.operands[1].operands.pop_back();
+                expr.operands[1].fops.clear();
+                return;
+                }
+              }
+            }
+          }
         }
 
       }
@@ -553,7 +750,10 @@ void optimize(Program& prog)
   visitor<Program, simplify_constant_expressions>::visit(prog, &sce);
   simplify_assignment sa;
   visitor<Program, simplify_assignment>::visit(prog, &sa);
+  type_variables tv;
+  visitor<Program, type_variables>::visit(prog, &tv);
   strength_reduction sr;
+  sr.p_variable_to_type_map = &tv.variable_to_type_map;
   visitor<Program, strength_reduction>::visit(prog, &sr);
   }
 
