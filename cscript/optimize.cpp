@@ -444,6 +444,7 @@ namespace
     {
     std::map<std::string, value_type> variable_to_type_map;
     std::set<std::string> variables_that_change_value;
+    std::set<std::string> variables_that_are_used;
 
     type_variables() {}
     virtual ~type_variables() {}
@@ -454,6 +455,14 @@ namespace
         variable_to_type_map[i.name] = integer_array;
       else
         variable_to_type_map[i.name] = integer;
+      if (!i.dims.empty())
+        {
+        bool constant_dims = true;
+        for (const auto& d : i.dims)
+          constant_dims &= is_constant(d);
+        if (!constant_dims)
+          variables_that_are_used.insert(i.name);
+        }
       }
 
     virtual void _postvisit(Float& f)
@@ -462,6 +471,14 @@ namespace
         variable_to_type_map[f.name] = single_array;
       else
         variable_to_type_map[f.name] = single;
+      if (!f.dims.empty())
+        {
+        bool constant_dims = true;
+        for (const auto& d : f.dims)
+          constant_dims &= is_constant(d);
+        if (!constant_dims)
+          variables_that_are_used.insert(f.name);
+        }
       }
 
     virtual void _postvisit(IntParameter& i)
@@ -470,6 +487,7 @@ namespace
         variable_to_type_map[i.name] = pointer_to_integer;
       else
         variable_to_type_map[i.name] = integer;
+      variables_that_are_used.insert(i.name);
       }
 
     virtual void _postvisit(FloatParameter& f)
@@ -478,6 +496,7 @@ namespace
         variable_to_type_map[f.name] = pointer_to_single;
       else
         variable_to_type_map[f.name] = single;
+      variables_that_are_used.insert(f.name);
       }
 
     virtual void _postvisit(Assignment& a)
@@ -485,19 +504,107 @@ namespace
       variables_that_change_value.insert(a.name);
       }
 
+    virtual void _postvisit(Variable& v)
+      {
+      variables_that_are_used.insert(v.name);
+      }
+
+    virtual void _postvisit(ArrayCall& a)
+      {
+      variables_that_are_used.insert(a.name);
+      }
+
+    virtual void _postvisit(Dereference& d)
+      {
+      variables_that_are_used.insert(d.name);
+      }
+
     virtual void _postvisit(LValue& a)
       {
       if (std::holds_alternative<Variable>(a.lvalue))
         {
         variables_that_change_value.insert(std::get<Variable>(a.lvalue).name);
+        variables_that_are_used.insert(std::get<Variable>(a.lvalue).name);
         }      
       if (std::holds_alternative<ArrayCall>(a.lvalue))
         {
         variables_that_change_value.insert(std::get<ArrayCall>(a.lvalue).name);
+        variables_that_are_used.insert(std::get<ArrayCall>(a.lvalue).name);
         }
       if (std::holds_alternative<Dereference>(a.lvalue))
         {
         variables_that_change_value.insert(std::get<Dereference>(a.lvalue).name);
+        variables_that_are_used.insert(std::get<Dereference>(a.lvalue).name);
+        }
+      }
+    };
+
+  struct remove_dead_variables : public base_visitor<remove_dead_variables>
+    {
+    std::set<std::string>* p_variables_that_are_used;
+
+    remove_dead_variables() {}
+    virtual ~remove_dead_variables() {}
+
+    virtual void _postvisit(Statement& stm)
+      {
+      if (std::holds_alternative<Int>(stm))
+        {
+        Int& i = std::get<Int>(stm);
+        auto it = p_variables_that_are_used->find(i.name);
+        if (it == p_variables_that_are_used->end())
+          {
+          if (i.expr.operands.empty())
+            {
+            stm = Nop();
+            }
+          else if (is_constant(i.expr))
+            {
+            stm = Nop();
+            }
+          else
+            {
+            stm = i.expr;            
+            }
+          }
+        }
+      else if (std::holds_alternative<Float>(stm))
+        {
+        Float& f = std::get<Float>(stm);
+        auto it = p_variables_that_are_used->find(f.name);
+        if (it == p_variables_that_are_used->end())
+          {
+          if (f.expr.operands.empty())
+            {
+            stm = Nop();
+            }
+          else if (is_constant(f.expr))
+            {
+            stm = Nop();
+            }
+          else
+            {
+            stm = f.expr;
+            }
+          }
+        }
+      else if (std::holds_alternative<Assignment>(stm))
+        {
+        Assignment& a = std::get<Assignment>(stm);
+        auto it = p_variables_that_are_used->find(a.name);
+        if (it == p_variables_that_are_used->end())
+          {
+          // We don't check the dimensions because we know they are constant.
+          // When we compute the variables that are used or not in visitor type_variables, if the dimensions are not constant, they are added as being used and so we cannot end up here.
+          if (is_constant(a.expr))
+            {
+            stm = Nop();
+            }
+          else
+            {
+            stm = a.expr;
+            }
+          }
         }
       }
     };
@@ -511,51 +618,6 @@ namespace
 
     replace_constant_variables() {}
     virtual ~replace_constant_variables() {}
-
-    /*
-    virtual void _postvisit(Int& i)
-      {
-      auto it = p_variables_that_change_value->find(i.name);
-      if (it == p_variables_that_change_value->end() && i.dims.empty())
-        {
-        if (i.expr.operands.empty())          
-          {
-          variable_to_value_map[i.name] = 0.0;
-          }
-        else if (is_constant(i.expr))
-          {
-          value_t v = get_constant_value(i.expr);
-          variable_to_value_map[i.name] = to_d(v);
-          }
-        }
-      }
-
-    virtual void _postvisit(Float& f)
-      {
-      auto it = p_variables_that_change_value->find(f.name);
-      if (it == p_variables_that_change_value->end() && f.dims.empty())
-        {
-        if (f.expr.operands.empty())
-          {
-          variable_to_value_map[f.name] = 0.0;
-          }
-        else if (is_constant(f.expr))
-          {
-          value_t v = get_constant_value(f.expr);
-          variable_to_value_map[f.name] = to_d(v);
-          }
-        }
-      }
-
-    virtual void _postvisit(Variable& v)
-      {
-      auto it = variable_to_value_map.find(v.name);
-      if (it != variable_to_value_map.end())
-        {
-
-        }
-      }
-      */
 
     virtual void _postvisit(Factor& f)
       {
@@ -901,9 +963,12 @@ namespace
 void optimize(Program& prog)
   {
   type_variables tv;
-  visitor<Program, type_variables>::visit(prog, &tv);
+  visitor<Program, type_variables>::visit(prog, &tv);  
   simplify_constant_expressions sce;
   visitor<Program, simplify_constant_expressions>::visit(prog, &sce);
+  remove_dead_variables rdv;
+  rdv.p_variables_that_are_used = &tv.variables_that_are_used;
+  visitor<Program, remove_dead_variables>::visit(prog, &rdv);
   replace_constant_variables rcv;
   rcv.p_variable_to_type_map = &tv.variable_to_type_map;
   rcv.p_variables_that_change_value = &tv.variables_that_change_value;

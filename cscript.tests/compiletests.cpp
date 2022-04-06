@@ -887,6 +887,19 @@ struct if_test : public compile_fixture
     }
   };
 
+struct dead_code_test : public compile_fixture
+  {
+  void test(bool optimize = false, bool peephole = true)
+    {
+    TEST_EQ(3.0, run("() float f = 0; int i; int j = 3; j;"), optimize, peephole);
+    TEST_EQ(3.0, run("() float f; f = 0; int i; int j = 3; j;"), optimize, peephole);
+    TEST_EQ(3.0, run("() float f; f += 1; int i; int j = 3; j;"), optimize, peephole);
+    TEST_EQ(3.0, run("() float f; f -= 2; int i; int j = 3; j;"), optimize, peephole);
+    TEST_EQ(3.0, run("() float f; f *= 4; int i; i = 2; int j = 3; j;"), optimize, peephole);
+    TEST_EQ(3.0, run("() float f; f /= 7; int i; i += 5; int j = 3; j;"), optimize, peephole);
+    }
+  };
+
 struct harmonic : public compile_fixture
   {
   void test(bool optimize = false, bool peephole = true)
@@ -1086,10 +1099,11 @@ void run_all_compile_tests()
     rsp_offset_test().test(optimize, peephole);
     modulo_test().test(optimize, peephole);
     if_test().test(optimize, peephole);
-    harmonic().test(optimize, peephole);
-    fibonacci().test(optimize, peephole);
-    hamming().test(optimize, peephole);
-    qsorter().test(optimize, peephole);
+    dead_code_test().test(optimize, peephole);
+    //harmonic().test(optimize, peephole);
+    //fibonacci().test(optimize, peephole);
+    //hamming().test(optimize, peephole);
+    //qsorter().test(optimize, peephole);
     }
   test_strength_reduction().test();
   }

@@ -210,6 +210,20 @@ void test_optimize_constant_variables()
   code.stream(std::cout);
   }
 
+void test_optimize_unused_variables()
+  {
+  pretty_print_visitor ppv;
+  auto tokens = tokenize("() int x = 1; int y = 2; float r; float g; float b; float z;x;");
+  auto prog = make_program(tokens);
+  visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
+  optimize(prog);
+  visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
+  VM::vmcode code;
+  compile(code, prog);
+  peephole_optimization(code);
+  code.stream(std::cout);
+  }
+
 COMPILER_END
 
 void run_all_optimize_tests()
@@ -225,4 +239,5 @@ void run_all_optimize_tests()
   //test_optimize_mul_zero();
   //test_optimize_div_one();
   //test_optimize_constant_variables();
+  //test_optimize_unused_variables();
   }
