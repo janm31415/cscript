@@ -891,12 +891,12 @@ struct dead_code_test : public compile_fixture
   {
   void test(bool optimize = false, bool peephole = true)
     {
-    TEST_EQ(3.0, run("() float f = 0; int i; int j = 3; j;"), optimize, peephole);
-    TEST_EQ(3.0, run("() float f; f = 0; int i; int j = 3; j;"), optimize, peephole);
-    TEST_EQ(3.0, run("() float f; f += 1; int i; int j = 3; j;"), optimize, peephole);
-    TEST_EQ(3.0, run("() float f; f -= 2; int i; int j = 3; j;"), optimize, peephole);
-    TEST_EQ(3.0, run("() float f; f *= 4; int i; i = 2; int j = 3; j;"), optimize, peephole);
-    TEST_EQ(3.0, run("() float f; f /= 7; int i; i += 5; int j = 3; j;"), optimize, peephole);
+    TEST_EQ(3.0, run("() float f = 0; int i; int j = 3; j;", optimize, peephole));
+    TEST_EQ(3.0, run("() float f; f = 0; int i; int j = 3; j;", optimize, peephole));
+    TEST_EQ(3.0, run("() float f; f += 1; int i; int j = 3; j;", optimize, peephole));
+    TEST_EQ(3.0, run("() float f; f -= 2; int i; int j = 3; j;", optimize, peephole));
+    TEST_EQ(3.0, run("() float f; f *= 4; int i; i = 2; int j = 3; j;", optimize, peephole));
+    TEST_EQ(3.0, run("() float f; f /= 7; int i; i += 5; int j = 3; j;", optimize, peephole));
     }
   };
 
