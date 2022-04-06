@@ -117,6 +117,21 @@ namespace
     return it;
     }
 
+  std::vector<VM::vmcode::instruction>::iterator peephole_mov_3(std::vector<VM::vmcode::instruction>::iterator it, std::vector<VM::vmcode::instruction>& vec)
+    {
+    if (it->oper != VM::vmcode::MOV)
+      return it;
+    auto it2 = it;
+    ++it2;
+    if (it2 == vec.end())
+      return it;
+    if (it2->oper == VM::vmcode::MOV && it->operand1 == it2->operand1 && it->operand1_mem == it2->operand1_mem)
+      {
+      it = vec.erase(it); // two moves that move to the same spot, so remove the first move.
+      }
+    return it;
+    }
+
   bool operations_duplicate_has_no_effect(VM::vmcode::instruction instr)
     {
     switch (instr.oper)
@@ -186,6 +201,7 @@ namespace
       {
       it = peephole_mov_1(it, vec);
       it = peephole_mov_2(it, vec);
+      it = peephole_mov_3(it, vec);
       it = remove_duplicates(it, vec);
       ++it;
       }
