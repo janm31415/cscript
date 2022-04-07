@@ -44,7 +44,6 @@ namespace
       case vmcode::CMPEQPD: return 2;
       case vmcode::CMPLTPD: return 2;
       case vmcode::CMPLEPD: return 2;
-      case vmcode::CQO: return 0;
       case vmcode::CVTSI2SD: return 2;
       case vmcode::CVTTSD2SI:return 2;
       case vmcode::CSQRT:return 2;
@@ -180,7 +179,7 @@ namespace
       case vmcode::COMMENT: return true;
       default: return false;
       }
-    }  
+    }    
 
   void get_memory_size_type(uint8_t& opmem, bool& save_mem_size, const vmcode::operation& op, const vmcode::operand& oprnd, uint64_t oprnd_mem)
     {
@@ -1877,14 +1876,6 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       case vmcode::CMP:
       {
       compare_operation(operand1, operand2, operand1_mem, operand2_mem, regs);
-      break;
-      }
-      case vmcode::CQO:
-      {
-      if (regs.rax & 0x8000000000000000)
-        regs.rdx = 0xffffffffffffffff;
-      else
-        regs.rdx = 0;
       break;
       }
       case vmcode::CMPEQPD:

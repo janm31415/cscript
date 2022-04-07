@@ -196,7 +196,6 @@ namespace
       case vmcode::CMPEQPD: return "cmpeqpd";
       case vmcode::CMPLTPD: return "cmpltpd";
       case vmcode::CMPLEPD: return "cmplepd";
-      case vmcode::CQO: return "cqo";
       case vmcode::CVTSI2SD: return "cvtsi2sd";
       case vmcode::CVTTSD2SI: return "cvttsd2si";
       case vmcode::CSQRT:return std::string("csqrt");
@@ -449,7 +448,6 @@ std::string vmcode::operation_to_string(operation oper)
     case vmcode::CMPEQPD: return std::string("CMPEQPD");
     case vmcode::CMPLTPD: return std::string("CMPLTPD");
     case vmcode::CMPLEPD: return std::string("CMPLEPD");
-    case vmcode::CQO: return std::string("CQO");
     case vmcode::CVTSI2SD: return std::string("CVTSI2SD");
     case vmcode::CVTTSD2SI:return std::string("CVTTSD2SI");
     case vmcode::CSQRT:return std::string("CSQRT");
