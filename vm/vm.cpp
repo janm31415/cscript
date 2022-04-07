@@ -78,7 +78,7 @@ namespace
       case vmcode::JG: return 1;
       case vmcode::JGE:return 1;
       case vmcode::JNE:return 1;
-      case vmcode::JMP:return 1;   
+      case vmcode::JMP:return 1;
       case vmcode::MOD: return 2;
       case vmcode::MODSD: return 2;
       case vmcode::MOV: return 2;
@@ -164,7 +164,7 @@ namespace
       case vmcode::JGE:
       case vmcode::JNE:
       case vmcode::JMP:
-        return _32BIT;   
+        return _32BIT;
       default: return _VARIABLE;
       }
     }
@@ -179,7 +179,7 @@ namespace
       case vmcode::COMMENT: return true;
       default: return false;
       }
-    }    
+    }
 
   void get_memory_size_type(uint8_t& opmem, bool& save_mem_size, const vmcode::operation& op, const vmcode::operand& oprnd, uint64_t oprnd_mem)
     {
@@ -487,7 +487,7 @@ namespace
             }
           data.size += fill_vm_bytecode(instr, buffer);
           break;
-          }         
+          }
           case vmcode::LABEL:
             data.label_to_address[instr.text] = data.size; break;
           case vmcode::LABEL_ALIGNED:
@@ -608,7 +608,7 @@ namespace
           instr.operand1 = vmcode::NUMBER;
           instr.operand1_mem = (int64_t(address - current));
           break;
-          }  
+          }
           }
         func += fill_vm_bytecode(instr, func);
         }
@@ -876,7 +876,7 @@ namespace
       case vmcode::R12: return &regs.r12;
       case vmcode::R13: return &regs.r13;
       case vmcode::R14: return &regs.r14;
-      case vmcode::R15: return &regs.r15;      
+      case vmcode::R15: return &regs.r15;
       case vmcode::XMM0: return (uint64_t*)(&regs.xmm0);
       case vmcode::XMM1: return (uint64_t*)(&regs.xmm1);
       case vmcode::XMM2: return (uint64_t*)(&regs.xmm2);
@@ -909,11 +909,11 @@ namespace
       case vmcode::MEM_R12: return (uint64_t*)(regs.r12 + operand_mem);
       case vmcode::MEM_R13: return (uint64_t*)(regs.r13 + operand_mem);
       case vmcode::MEM_R14: return (uint64_t*)(regs.r14 + operand_mem);
-      case vmcode::MEM_R15: return (uint64_t*)(regs.r15 + operand_mem);      
+      case vmcode::MEM_R15: return (uint64_t*)(regs.r15 + operand_mem);
       case vmcode::LABELADDRESS: *reserved = operand_mem; return reserved;
       default: return nullptr;
       }
-      }
+    }
 
   struct AddOper
     {
@@ -1158,23 +1158,13 @@ namespace
     uint64_t operand2_mem,
     registers& regs)
     {
-#if 0
-    uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
-    if (oprnd1)
-      {
-      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
-      if (oprnd2)
-        TOper::apply(*reinterpret_cast<double*>(oprnd1), *reinterpret_cast<double*>(oprnd2));
-      }
-#else
     uint64_t tmp;
     uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
     uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
     assert(oprnd1);
     assert(oprnd2);
     TOper::apply(*reinterpret_cast<double*>(oprnd1), *reinterpret_cast<double*>(oprnd2));
-#endif
-      }
+    }
 
   template <class TOper>
   inline uint64_t execute_operation_const(vmcode::operand operand1,
@@ -1365,9 +1355,9 @@ namespace
         break;
         }
         }
-        }
+      }
     return args;
-        }
+    }
 
   template <class T>
   T _call_external_0(const external_function& f)
@@ -1809,7 +1799,7 @@ namespace
       }
     }
 
-      } // namespace
+  } // namespace
 void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const std::vector<external_function>& externals)
   {
   (void*)size;
@@ -1879,7 +1869,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
         throw std::logic_error("Call to unknown external function\n");
       call_external(*it, regs);
       break;
-      }      
+      }
       case vmcode::CMP:
       {
       compare_operation(operand1, operand2, operand1_mem, operand2_mem, regs);
@@ -2010,7 +2000,6 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
         regs.eflags &= ~zero_flag;
       else
         regs.eflags |= zero_flag;
-
       break;
       }
       case vmcode::DIV:
@@ -2026,11 +2015,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::DIV2:
       {
-      uint64_t tmp;
-      //uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
-      //uint64_t divider = *oprnd1;
-      //uint64_t result = regs.rax / divider;      
-      //regs.rax = result;      
+      uint64_t tmp;   
       uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
       uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
       uint64_t result = *oprnd1 / *oprnd2;
@@ -2070,7 +2055,6 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       assert(oprnd1);
       if (oprnd2)
         {
-        assert(oprnd1);
         *oprnd1 *= (int64_t)(*oprnd2);
         }
       else
@@ -2111,20 +2095,14 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
         }
       break;
       }
-      case vmcode::JA:      
+      case vmcode::JA:
       {
       if (((regs.eflags & zero_flag) | (regs.eflags & carry_flag)) == 0)
         {
-        if (operand1 == vmcode::NUMBER)
-          {
-          int32_t local_offset = (int32_t)operand1_mem;
-          bytecode_ptr += local_offset;
-          sz = 0;
-          }
-        else
-          {
-          throw std::logic_error("ja(s) not implemented");
-          }
+        assert(operand1 == vmcode::NUMBER);
+        int32_t local_offset = (int32_t)operand1_mem;
+        bytecode_ptr += local_offset;
+        sz = 0;
         }
       break;
       }
@@ -2132,16 +2110,10 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       {
       if (regs.eflags & carry_flag)
         {
-        if (operand1 == vmcode::NUMBER)
-          {
-          int32_t local_offset = (int32_t)operand1_mem;
-          bytecode_ptr += local_offset;
-          sz = 0;
-          }
-        else
-          {
-          throw std::logic_error("jb(s) not implemented");
-          }
+        assert(operand1 == vmcode::NUMBER);
+        int32_t local_offset = (int32_t)operand1_mem;
+        bytecode_ptr += local_offset;
+        sz = 0;
         }
       break;
       }
@@ -2149,16 +2121,10 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       {
       if (regs.eflags & zero_flag)
         {
-        if (operand1 == vmcode::NUMBER)
-          {
-          int32_t local_offset = (int32_t)operand1_mem;
-          bytecode_ptr += local_offset;
-          sz = 0;
-          }
-        else
-          {
-          throw std::logic_error("je(s) not implemented");
-          }
+        assert(operand1 == vmcode::NUMBER);
+        int32_t local_offset = (int32_t)operand1_mem;
+        bytecode_ptr += local_offset;
+        sz = 0;
         }
       break;
       }
@@ -2166,16 +2132,10 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       {
       if (((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)))
         {
-        if (operand1 == vmcode::NUMBER)
-          {
-          int32_t local_offset = (int32_t)operand1_mem;
-          bytecode_ptr += local_offset;
-          sz = 0;
-          }
-        else
-          {
-          throw std::logic_error("jl(s) not implemented");
-          }
+        assert(operand1 == vmcode::NUMBER);
+        int32_t local_offset = (int32_t)operand1_mem;
+        bytecode_ptr += local_offset;
+        sz = 0;
         }
       break;
       }
@@ -2183,16 +2143,10 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       {
       if ((((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)) | (regs.eflags & zero_flag)))
         {
-        if (operand1 == vmcode::NUMBER)
-          {
-          int32_t local_offset = (int32_t)operand1_mem;
-          bytecode_ptr += local_offset;
-          sz = 0;
-          }
-        else
-          {
-          throw std::logic_error("jle(s) not implemented");
-          }
+        assert(operand1 == vmcode::NUMBER);
+        int32_t local_offset = (int32_t)operand1_mem;
+        bytecode_ptr += local_offset;
+        sz = 0;
         }
       break;
       }
@@ -2200,16 +2154,10 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       {
       if ((((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)) | (regs.eflags & zero_flag)) == 0)
         {
-        if (operand1 == vmcode::NUMBER)
-          {
-          int32_t local_offset = (int32_t)operand1_mem;
-          bytecode_ptr += local_offset;
-          sz = 0;
-          }
-        else
-          {
-          throw std::logic_error("jg(s) not implemented");
-          }
+        assert(operand1 == vmcode::NUMBER);
+        int32_t local_offset = (int32_t)operand1_mem;
+        bytecode_ptr += local_offset;
+        sz = 0;
         }
       break;
       }
@@ -2217,36 +2165,24 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       {
       if (((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)) == 0)
         {
-        if (operand1 == vmcode::NUMBER)
-          {
-          int32_t local_offset = (int32_t)operand1_mem;
-          bytecode_ptr += local_offset;
-          sz = 0;
-          }
-        else
-          {
-          throw std::logic_error("jge(s) not implemented");
-          }
+        assert(operand1 == vmcode::NUMBER);
+        int32_t local_offset = (int32_t)operand1_mem;
+        bytecode_ptr += local_offset;
+        sz = 0;
         }
       break;
-      }      
+      }
       case vmcode::JNE:
       {
       if ((regs.eflags & zero_flag) == 0)
         {
-        if (operand1 == vmcode::NUMBER)
-          {
-          int32_t local_offset = (int32_t)operand1_mem;
-          bytecode_ptr += local_offset;
-          sz = 0;
-          }
-        else
-          {
-          throw std::logic_error("jne(s) not implemented");
-          }
+        assert(operand1 == vmcode::NUMBER);
+        int32_t local_offset = (int32_t)operand1_mem;
+        bytecode_ptr += local_offset;
+        sz = 0;
         }
       break;
-      }     
+      }
       case vmcode::MOD:
       {
       execute_operation<ModOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
