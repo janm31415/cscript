@@ -94,19 +94,13 @@ namespace
     return false;
     }
 
-  bool is_operation_that_sets_first_register(VM::vmcode::operation op)
+  bool is_operation_that_sets_first_register_without_side_effects(VM::vmcode::operation op)
     {
     switch (op)
       {
       case VM::vmcode::MOV:
       case VM::vmcode::CVTSI2SD:
       case VM::vmcode::CVTTSD2SI:
-      case VM::vmcode::SETE:
-      case VM::vmcode::SETNE:
-      case VM::vmcode::SETL:
-      case VM::vmcode::SETG:
-      case VM::vmcode::SETLE:
-      case VM::vmcode::SETGE:
         return true;
       }
     return false;
@@ -266,7 +260,7 @@ namespace
         if (get_memory_register(instr.operand1) == instr.operand1 && get_register(instr.operand1) != instr.operand1) // any memory register is not a placeholder
           non_placeholders.insert(get_register(instr.operand1));
         }
-      if (!is_operation_that_sets_first_register(instr.oper))
+      if (!is_operation_that_sets_first_register_without_side_effects(instr.oper))
         {
         non_placeholders.insert(get_register(instr.operand1));
         }
@@ -277,7 +271,7 @@ namespace
       {
       for (const auto& instr : vec)
         {
-        if (is_operation_that_sets_first_register(instr.oper))
+        if (is_operation_that_sets_first_register_without_side_effects(instr.oper))
           {
           auto it = non_placeholders.find(get_register(instr.operand2));
           if (it != non_placeholders.end())
@@ -325,7 +319,7 @@ namespace
         {
         done = true;
         }
-      else if (is_operation_that_sets_first_register(it2->oper) && it2->operand1 == local_register)
+      else if (is_operation_that_sets_first_register_without_side_effects(it2->oper) && it2->operand1 == local_register)
         {
         done = true;
         }
