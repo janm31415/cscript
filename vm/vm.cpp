@@ -117,6 +117,13 @@ namespace
       case vmcode::UCOMISD: return 2;
       case vmcode::XOR: return 2;
       case vmcode::XORPD: return 2;
+
+      case vmcode::MOVADD: return 3;
+      case vmcode::MOVSUB: return 3;
+      case vmcode::MOVMUL: return 3;
+      case vmcode::MOVDIV: return 3;
+      case vmcode::MOVSHL: return 3;
+      case vmcode::MOVSHR: return 3;
       default:
       {
       std::stringstream str;
@@ -287,6 +294,7 @@ namespace
     }
 
   /*
+  Byte settings for normal operators:
   byte 1: operation opcode: equal to (int)vmcode::operation value of instr.oper
   byte 2: first operand: equal to (int)vmcode::operand of instr.operand1
   byte 3: second operand: equal to (int)vmcode::operand of instr.operand2
@@ -302,6 +310,29 @@ namespace
                                   : 3 => instr.operand2_mem needs 32 bits
                                   : 4 => instr.operand2_mem needs 64 bits
   byte 5+: instr.operand1_mem using as many bytes as warranted by byte 4, followed by instr.operand2_mem using as many bytes as warranted by byte4.
+
+  Byte settings for super operators:
+  byte 1: operation opcode: equal to (int)vmcode::operation value of instr.oper, but value is larger or equal than SUPEROPERATOR_START
+  byte 2: first operand: equal to (int)vmcode::operand of instr.operand1
+  byte 3: second operand: equal to (int)vmcode::operand of instr.operand2
+  byte 4: third operand: equal to (int)vmcode::operand of instr.operand3
+  byte 5: information on operand1_mem and operand2_mem
+          First two bits equal to : 0 => instr.operand1_mem equals zero
+                                  : 1 => instr.operand1_mem needs 8 bits
+                                  : 2 => instr.operand1_mem needs 32 bits
+                                  : 3 => instr.operand1_mem needs 64 bits                                  
+          Bits three to five equal to : 0 => instr.operand2_mem equals zero
+                                      : 1 => instr.operand2_mem needs 8 bits
+                                      : 2 => instr.operand2_mem needs 16 bits
+                                      : 3 => instr.operand2_mem needs 32 bits
+                                      : 4 => instr.operand2_mem needs 64 bits
+          Last three bits equal to    : 0 => instr.operand3_mem equals zero
+                                      : 1 => instr.operand3_mem needs 8 bits
+                                      : 2 => instr.operand3_mem needs 16 bits
+                                      : 3 => instr.operand3_mem needs 32 bits
+                                      : 4 => instr.operand3_mem needs 64 bits
+  byte 6+: instr.operand1_mem using as many bytes as warranted by byte 5, followed by instr.operand2_mem using as many bytes as warranted by byte 5,
+           flollowed by instr.operand3_mem using as many bytes as warranted by byte 5.
   */
   uint64_t fill_vm_bytecode(const vmcode::instruction& instr, uint8_t* opcode_stream)
     {
@@ -311,9 +342,11 @@ namespace
     opcode_stream[sz++] = (uint8_t)instr.oper;
     uint8_t op1mem = 0;
     uint8_t op2mem = 0;
+    uint8_t op3mem = 0;
     int nr_ops = number_of_operands(instr.oper);
     if (nr_ops == 1)
       {
+      assert((int)instr.oper < SUPEROPERATOR_START);
       bool savemem = true;
       get_memory_size_type(op1mem, savemem, instr.oper, instr.operand1, instr.operand1_mem);
       if (savemem)
@@ -328,6 +361,7 @@ namespace
       }
     else if (nr_ops == 2)
       {
+      assert((int)instr.oper < SUPEROPERATOR_START);
       bool savemem1 = true;
       bool savemem2 = true;
       get_memory_size_type(op1mem, savemem1, instr.oper, instr.operand1, instr.operand1_mem);
@@ -344,6 +378,35 @@ namespace
         opcode_stream[sz++] = (uint8_t)instr.operand2 | operand_has_8bit_mem;
         }
       }
+    else if (nr_ops == 3)
+      {
+      assert((int)instr.oper >= SUPEROPERATOR_START);
+      bool savemem1 = true;
+      bool savemem2 = true;
+      bool savemem3 = true;
+      get_memory_size_type(op1mem, savemem1, instr.oper, instr.operand1, instr.operand1_mem);
+      get_memory_size_type(op2mem, savemem2, instr.oper, instr.operand2, instr.operand2_mem);
+      get_memory_size_type(op3mem, savemem3, instr.oper, instr.operand3, instr.operand3_mem);
+      if (savemem1 || savemem2 || savemem3)
+        {
+        // see bit layout for memory in explanation above for super operators
+        if (op1mem == 2) // 16bit
+          op1mem = 3; // make 32 bit
+        uint8_t op1memstorage = op1mem;
+        if (op1memstorage >= 3)
+          --op1memstorage;
+        opcode_stream[sz++] = (uint8_t)instr.operand1;
+        opcode_stream[sz++] = (uint8_t)instr.operand2;
+        opcode_stream[sz++] = (uint8_t)instr.operand3;
+        opcode_stream[sz++] = (uint8_t)(op3mem << 5) | (uint8_t)(op2mem << 2) | op1memstorage;
+        }
+      else
+        {
+        opcode_stream[sz++] = (uint8_t)instr.operand1 | operand_has_8bit_mem;
+        opcode_stream[sz++] = (uint8_t)instr.operand2 | operand_has_8bit_mem;
+        opcode_stream[sz++] = (uint8_t)instr.operand3 | operand_has_8bit_mem;
+        }
+      }
     switch (op1mem)
       {
       case 1: opcode_stream[sz++] = (uint8_t)instr.operand1_mem; break;
@@ -360,102 +423,15 @@ namespace
       case 4: *(reinterpret_cast<uint64_t*>(opcode_stream + sz)) = (uint64_t)instr.operand2_mem; sz += 8; break;
       default: break;
       }
-    return sz;
-    /*
-    switch (instr.oper)
+    switch (op3mem)
       {
-      case vmcode::LABEL: return 0;
-      case vmcode::LABEL_ALIGNED: return 0;
-      case vmcode::GLOBAL: return 0;
-      case vmcode::COMMENT: return 0;
-      case vmcode::NOP:
-      {
-      opcode_stream[0] = (uint8_t)instr.oper;
-      return 1;
-      }
+      case 1: opcode_stream[sz++] = (uint8_t)instr.operand3_mem; break;
+      case 2: *(reinterpret_cast<uint16_t*>(opcode_stream + sz)) = (uint16_t)instr.operand3_mem; sz += 2; break;
+      case 3: *(reinterpret_cast<uint32_t*>(opcode_stream + sz)) = (uint32_t)instr.operand3_mem; sz += 4; break;
+      case 4: *(reinterpret_cast<uint64_t*>(opcode_stream + sz)) = (uint64_t)instr.operand3_mem; sz += 8; break;
       default: break;
       }
-    opcode_stream[0] = (uint8_t)instr.oper;
-    opcode_stream[1] = (uint8_t)instr.operand1;
-    opcode_stream[2] = (uint8_t)instr.operand2;
-    uint8_t op1mem = 0;
-    uint8_t op2mem = 0;
-    if (instr.operand1_mem != 0)
-      {
-      if (is_8_bit(instr.operand1_mem))
-        op1mem = 1;
-      else if (is_16_bit(instr.operand1_mem))
-        op1mem = 2;
-      else if (is_32_bit(instr.operand1_mem))
-        op1mem = 3;
-      else
-        op1mem = 4;
-      }
-    if (op1mem < 4)
-      {
-      if (instr.operand1 == vmcode::LABELADDRESS)
-        op1mem = 4;
-      }
-    if (op1mem < 3)
-      {
-      if (instr.oper == vmcode::CALL)
-        op1mem = 3;
-      if (instr.oper == vmcode::JMP)
-        op1mem = 3;
-      if (instr.oper == vmcode::JA)
-        op1mem = 3;
-      if (instr.oper == vmcode::JB)
-        op1mem = 3;
-      if (instr.oper == vmcode::JE)
-        op1mem = 3;
-      if (instr.oper == vmcode::JL)
-        op1mem = 3;
-      if (instr.oper == vmcode::JLE)
-        op1mem = 3;
-      if (instr.oper == vmcode::JG)
-        op1mem = 3;
-      if (instr.oper == vmcode::JGE)
-        op1mem = 3;
-      if (instr.oper == vmcode::JNE)
-        op1mem = 3;
-      }
-    if (instr.operand2_mem != 0)
-      {
-      if (is_8_bit(instr.operand2_mem))
-        op2mem = 1;
-      else if (is_16_bit(instr.operand2_mem))
-        op2mem = 2;
-      else if (is_32_bit(instr.operand2_mem))
-        op2mem = 3;
-      else
-        op2mem = 4;
-      }
-    if (op2mem < 4)
-      {
-      if (instr.operand2 == vmcode::LABELADDRESS)
-        op2mem = 4;
-      }
-    opcode_stream[3] = (uint8_t)(op2mem << 4) | op1mem;
-    uint64_t sz = 4;
-    switch (op1mem)
-      {
-      case 1: opcode_stream[sz++] = (uint8_t)instr.operand1_mem; break;
-      case 2: *(reinterpret_cast<uint16_t*>(opcode_stream + sz)) = (uint16_t)instr.operand1_mem; sz += 2; break;
-      case 3: *(reinterpret_cast<uint32_t*>(opcode_stream + sz)) = (uint32_t)instr.operand1_mem; sz += 4; break;
-      case 4: *(reinterpret_cast<uint64_t*>(opcode_stream + sz)) = (uint64_t)instr.operand1_mem; sz += 8; break;
-      default: break;
-      }
-    switch (op2mem)
-      {
-      case 1: opcode_stream[sz++] = (uint8_t)instr.operand2_mem; break;
-      case 2: *(reinterpret_cast<uint16_t*>(opcode_stream + sz)) = (uint16_t)instr.operand2_mem; sz += 2; break;
-      case 3: *(reinterpret_cast<uint32_t*>(opcode_stream + sz)) = (uint32_t)instr.operand2_mem; sz += 4; break;
-      case 4: *(reinterpret_cast<uint64_t*>(opcode_stream + sz)) = (uint64_t)instr.operand2_mem; sz += 8; break;
-      default: break;
-      }
-
-    return sz;
-    */
+    return sz;  
     }
 
 
@@ -762,6 +738,7 @@ void free_bytecode(void* f, uint64_t size)
 
 
 /*
+Byte settings for normal operators:
 byte 1: operation opcode: equal to (int)vmcode::operation value of instr.oper
 byte 2: first operand: equal to (int)vmcode::operand of instr.operand1
 byte 3: second operand: equal to (int)vmcode::operand of instr.operand2
@@ -778,21 +755,48 @@ byte 4: information on operand1_mem and operand2_mem
                                 : 4 => instr.operand2_mem needs 64 bits
 byte 5+: instr.operand1_mem using as many bytes as warranted by byte 4, followed by instr.operand2_mem using as many bytes as warranted by byte4.
 
+Byte settings for super operators:
+byte 1: operation opcode: equal to (int)vmcode::operation value of instr.oper, but value is larger or equal than SUPEROPERATOR_START
+byte 2: first operand: equal to (int)vmcode::operand of instr.operand1
+byte 3: second operand: equal to (int)vmcode::operand of instr.operand2
+byte 4: third operand: equal to (int)vmcode::operand of instr.operand3
+byte 5: information on operand1_mem and operand2_mem
+        First two bits equal to : 0 => instr.operand1_mem equals zero
+                                : 1 => instr.operand1_mem needs 8 bits
+                                : 2 => instr.operand1_mem needs 32 bits
+                                : 3 => instr.operand1_mem needs 64 bits
+        Bits three to five equal to : 0 => instr.operand2_mem equals zero
+                                    : 1 => instr.operand2_mem needs 8 bits
+                                    : 2 => instr.operand2_mem needs 16 bits
+                                    : 3 => instr.operand2_mem needs 32 bits
+                                    : 4 => instr.operand2_mem needs 64 bits
+        Last three bits equal to    : 0 => instr.operand3_mem equals zero
+                                    : 1 => instr.operand3_mem needs 8 bits
+                                    : 2 => instr.operand3_mem needs 16 bits
+                                    : 3 => instr.operand3_mem needs 32 bits
+                                    : 4 => instr.operand3_mem needs 64 bits
+byte 6+: instr.operand1_mem using as many bytes as warranted by byte 5, followed by instr.operand2_mem using as many bytes as warranted by byte 5,
+         flollowed by instr.operand3_mem using as many bytes as warranted by byte 5.
 */
 uint64_t disassemble_bytecode(vmcode::operation& op,
   vmcode::operand& operand1,
   vmcode::operand& operand2,
+  vmcode::operand& operand3,
   uint64_t& operand1_mem,
   uint64_t& operand2_mem,
+  uint64_t& operand3_mem,
   const uint8_t* bytecode)
   {
   operand1 = vmcode::EMPTY;
   operand2 = vmcode::EMPTY;
+  operand3 = vmcode::EMPTY;
   operand1_mem = 0;
   operand2_mem = 0;
+  operand3_mem = 0;
   uint64_t sz = 0;
   uint8_t op1mem = 0;
   uint8_t op2mem = 0;
+  uint8_t op3mem = 0;
   op = (vmcode::operation)bytecode[sz++];
   int nr_ops = number_of_operands(op);
   if (nr_ops == 0)
@@ -816,16 +820,11 @@ uint64_t disassemble_bytecode(vmcode::operation& op,
       get_memory_size_type(op1mem, savemem, op, operand1, 0);
       }
     }
-  else
+  else if (nr_ops == 2)
     {
     assert(nr_ops == 2);
     uint8_t op1 = bytecode[sz++];
     uint8_t op2 = bytecode[sz++];
-    //bool savemem1 = true;
-    //get_memory_size_type(op1mem, savemem1, op, operand1, 0);
-    //bool savemem2 = true;
-    //get_memory_size_type(op2mem, savemem2, op, operand2, 0);
-    //if (savemem1 || savemem2)
     if ((op1 & operand_has_8bit_mem) == 0)
       {
       op1mem = bytecode[sz] & 15;
@@ -845,6 +844,47 @@ uint64_t disassemble_bytecode(vmcode::operation& op,
       get_memory_size_type(op2mem, savemem, op, operand2, 0);
       }
     }
+  else 
+    {
+    assert(nr_ops == 3);
+    uint8_t op1 = bytecode[sz++];
+    uint8_t op2 = bytecode[sz++];
+    uint8_t op3 = bytecode[sz++];
+    if ((op1 & operand_has_8bit_mem) == 0)
+      {
+      /*
+      // see bit layout for memory in explanation above for super operators
+      if (op1mem == 2) // 16bit
+        op1mem = 3; // make 32 bit
+      uint8_t op1memstorage = op1mem;
+      if (op1memstorage >= 3)
+        --op1memstorage;
+      */
+      op1mem = bytecode[sz] & 3;
+      // see bit layout for memory in explanation above for super operators
+      if (op1mem >= 2)
+        ++op1mem;
+      op2mem = (bytecode[sz] >> 2) & 7;
+      op3mem = (bytecode[sz] >> 5) & 7;
+      operand1 = (vmcode::operand)op1;
+      operand2 = (vmcode::operand)op2;
+      operand3 = (vmcode::operand)op3;
+      ++sz;
+      }
+    else
+      {
+      op1 &= ~operand_has_8bit_mem;
+      op2 &= ~operand_has_8bit_mem;
+      op3 &= ~operand_has_8bit_mem;
+      operand1 = (vmcode::operand)op1;
+      operand2 = (vmcode::operand)op2;
+      operand3 = (vmcode::operand)op3;
+      bool savemem;
+      get_memory_size_type(op1mem, savemem, op, operand1, 0);
+      get_memory_size_type(op2mem, savemem, op, operand2, 0);
+      get_memory_size_type(op3mem, savemem, op, operand2, 0);
+      }
+    }
   switch (op1mem)
     {
     case 1: operand1_mem = (int8_t)bytecode[sz++]; break;
@@ -861,34 +901,16 @@ uint64_t disassemble_bytecode(vmcode::operation& op,
     case 4: operand2_mem = *reinterpret_cast<const uint64_t*>(bytecode + sz); sz += 8; break;
     default: operand2_mem = 0; break;
     }
-  return sz;
-  /*
-  op = (vmcode::operation)bytecode[0];
-  if (op == vmcode::NOP)
-    return 1;
-  operand1 = (vmcode::operand)bytecode[1];
-  operand2 = (vmcode::operand)bytecode[2];
-  uint8_t op1mem = bytecode[3] & 15;
-  uint8_t op2mem = bytecode[3] >> 4;
-  uint64_t sz = 4;
-  switch (op1mem)
+  switch (op3mem)
     {
-    case 1: operand1_mem = (int8_t)bytecode[sz++]; break;
-    case 2: operand1_mem = (int16_t)(*reinterpret_cast<const uint16_t*>(bytecode + sz)); sz += 2; break;
-    case 3: operand1_mem = (int32_t)(*reinterpret_cast<const uint32_t*>(bytecode + sz)); sz += 4; break;
-    case 4: operand1_mem = *reinterpret_cast<const uint64_t*>(bytecode + sz); sz += 8; break;
-    default: operand1_mem = 0; break;
-    }
-  switch (op2mem)
-    {
-    case 1: operand2_mem = (int8_t)bytecode[sz++]; break;
-    case 2: operand2_mem = (int16_t)(*reinterpret_cast<const uint16_t*>(bytecode+sz)); sz += 2; break;
-    case 3: operand2_mem = (int32_t)(*reinterpret_cast<const uint32_t*>(bytecode+sz)); sz += 4; break;
-    case 4: operand2_mem = *reinterpret_cast<const uint64_t*>(bytecode+sz); sz += 8; break;
-    default: operand2_mem = 0; break;
+    case 1: operand3_mem = (int8_t)bytecode[sz++]; break;
+    case 2: operand3_mem = (int16_t)(*reinterpret_cast<const uint16_t*>(bytecode + sz)); sz += 2; break;
+    case 3: operand3_mem = (int32_t)(*reinterpret_cast<const uint32_t*>(bytecode + sz)); sz += 4; break;
+    case 4: operand3_mem = *reinterpret_cast<const uint64_t*>(bytecode + sz); sz += 8; break;
+    default: operand3_mem = 0; break;
     }
   return sz;
-  */
+ 
   }
 
 registers::registers()
@@ -1958,9 +1980,11 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
     vmcode::operation op;
     vmcode::operand operand1;
     vmcode::operand operand2;
+    vmcode::operand operand3;
     uint64_t operand1_mem;
     uint64_t operand2_mem;
-    uint64_t sz = disassemble_bytecode(op, operand1, operand2, operand1_mem, operand2_mem, bytecode_ptr);
+    uint64_t operand3_mem;
+    uint64_t sz = disassemble_bytecode(op, operand1, operand2, operand3, operand1_mem, operand2_mem, operand3_mem, bytecode_ptr);
 
     //print(op, operand1, operand2, operand1_mem, operand2_mem);
 

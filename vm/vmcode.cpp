@@ -90,76 +90,81 @@ void vmcode::stream(std::ostream& out) const
     }
   }
 
-vmcode::instruction::instruction() : oper(NOP), operand1(EMPTY), operand2(EMPTY), operand1_mem(0), operand2_mem(0)
+vmcode::instruction::instruction() : oper(NOP), operand1(EMPTY), operand2(EMPTY), operand1_mem(0), operand2_mem(0), operand3(EMPTY), operand3_mem(0)
   {
   }
 
-vmcode::instruction::instruction(const std::string& txt) : oper(COMMENT), operand1(EMPTY), operand2(EMPTY), operand1_mem(0), operand2_mem(0), text(txt)
+vmcode::instruction::instruction(const std::string& txt) : oper(COMMENT), operand1(EMPTY), operand2(EMPTY), operand1_mem(0), operand2_mem(0), text(txt), operand3(EMPTY), operand3_mem(0)
   {
   }
 
-vmcode::instruction::instruction(operation op) : oper(op), operand1(EMPTY), operand2(EMPTY), operand1_mem(0), operand2_mem(0)
+vmcode::instruction::instruction(operation op) : oper(op), operand1(EMPTY), operand2(EMPTY), operand1_mem(0), operand2_mem(0), operand3(EMPTY), operand3_mem(0)
   {
   }
 
-vmcode::instruction::instruction(operation op, operand op1) : oper(op), operand1(op1), operand2(EMPTY), operand1_mem(0), operand2_mem(0)
-  {
-
-  }
-
-vmcode::instruction::instruction(operation op, operand op1, operand op2) : oper(op), operand1(op1), operand2(op2), operand1_mem(0), operand2_mem(0)
+vmcode::instruction::instruction(operation op, operand op1) : oper(op), operand1(op1), operand2(EMPTY), operand1_mem(0), operand2_mem(0), operand3(EMPTY), operand3_mem(0)
   {
 
   }
 
-vmcode::instruction::instruction(operation op, operand op1, uint64_t op1_mem) : oper(op), operand1(op1), operand2(EMPTY), operand1_mem(op1_mem), operand2_mem(0)
+vmcode::instruction::instruction(operation op, operand op1, operand op2) : oper(op), operand1(op1), operand2(op2), operand1_mem(0), operand2_mem(0), operand3(EMPTY), operand3_mem(0)
   {
 
   }
 
-vmcode::instruction::instruction(operation op, operand op1, uint64_t op1_mem, operand op2) : oper(op), operand1(op1), operand2(op2), operand1_mem(op1_mem), operand2_mem(0)
+vmcode::instruction::instruction(operation op, operand op1, operand op2, operand op3) : oper(op), operand1(op1), operand2(op2), operand1_mem(0), operand2_mem(0), operand3(op3), operand3_mem(0)
   {
 
   }
 
-vmcode::instruction::instruction(operation op, operand op1, uint64_t op1_mem, operand op2, uint64_t op2_mem) : oper(op), operand1(op1), operand2(op2), operand1_mem(op1_mem), operand2_mem(op2_mem)
-  {
-  }
-
-vmcode::instruction::instruction(operation op, operand op1, operand op2, uint64_t op2_mem) : oper(op), operand1(op1), operand2(op2), operand1_mem(0), operand2_mem(op2_mem)
-  {
-  }
-
-vmcode::instruction::instruction(operation op, const std::string& txt) : oper(op), operand1(EMPTY), operand2(EMPTY), operand1_mem(0), operand2_mem(0), text(txt)
-  {
-  }
-
-vmcode::instruction::instruction(operation op, operand op1, const std::string& txt) : oper(op), operand1(op1), operand2(EMPTY), operand1_mem(0), operand2_mem(0), text(txt)
+vmcode::instruction::instruction(operation op, operand op1, uint64_t op1_mem) : oper(op), operand1(op1), operand2(EMPTY), operand1_mem(op1_mem), operand2_mem(0), operand3(EMPTY), operand3_mem(0)
   {
 
   }
 
-vmcode::instruction::instruction(operation op, operand op1, operand op2, const std::string& txt) : oper(op), operand1(op1), operand2(op2), operand1_mem(0), operand2_mem(0), text(txt)
+vmcode::instruction::instruction(operation op, operand op1, uint64_t op1_mem, operand op2) : oper(op), operand1(op1), operand2(op2), operand1_mem(op1_mem), operand2_mem(0), operand3(EMPTY), operand3_mem(0)
   {
 
   }
 
-vmcode::instruction::instruction(operation op, operand op1, uint64_t op1_mem, const std::string& txt) : oper(op), operand1(op1), operand2(EMPTY), operand1_mem(op1_mem), operand2_mem(0), text(txt)
+vmcode::instruction::instruction(operation op, operand op1, uint64_t op1_mem, operand op2, uint64_t op2_mem) : oper(op), operand1(op1), operand2(op2), operand1_mem(op1_mem), operand2_mem(op2_mem), operand3(EMPTY), operand3_mem(0)
+  {
+  }
+
+vmcode::instruction::instruction(operation op, operand op1, operand op2, uint64_t op2_mem) : oper(op), operand1(op1), operand2(op2), operand1_mem(0), operand2_mem(op2_mem), operand3(EMPTY), operand3_mem(0)
+  {
+  }
+
+vmcode::instruction::instruction(operation op, const std::string& txt) : oper(op), operand1(EMPTY), operand2(EMPTY), operand1_mem(0), operand2_mem(0), text(txt), operand3(EMPTY), operand3_mem(0)
+  {
+  }
+
+vmcode::instruction::instruction(operation op, operand op1, const std::string& txt) : oper(op), operand1(op1), operand2(EMPTY), operand1_mem(0), operand2_mem(0), text(txt), operand3(EMPTY), operand3_mem(0)
   {
 
   }
 
-vmcode::instruction::instruction(operation op, operand op1, uint64_t op1_mem, operand op2, const std::string& txt) : oper(op), operand1(op1), operand2(op2), operand1_mem(op1_mem), operand2_mem(0), text(txt)
+vmcode::instruction::instruction(operation op, operand op1, operand op2, const std::string& txt) : oper(op), operand1(op1), operand2(op2), operand1_mem(0), operand2_mem(0), text(txt), operand3(EMPTY), operand3_mem(0)
   {
 
   }
 
-vmcode::instruction::instruction(operation op, operand op1, uint64_t op1_mem, operand op2, uint64_t op2_mem, const std::string& txt) : oper(op), operand1(op1), operand2(op2), operand1_mem(op1_mem), operand2_mem(op2_mem), text(txt)
+vmcode::instruction::instruction(operation op, operand op1, uint64_t op1_mem, const std::string& txt) : oper(op), operand1(op1), operand2(EMPTY), operand1_mem(op1_mem), operand2_mem(0), text(txt), operand3(EMPTY), operand3_mem(0)
   {
 
   }
 
-vmcode::instruction::instruction(operation op, operand op1, operand op2, uint64_t op2_mem, const std::string& txt) : oper(op), operand1(op1), operand2(op2), operand1_mem(0), operand2_mem(op2_mem), text(txt)
+vmcode::instruction::instruction(operation op, operand op1, uint64_t op1_mem, operand op2, const std::string& txt) : oper(op), operand1(op1), operand2(op2), operand1_mem(op1_mem), operand2_mem(0), text(txt), operand3(EMPTY), operand3_mem(0)
+  {
+
+  }
+
+vmcode::instruction::instruction(operation op, operand op1, uint64_t op1_mem, operand op2, uint64_t op2_mem, const std::string& txt) : oper(op), operand1(op1), operand2(op2), operand1_mem(op1_mem), operand2_mem(op2_mem), text(txt), operand3(EMPTY), operand3_mem(0)
+  {
+
+  }
+
+vmcode::instruction::instruction(operation op, operand op1, operand op2, uint64_t op2_mem, const std::string& txt) : oper(op), operand1(op1), operand2(op2), operand1_mem(0), operand2_mem(op2_mem), text(txt), operand3(EMPTY), operand3_mem(0)
   {
 
   }
@@ -243,6 +248,12 @@ namespace
       case vmcode::UCOMISD: return "ucomisd";
       case vmcode::XOR: return "xor";
       case vmcode::XORPD: return "xorpd";
+      case vmcode::MOVADD: return "movadd";
+      case vmcode::MOVSUB: return "movsub";
+      case vmcode::MOVMUL: return "movmul";
+      case vmcode::MOVDIV: return "movdiv";
+      case vmcode::MOVSHL: return "movshl";
+      case vmcode::MOVSHR: return "movshr";
       }
     return "";
     }
@@ -606,6 +617,12 @@ std::string vmcode::operation_to_string(operation oper)
     case vmcode::UCOMISD:return std::string("UCOMISD");
     case vmcode::XOR: return std::string("XOR");
     case vmcode::XORPD: return std::string("XORPD");
+    case vmcode::MOVADD: return std::string("MOVADD");
+    case vmcode::MOVSUB: return std::string("MOVSUB");
+    case vmcode::MOVMUL: return std::string("MOVMUL");
+    case vmcode::MOVDIV: return std::string("MOVDIV");
+    case vmcode::MOVSHL: return std::string("MOVSHL");
+    case vmcode::MOVSHR: return std::string("MOVSHR");
     }
   return std::string();
   }

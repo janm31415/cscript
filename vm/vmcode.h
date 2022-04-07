@@ -10,9 +10,12 @@
 
 VM_BEGIN
 
+#define SUPEROPERATOR_START 100
+
 class vmcode
   {
-  public:
+  public:    
+
     enum operation
       {
       ADD,
@@ -73,7 +76,7 @@ class vmcode
       MOD,
       MODSD,
       MOV,         
-      MOVMSKPD,         
+      MOVMSKPD,               
       MUL,
       MULSD,      
       NEG,
@@ -98,7 +101,14 @@ class vmcode
       TEST,
       UCOMISD,      
       XOR,
-      XORPD
+      XORPD,
+      // super operators with three operands
+      MOVADD = SUPEROPERATOR_START,
+      MOVSUB,
+      MOVMUL,
+      MOVDIV,
+      MOVSHL,
+      MOVSHR,
       };
 
     enum operand
@@ -213,8 +223,8 @@ class vmcode
     struct instruction
       {
       operation oper;
-      operand operand1, operand2;
-      uint64_t operand1_mem, operand2_mem;
+      operand operand1, operand2, operand3;
+      uint64_t operand1_mem, operand2_mem, operand3_mem;
       std::string text;
 
       VM_API instruction();
@@ -222,6 +232,7 @@ class vmcode
       VM_API instruction(operation op);
       VM_API instruction(operation op, operand op1);
       VM_API instruction(operation op, operand op1, operand op2);
+      VM_API instruction(operation op, operand op1, operand op2, operand op3);
       VM_API instruction(operation op, operand op1, uint64_t op1_mem);
       VM_API instruction(operation op, operand op1, uint64_t op1_mem, operand op2);
       VM_API instruction(operation op, operand op1, uint64_t op1_mem, operand op2, uint64_t op2_mem);

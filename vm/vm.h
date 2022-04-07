@@ -26,8 +26,10 @@ VM_API void free_bytecode(void* f, uint64_t size);
 VM_API uint64_t disassemble_bytecode(vmcode::operation& op,
                                         vmcode::operand& operand1,
                                         vmcode::operand& operand2,
+                                        vmcode::operand& operand3,
                                         uint64_t& operand1_mem,
                                         uint64_t& operand2_mem,
+                                        uint64_t& operand3_mem,
                                         const uint8_t* bytecode);
   
 #define carry_flag 1

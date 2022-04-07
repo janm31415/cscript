@@ -29,15 +29,52 @@ namespace
     vmcode::operation op;
     vmcode::operand operand1;
     vmcode::operand operand2;
+    vmcode::operand operand3;
     uint64_t operand1_mem;
     uint64_t operand2_mem;
-    uint64_t sz = disassemble_bytecode(op, operand1, operand2, operand1_mem, operand2_mem, f);
+    uint64_t operand3_mem;
+    uint64_t sz = disassemble_bytecode(op, operand1, operand2, operand3, operand1_mem, operand2_mem, operand3_mem, f);
     TEST_EQ(3, sz);
     TEST_EQ(vmcode::MOV, op);
     TEST_EQ(vmcode::RAX, operand1);
     TEST_EQ(vmcode::RCX, operand2);
+    TEST_EQ(vmcode::EMPTY, operand3);
     TEST_EQ(0, operand1_mem);
     TEST_EQ(0, operand2_mem);
+    TEST_EQ(0, operand3_mem);
+
+    free_bytecode(f, size);
+    }
+
+  void test_vm_movadd_bytecode()
+    {
+    vmcode code;
+    code.add(vmcode::MOVADD, vmcode::RAX, vmcode::RCX, vmcode::RDX);
+
+    uint64_t size;
+    uint8_t* f = (uint8_t*)vm_bytecode(size, code);
+    TEST_EQ(4, size);
+    TEST_EQ((int)vmcode::MOVADD, (int)f[0]);
+    TEST_EQ((int)vmcode::RAX | operand_has_8bit_mem, (int)f[1]);
+    TEST_EQ((int)vmcode::RCX | operand_has_8bit_mem, (int)f[2]);
+    TEST_EQ((int)vmcode::RDX | operand_has_8bit_mem, (int)f[3]);
+
+    vmcode::operation op;
+    vmcode::operand operand1;
+    vmcode::operand operand2;
+    vmcode::operand operand3;
+    uint64_t operand1_mem;
+    uint64_t operand2_mem;
+    uint64_t operand3_mem;
+    uint64_t sz = disassemble_bytecode(op, operand1, operand2, operand3, operand1_mem, operand2_mem, operand3_mem, f);
+    TEST_EQ(4, sz);
+    TEST_EQ(vmcode::MOVADD, op);
+    TEST_EQ(vmcode::RAX, operand1);
+    TEST_EQ(vmcode::RCX, operand2);
+    TEST_EQ(vmcode::RDX, operand3);
+    TEST_EQ(0, operand1_mem);
+    TEST_EQ(0, operand2_mem);
+    TEST_EQ(0, operand3_mem);
 
     free_bytecode(f, size);
     }
@@ -66,9 +103,11 @@ namespace
     vmcode::operation op;
     vmcode::operand operand1;
     vmcode::operand operand2;
+    vmcode::operand operand3;
     uint64_t operand1_mem;
     uint64_t operand2_mem;
-    uint64_t sz = disassemble_bytecode(op, operand1, operand2, operand1_mem, operand2_mem, f);
+    uint64_t operand3_mem;
+    uint64_t sz = disassemble_bytecode(op, operand1, operand2, operand3, operand1_mem, operand2_mem, operand3_mem, f);
     TEST_EQ(12, sz);
     TEST_EQ(vmcode::MOV, op);
     TEST_EQ(vmcode::RAX, operand1);
@@ -92,9 +131,11 @@ namespace
     vmcode::operation op;
     vmcode::operand operand1;
     vmcode::operand operand2;
+    vmcode::operand operand3;
     uint64_t operand1_mem;
     uint64_t operand2_mem;
-    uint64_t sz = disassemble_bytecode(op, operand1, operand2, operand1_mem, operand2_mem, f);
+    uint64_t operand3_mem;
+    uint64_t sz = disassemble_bytecode(op, operand1, operand2, operand3, operand1_mem, operand2_mem, operand3_mem, f);
     TEST_EQ(1, sz);
     TEST_EQ(vmcode::NOP, op);
     
@@ -733,6 +774,7 @@ void run_all_vm_tests()
   test_vm_mov_bytecode();  
   test_vm_mov_bytecode_2();
   test_vm_nop_bytecode();
+  test_vm_movadd_bytecode();
   test_vm_ret();
   test_vm_mov();
   test_vm_mov_2();
