@@ -472,12 +472,12 @@ namespace
     free_bytecode(f, size);
     }
 
-  void test_vm_jls()
+  void test_vm_jl()
     {
     vmcode code;
     code.add(vmcode::MOV, vmcode::RAX, vmcode::NUMBER, 10);
     code.add(vmcode::CMP, vmcode::RAX, vmcode::NUMBER, 5);
-    code.add(vmcode::JLS, "L_label");
+    code.add(vmcode::JL, "L_label");
     code.add(vmcode::MOV, vmcode::RCX, vmcode::NUMBER, 3);
     code.add(vmcode::RET);
     code.add(vmcode::LABEL, "L_label");
@@ -500,12 +500,12 @@ namespace
     free_bytecode(f, size);
     }
 
-  void test_vm_jls_2()
+  void test_vm_jl_2()
     {
     vmcode code;
     code.add(vmcode::MOV, vmcode::RAX, vmcode::NUMBER, 10);
     code.add(vmcode::CMP, vmcode::RAX, vmcode::NUMBER, 20);
-    code.add(vmcode::JLS, "L_label");
+    code.add(vmcode::JL, "L_label");
     code.add(vmcode::MOV, vmcode::RCX, vmcode::NUMBER, 3);
     code.add(vmcode::RET);
     code.add(vmcode::LABEL, "L_label");
@@ -528,12 +528,12 @@ namespace
     free_bytecode(f, size);
     }
 
-  void test_vm_jles()
+  void test_vm_jle()
     {
     vmcode code;
     code.add(vmcode::MOV, vmcode::RAX, vmcode::NUMBER, 10);
     code.add(vmcode::CMP, vmcode::RAX, vmcode::NUMBER, 10);
-    code.add(vmcode::JLES, "L_label");
+    code.add(vmcode::JLE, "L_label");
     code.add(vmcode::MOV, vmcode::RCX, vmcode::NUMBER, 3);
     code.add(vmcode::RET);
     code.add(vmcode::LABEL, "L_label");
@@ -556,12 +556,12 @@ namespace
     free_bytecode(f, size);
     }
 
-  void test_vm_jges()
+  void test_vm_jge()
     {
     vmcode code;
     code.add(vmcode::MOV, vmcode::RAX, vmcode::NUMBER, 10);
     code.add(vmcode::CMP, vmcode::RAX, vmcode::NUMBER, 10);
-    code.add(vmcode::JGES, "L_label");
+    code.add(vmcode::JGE, "L_label");
     code.add(vmcode::MOV, vmcode::RCX, vmcode::NUMBER, 3);
     code.add(vmcode::RET);
     code.add(vmcode::LABEL, "L_label");
@@ -735,13 +735,13 @@ namespace
     code.add(vmcode::MOV, vmcode::XMM4, vmcode::R11);
     code.add(vmcode::LABEL, "L_0");
     code.add(vmcode::CMP, vmcode::R9, vmcode::R10);
-    code.add(vmcode::JGES, "L_1");
+    code.add(vmcode::JGE, "L_1");
     code.add(vmcode::CVTSI2SD, vmcode::XMM5, vmcode::R9);
     code.add(vmcode::MOV, vmcode::XMM2, vmcode::XMM4);
     code.add(vmcode::DIVSD, vmcode::XMM2, vmcode::XMM5);
     code.add(vmcode::ADDSD, vmcode::XMM0, vmcode::XMM2);
     code.add(vmcode::INC, vmcode::R9);
-    code.add(vmcode::JMPS, "L_0");
+    code.add(vmcode::JMP, "L_0");
     code.add(vmcode::LABEL, "L_1");
     code.add(vmcode::RET);
     uint64_t size;
@@ -787,10 +787,10 @@ void run_all_vm_tests()
   test_vm_jmp_aligned();
   test_vm_jmp_register();
   test_vm_shift();
-  test_vm_jls();
-  test_vm_jls_2();
-  test_vm_jles();  
-  test_vm_jges();
+  test_vm_jl();
+  test_vm_jl_2();
+  test_vm_jle();  
+  test_vm_jge();
   test_vm_push_pop();
   test_vm_movq();
   test_vm_addsd();

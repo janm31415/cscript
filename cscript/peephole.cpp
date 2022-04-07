@@ -229,16 +229,7 @@ namespace
       case VM::vmcode::JLE:
       case VM::vmcode::JG:
       case VM::vmcode::JGE:
-      case VM::vmcode::JNE:
-      case VM::vmcode::JMPS:
-      case VM::vmcode::JAS:
-      case VM::vmcode::JBS:
-      case VM::vmcode::JES:
-      case VM::vmcode::JLS:
-      case VM::vmcode::JLES:
-      case VM::vmcode::JGS:
-      case VM::vmcode::JGES:
-      case VM::vmcode::JNES:
+      case VM::vmcode::JNE:     
         return true;
       default:
         return false;

@@ -78,16 +78,7 @@ namespace
       case vmcode::JG: return 1;
       case vmcode::JGE:return 1;
       case vmcode::JNE:return 1;
-      case vmcode::JMP:return 1;
-      case vmcode::JES:return 1;
-      case vmcode::JLS:return 1;
-      case vmcode::JLES:return 1;
-      case vmcode::JAS: return 1;
-      case vmcode::JBS: return 1;
-      case vmcode::JGS: return 1;
-      case vmcode::JGES:return 1;
-      case vmcode::JNES:return 1;
-      case vmcode::JMPS:return 1;
+      case vmcode::JMP:return 1;   
       case vmcode::MOD: return 2;
       case vmcode::MODSD: return 2;
       case vmcode::MOV: return 2;
@@ -156,17 +147,7 @@ namespace
       case vmcode::JGE:
       case vmcode::JNE:
       case vmcode::JMP:
-        return _32BIT;
-      case vmcode::JES:
-      case vmcode::JLS:
-      case vmcode::JLES:
-      case vmcode::JAS:
-      case vmcode::JBS:
-      case vmcode::JGS:
-      case vmcode::JGES:
-      case vmcode::JNES:
-      case vmcode::JMPS:
-        return _8BIT;
+        return _32BIT;   
       default: return _VARIABLE;
       }
     }
@@ -517,22 +498,7 @@ namespace
             }
           data.size += fill_vm_bytecode(instr, buffer);
           break;
-          }
-          case vmcode::JMPS:
-          case vmcode::JES:
-          case vmcode::JLS:
-          case vmcode::JLES:
-          case vmcode::JGS:
-          case vmcode::JAS:
-          case vmcode::JBS:
-          case vmcode::JGES:
-          case vmcode::JNES:
-          {
-          instr.operand1 = vmcode::NUMBER;
-          instr.operand1_mem = 0x11;
-          data.size += fill_vm_bytecode(instr, buffer);
-          break;
-          }
+          }         
           case vmcode::LABEL:
             data.label_to_address[instr.text] = data.size; break;
           case vmcode::LABEL_ALIGNED:
@@ -653,30 +619,7 @@ namespace
           instr.operand1 = vmcode::NUMBER;
           instr.operand1_mem = (int64_t(address - current));
           break;
-          }
-          case vmcode::JES:
-          case vmcode::JLS:
-          case vmcode::JLES:
-          case vmcode::JGS:
-          case vmcode::JAS:
-          case vmcode::JBS:
-          case vmcode::JGES:
-          case vmcode::JNES:
-          case vmcode::JMPS:
-          {
-          if (instr.operand1 != vmcode::EMPTY)
-            break;
-          auto it2 = data.label_to_address.find(instr.text);
-          if (it2 == data.label_to_address.end())
-            throw std::logic_error("second_pass error: label does not exist");
-          int64_t address = (int64_t)it2->second;
-          int64_t current = (int64_t)(func - start);
-          instr.operand1 = vmcode::NUMBER;
-          instr.operand1_mem = (int64_t(address - current));
-          if ((int64_t)instr.operand1_mem > 127 || (int64_t)instr.operand1_mem < -128)
-            throw std::logic_error("second_pass error: jump short is too far");
-          break;
-          }
+          }  
           }
         func += fill_vm_bytecode(instr, func);
         }
@@ -2267,8 +2210,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
 
       break;
       }
-      case vmcode::JA:
-      case vmcode::JAS:
+      case vmcode::JA:      
       {
       if (((regs.eflags & zero_flag) | (regs.eflags & carry_flag)) == 0)
         {
@@ -2286,7 +2228,6 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       break;
       }
       case vmcode::JB:
-      case vmcode::JBS:
       {
       if (regs.eflags & carry_flag)
         {
@@ -2304,7 +2245,6 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       break;
       }
       case vmcode::JE:
-      case vmcode::JES:
       {
       if (regs.eflags & zero_flag)
         {
@@ -2322,7 +2262,6 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       break;
       }
       case vmcode::JG:
-      case vmcode::JGS:
       {
       if ((((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)) | (regs.eflags & zero_flag)) == 0)
         {
@@ -2340,7 +2279,6 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       break;
       }
       case vmcode::JGE:
-      case vmcode::JGES:
       {
       if (((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)) == 0)
         {
@@ -2358,7 +2296,6 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       break;
       }
       case vmcode::JL:
-      case vmcode::JLS:
       {
       if (((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)))
         {
@@ -2376,7 +2313,6 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       break;
       }
       case vmcode::JLE:
-      case vmcode::JLES:
       {
       if ((((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)) | (regs.eflags & zero_flag)))
         {
@@ -2394,7 +2330,6 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       break;
       }
       case vmcode::JNE:
-      case vmcode::JNES:
       {
       if ((regs.eflags & zero_flag) == 0)
         {
@@ -2408,20 +2343,6 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
           {
           throw std::logic_error("jne(s) not implemented");
           }
-        }
-      break;
-      }
-      case vmcode::JMPS:
-      {
-      if (operand1 == vmcode::NUMBER)
-        {
-        int32_t local_offset = (int32_t)operand1_mem;
-        bytecode_ptr += local_offset;
-        sz = 0;
-        }
-      else
-        {
-        throw std::logic_error("jmps not implemented");
         }
       break;
       }

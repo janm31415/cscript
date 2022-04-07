@@ -467,52 +467,7 @@ void vmcode::instruction::stream(std::ostream& out) const
     {
     out << "\tjge " << text << std::endl;
     break;
-    }
-    case JMPS:
-    {
-    out << "\tjmp short " << text << std::endl;
-    break;
-    }
-    case JES:
-    {
-    out << "\tje short " << text << std::endl;
-    break;
-    }
-    case JNES:
-    {
-    out << "\tjne short " << text << std::endl;
-    break;
-    }
-    case JLS:
-    {
-    out << "\tjl short " << text << std::endl;
-    break;
-    }
-    case JLES:
-    {
-    out << "\tjle short " << text << std::endl;
-    break;
-    }
-    case JAS:
-    {
-    out << "\tja short " << text << std::endl;
-    break;
-    }
-    case JBS:
-    {
-    out << "\tjb short " << text << std::endl;
-    break;
-    }
-    case JGS:
-    {
-    out << "\tjg short " << text << std::endl;
-    break;
-    }
-    case JGES:
-    {
-    out << "\tjge short " << text << std::endl;
-    break;
-    }
+    }   
     default:
     {
     out << "\t" << _operation2string(oper);
@@ -583,16 +538,7 @@ std::string vmcode::operation_to_string(operation oper)
     case vmcode::JG: return std::string("JG");
     case vmcode::JGE:return std::string("JGE");
     case vmcode::JNE:return std::string("JNE");
-    case vmcode::JMP:return std::string("JMP");
-    case vmcode::JES:return std::string("JES");
-    case vmcode::JLS:return std::string("JLS");
-    case vmcode::JLES:return std::string("JLES");
-    case vmcode::JAS: return std::string("JAS");
-    case vmcode::JBS: return std::string("JBS");
-    case vmcode::JGS: return std::string("JGS");
-    case vmcode::JGES:return std::string("JGES");
-    case vmcode::JNES:return std::string("JNES");
-    case vmcode::JMPS:return std::string("JMPS");
+    case vmcode::JMP:return std::string("JMP"); 
     case vmcode::MOD: return std::string("MOD");
     case vmcode::MODSD: return std::string("MODSD");
     case vmcode::MOV: return std::string("MOV");

@@ -61,16 +61,7 @@ class vmcode
       JLE,
       JG,
       JGE,
-      JNE,
-      JMPS, // JMP short
-      JAS, // JA short
-      JBS, // JB short
-      JES, // JE short
-      JLS, // JL short
-      JLES, // JLE short
-      JGS, // JG short
-      JGES, // JGE short
-      JNES, // JNE short      
+      JNE,    
       LABEL,
       LABEL_ALIGNED,
       MOD,
