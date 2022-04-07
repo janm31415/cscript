@@ -882,7 +882,7 @@ uint64_t disassemble_bytecode(vmcode::operation& op,
       bool savemem;
       get_memory_size_type(op1mem, savemem, op, operand1, 0);
       get_memory_size_type(op2mem, savemem, op, operand2, 0);
-      get_memory_size_type(op3mem, savemem, op, operand2, 0);
+      get_memory_size_type(op3mem, savemem, op, operand3, 0);
       }
     }
   switch (op1mem)
@@ -923,7 +923,7 @@ registers::registers()
 namespace
   {
 
-  uint64_t* get_address_64bit(vmcode::operand oper, uint64_t operand_mem, registers& regs)
+  uint64_t* get_address_64bit(vmcode::operand oper, uint64_t operand_mem, registers& regs, uint64_t* reserved)
     {
     switch (oper)
       {
@@ -996,7 +996,7 @@ namespace
       case vmcode::MEM_R30: return (uint64_t*)(regs.r30 + operand_mem);
       case vmcode::MEM_R31: return (uint64_t*)(regs.r31 + operand_mem);
 #endif
-      case vmcode::NUMBER: regs.reserved = operand_mem; return &regs.reserved;
+      case vmcode::NUMBER: *reserved = operand_mem; return reserved;
       case vmcode::XMM0: return (uint64_t*)(&regs.xmm0);
       case vmcode::XMM1: return (uint64_t*)(&regs.xmm1);
       case vmcode::XMM2: return (uint64_t*)(&regs.xmm2);
@@ -1031,7 +1031,7 @@ namespace
       case vmcode::XMM30:return (uint64_t*)(&regs.xmm30);
       case vmcode::XMM31:return (uint64_t*)(&regs.xmm31);
 #endif
-      case vmcode::LABELADDRESS: regs.reserved = operand_mem; return &regs.reserved;
+      case vmcode::LABELADDRESS: *reserved = operand_mem; return reserved;
       default: return nullptr;
       }
     }
@@ -1264,9 +1264,10 @@ namespace
     uint64_t operand2_mem,
     registers& regs)
     {
-    uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+    uint64_t tmp;
+    uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
     assert(oprnd1);    
-    uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+    uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
     assert(oprnd2);
     TOper::apply(*oprnd1, *oprnd2);    
     }
@@ -1279,16 +1280,17 @@ namespace
     registers& regs)
     {
 #if 0
-    uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+    uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
     if (oprnd1)
       {
-      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
       if (oprnd2)
         TOper::apply(*reinterpret_cast<double*>(oprnd1), *reinterpret_cast<double*>(oprnd2));
       }
 #else
-    uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
-    uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+    uint64_t tmp;
+    uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
+    uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
     assert(oprnd1);
     assert(oprnd2);
     TOper::apply(*reinterpret_cast<double*>(oprnd1), *reinterpret_cast<double*>(oprnd2));
@@ -1302,10 +1304,11 @@ namespace
     uint64_t operand2_mem,
     registers& regs)
     {
-    uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+    uint64_t tmp;
+    uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
     assert(oprnd1);
     uint64_t left = *oprnd1;
-    uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+    uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
     assert(oprnd2);
     TOper::apply(left, *oprnd2);
     return left;          
@@ -1317,11 +1320,12 @@ namespace
     uint64_t operand2_mem,
     registers& regs)
     {
-    uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+    uint64_t tmp;
+    uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
     assert(oprnd1);
     left_unsigned = *oprnd1;
     left_signed = (int64_t)left_unsigned;
-    uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+    uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
     assert(oprnd2);      
     right_unsigned = *oprnd2;
     right_signed = (int64_t)right_unsigned;
@@ -2007,7 +2011,8 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::CALLEXTERNAL:
       {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
       uint64_t address = *oprnd1;
       auto it = std::find_if(externals.begin(), externals.end(), [&](const external_function& f) { return f.address == address; });
       if (it == externals.end())
@@ -2027,7 +2032,8 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
         }
       else // external call
         {
-        uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+        uint64_t tmp;
+        uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
         regs.rsp -= 8;
         *((uint64_t*)regs.rsp) = (uint64_t)(bytecode_ptr + sz); // save address right after call on stack
         bytecode_ptr = (const uint8_t*)(*oprnd1);
@@ -2051,8 +2057,9 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::CMPEQPD:
       {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
-      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
       double v1 = *reinterpret_cast<double*>(oprnd1);
       double v2 = *reinterpret_cast<double*>(oprnd2);
       *oprnd1 = (v1 == v2) ? 0xffffffffffffffff : 0;
@@ -2060,8 +2067,9 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::CMPLTPD:
       {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
-      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
       double v1 = *reinterpret_cast<double*>(oprnd1);
       double v2 = *reinterpret_cast<double*>(oprnd2);
       *oprnd1 = (v1 < v2) ? 0xffffffffffffffff : 0;
@@ -2069,8 +2077,9 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::CMPLEPD:
       {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
-      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
       double v1 = *reinterpret_cast<double*>(oprnd1);
       double v2 = *reinterpret_cast<double*>(oprnd2);
       *oprnd1 = (v1 <= v2) ? 0xffffffffffffffff : 0;
@@ -2078,16 +2087,18 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::CVTSI2SD:
       {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
-      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
       double v = (double)((int64_t)*oprnd2);
       *reinterpret_cast<double*>(oprnd1) = v;
       break;
       }
       case vmcode::CVTTSD2SI:
       {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
-      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
       double v = *reinterpret_cast<double*>(oprnd2);
       *oprnd1 = (int64_t)v;
       break;
@@ -2149,18 +2160,20 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::SWAP:
       {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
-      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
       assert(oprnd1);
       assert(oprnd2);
-      uint64_t tmp = *oprnd1;
+      uint64_t tmp2 = *oprnd1;
       *oprnd1 = *oprnd2;
-      *oprnd2 = tmp;
+      *oprnd2 = tmp2;
       break;
       }
       case vmcode::DEC:
       {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
       assert(oprnd1);
       *oprnd1 -= 1;
       if (*oprnd1)
@@ -2172,7 +2185,8 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::DIV:
       {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
       uint64_t divider = *oprnd1;
       uint64_t result = regs.rax / divider;
       uint64_t remainder = regs.rax % divider;
@@ -2182,12 +2196,13 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::DIV2:
       {
-      //uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t tmp;
+      //uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
       //uint64_t divider = *oprnd1;
       //uint64_t result = regs.rax / divider;      
       //regs.rax = result;      
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
-      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
       uint64_t result = *oprnd1 / *oprnd2;
       *oprnd1 = (uint64_t)result;
       break;
@@ -2199,7 +2214,8 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }  
       case vmcode::IDIV:
       {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
       int64_t divider = (int64_t)*oprnd1;
       int64_t result = (int64_t)regs.rax / divider;
       int64_t remainder = (int64_t)regs.rax % divider;
@@ -2209,16 +2225,18 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::IDIV2:
       {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
-      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
       int64_t result = (int64_t)*oprnd1 / (int64_t)*oprnd2;
       *oprnd1 = (uint64_t)result;
       break;
       }
       case vmcode::IMUL:
       {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
-      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
       assert(oprnd1);
       if (oprnd2)
         {
@@ -2235,7 +2253,8 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::INC:
       {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
       assert(oprnd1);
       *oprnd1 += 1;
       if (*oprnd1)
@@ -2413,7 +2432,8 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
         }
       else
         {
-        uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+        uint64_t tmp;
+        uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
         bytecode_ptr = (const uint8_t*)(*oprnd1);
         sz = 0;
         }
@@ -2431,8 +2451,9 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::MOVMSKPD:
       {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
-      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
       *oprnd1 = (*oprnd2) ? 1 : 0;
       break;
       }
@@ -2443,7 +2464,8 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::MUL:
       {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
       assert(oprnd1);
       regs.rax *= (uint64_t)(*oprnd1);
       break;
@@ -2455,7 +2477,8 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::NEG:
       {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
       assert(oprnd1);
       int64_t val = (int64_t)(*oprnd1);
       *oprnd1 = -val;      
@@ -2469,16 +2492,18 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::POP:
       {
+      uint64_t tmp;
       uint64_t address = *((uint64_t*)regs.rsp);
       regs.rsp += 8;
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
       *oprnd1 = address;
       break;
       }
       case vmcode::PUSH:
       {
+      uint64_t tmp;
       regs.rsp -= 8;
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
       if (oprnd1)
         *((uint64_t*)regs.rsp) = *oprnd1;
       else if (operand1 == vmcode::NUMBER || operand1 == vmcode::LABELADDRESS)
@@ -2507,7 +2532,8 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::SETE:
       {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
       if (regs.eflags & zero_flag)
         *oprnd1 = 1;
       else
@@ -2516,7 +2542,8 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::SETNE:
       {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
       if (regs.eflags & zero_flag)
         *oprnd1 = 0;
       else
@@ -2525,7 +2552,8 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::SETL:
       {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
       if (((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)))
         *oprnd1 = 1;
       else
@@ -2534,7 +2562,8 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::SETLE:
       {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
       if ((((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)) | (regs.eflags & zero_flag)) == 0)
         *oprnd1 = 0;
       else
@@ -2543,7 +2572,8 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::SETG:
       {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
       if ((((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)) | (regs.eflags & zero_flag)) == 0)
         *oprnd1 = 1;
       else
@@ -2552,7 +2582,8 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::SETGE:
       {
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
       if (((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)))
         *oprnd1 = 0;
       else
@@ -2604,8 +2635,9 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::UCOMISD:
       {
-      double* oprnd1 = (double*)get_address_64bit(operand1, operand1_mem, regs);
-      double* oprnd2 = (double*)get_address_64bit(operand2, operand2_mem, regs);
+      uint64_t tmp;
+      double* oprnd1 = (double*)get_address_64bit(operand1, operand1_mem, regs, &tmp);
+      double* oprnd2 = (double*)get_address_64bit(operand2, operand2_mem, regs, &tmp);
       if (*oprnd1 != *oprnd1 || *oprnd2 != *oprnd2)
         {
         regs.eflags = zero_flag | carry_flag;
@@ -2633,6 +2665,84 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       case vmcode::XORPD:
       {
       execute_double_operation<XorpdOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
+      case vmcode::MOVADD:
+      {
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
+      assert(oprnd1);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
+      assert(oprnd2);
+      uint64_t tmp2;
+      uint64_t* oprnd3 = get_address_64bit(operand3, operand3_mem, regs, &tmp2);
+      assert(oprnd3);
+      *oprnd1 = *oprnd2 + *oprnd3;
+      break;
+      }
+      case vmcode::MOVSUB:
+      {
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
+      assert(oprnd1);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
+      assert(oprnd2);
+      uint64_t tmp2;
+      uint64_t* oprnd3 = get_address_64bit(operand3, operand3_mem, regs, &tmp2);
+      assert(oprnd3);
+      *oprnd1 = *oprnd2 - *oprnd3;
+      break;
+      }
+      case vmcode::MOVMUL:
+      {
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
+      assert(oprnd1);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
+      assert(oprnd2);
+      uint64_t tmp2;
+      uint64_t* oprnd3 = get_address_64bit(operand3, operand3_mem, regs, &tmp2);
+      assert(oprnd3);
+      *oprnd1 = *oprnd2 * *oprnd3;
+      break;
+      }
+      case vmcode::MOVDIV:
+      {
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
+      assert(oprnd1);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
+      assert(oprnd2);
+      uint64_t tmp2;
+      uint64_t* oprnd3 = get_address_64bit(operand3, operand3_mem, regs, &tmp2);
+      assert(oprnd3);
+      *oprnd1 = *oprnd2 / *oprnd3;
+      break;
+      }
+      case vmcode::MOVSHL:
+      {
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
+      assert(oprnd1);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
+      assert(oprnd2);
+      uint64_t tmp2;
+      uint64_t* oprnd3 = get_address_64bit(operand3, operand3_mem, regs, &tmp2);
+      assert(oprnd3);
+      *oprnd1 = *oprnd2 << *oprnd3;
+      break;
+      }
+      case vmcode::MOVSHR:
+      {
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
+      assert(oprnd1);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
+      assert(oprnd2);
+      uint64_t tmp2;
+      uint64_t* oprnd3 = get_address_64bit(operand3, operand3_mem, regs, &tmp2);
+      assert(oprnd3);
+      *oprnd1 = *oprnd2 >> *oprnd3;
       break;
       }
       default:

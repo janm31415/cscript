@@ -44,7 +44,6 @@ struct registers
   VM_API registers();
   uint64_t stack[256];
   uint64_t eflags;
-  uint64_t reserved;
   uint64_t rax;
   uint64_t rbx;
   uint64_t rcx;

@@ -345,6 +345,60 @@ namespace
     return it;
     }
 
+  std::vector<VM::vmcode::instruction>::iterator peephole_superoperators(std::vector<VM::vmcode::instruction>::iterator it, std::vector<VM::vmcode::instruction>& vec)
+    {
+    if (it->oper != VM::vmcode::MOV)
+      return it;
+    auto it2 = it;
+    ++it2;
+    if (it2 == vec.end())
+      return it;
+    if (it2->operand1 != it->operand1 || it2->operand1_mem != it->operand1_mem)
+      return it;
+    switch (it2->oper)
+      {
+      case VM::vmcode::ADD:
+        it->oper = VM::vmcode::MOVADD;
+        it->operand3 = it2->operand2;
+        it->operand3_mem = it2->operand2_mem;
+        it = vec.erase(it2);
+        break;
+      case VM::vmcode::SUB:
+        it->oper = VM::vmcode::MOVSUB;
+        it->operand3 = it2->operand2;
+        it->operand3_mem = it2->operand2_mem;
+        it = vec.erase(it2);
+        break;
+      case VM::vmcode::MUL:
+        it->oper = VM::vmcode::MOVMUL;
+        it->operand3 = it2->operand2;
+        it->operand3_mem = it2->operand2_mem;
+        it = vec.erase(it2);
+        break;
+      case VM::vmcode::DIV:
+        it->oper = VM::vmcode::MOVDIV;
+        it->operand3 = it2->operand2;
+        it->operand3_mem = it2->operand2_mem;
+        it = vec.erase(it2);
+        break;
+      case VM::vmcode::SHL:
+        it->oper = VM::vmcode::MOVSHL;
+        it->operand3 = it2->operand2;
+        it->operand3_mem = it2->operand2_mem;
+        it = vec.erase(it2);
+        break;
+      case VM::vmcode::SHR:
+        it->oper = VM::vmcode::MOVSHR;
+        it->operand3 = it2->operand2;
+        it->operand3_mem = it2->operand2_mem;
+        it = vec.erase(it2);
+        break;
+      default:
+        break;
+      }
+    return it;
+    }
+
   void peephole(std::vector<VM::vmcode::instruction>& vec)
     {
     auto placeholder_operands = get_placeholder_operands(vec);
@@ -356,6 +410,7 @@ namespace
       it = peephole_mov_3(it, vec);
       it = remove_duplicates(it, vec);
       it = transitive_numbers(it, vec, placeholder_operands);
+      it = peephole_superoperators(it, vec);
       ++it;
       }
     }

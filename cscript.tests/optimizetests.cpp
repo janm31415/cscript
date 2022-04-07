@@ -245,6 +245,27 @@ void test_optimize_number_transition()
   code.stream(std::cout);
   }
 
+void test_optimize_super_operators()
+  {
+  pretty_print_visitor ppv;
+  //auto tokens = tokenize("() float f; int i; f = 3.1415; i = 1; i += f; i;");
+  auto tokens = tokenize("()110+25;");
+  auto prog = make_program(tokens);
+  visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
+  //optimize(prog);
+  visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
+  VM::vmcode code;
+  compile(code, prog);
+  peephole_optimization(code);
+  uint64_t size;
+  uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
+  VM::registers regs;
+  VM::run_bytecode(f, size, regs);
+  //std::cout << "Byte size: " << size << "\n";
+  VM::free_bytecode(f, size);
+  code.stream(std::cout);
+  }
+
 COMPILER_END
 
 void run_all_optimize_tests()
@@ -262,4 +283,5 @@ void run_all_optimize_tests()
   //test_optimize_constant_variables();
   //test_optimize_unused_variables();
   //test_optimize_number_transition();
+  //test_optimize_super_operators();
   }

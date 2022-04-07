@@ -523,6 +523,10 @@ void vmcode::instruction::stream(std::ostream& out) const
       {
       out << ", " << _operand2string(operand2, operand2_mem, text);
       }
+    if (operand3 != vmcode::EMPTY)
+      {
+      out << ", " << _operand2string(operand3, operand3_mem, text);
+      }
     out << std::endl;
     break;
     }
