@@ -224,6 +224,11 @@ namespace
       case vmcode::NUMBER:
       {
       auto memtype = get_operand_immediate_type(op);
+      if (memtype == _32BIT)
+        {
+        opmem = 3; return;
+        }
+      /*
       switch (memtype)
         {
         case _VARIABLE: break;
@@ -231,6 +236,8 @@ namespace
         case _32BIT: opmem = 3; return;
         case _64BIT: opmem = 4; return;
         }
+      */
+      break;
       }
       default: break;
       }
@@ -869,24 +876,7 @@ namespace
       case vmcode::R12: return &regs.r12;
       case vmcode::R13: return &regs.r13;
       case vmcode::R14: return &regs.r14;
-      case vmcode::R15: return &regs.r15;
-      case vmcode::MEM_RAX: return (uint64_t*)(regs.rax + operand_mem);
-      case vmcode::MEM_RBX: return (uint64_t*)(regs.rbx + operand_mem);
-      case vmcode::MEM_RCX: return (uint64_t*)(regs.rcx + operand_mem);
-      case vmcode::MEM_RDX: return (uint64_t*)(regs.rdx + operand_mem);
-      case vmcode::MEM_RDI: return (uint64_t*)(regs.rdi + operand_mem);
-      case vmcode::MEM_RSI: return (uint64_t*)(regs.rsi + operand_mem);
-      case vmcode::MEM_RSP: return (uint64_t*)(regs.rsp + operand_mem);
-      case vmcode::MEM_RBP: return (uint64_t*)(regs.rbp + operand_mem);
-      case vmcode::MEM_R8:  return (uint64_t*)(regs.r8 + operand_mem);
-      case vmcode::MEM_R9:  return (uint64_t*)(regs.r9 + operand_mem);
-      case vmcode::MEM_R10: return (uint64_t*)(regs.r10 + operand_mem);
-      case vmcode::MEM_R11: return (uint64_t*)(regs.r11 + operand_mem);
-      case vmcode::MEM_R12: return (uint64_t*)(regs.r12 + operand_mem);
-      case vmcode::MEM_R13: return (uint64_t*)(regs.r13 + operand_mem);
-      case vmcode::MEM_R14: return (uint64_t*)(regs.r14 + operand_mem);
-      case vmcode::MEM_R15: return (uint64_t*)(regs.r15 + operand_mem);
-      case vmcode::NUMBER: *reserved = operand_mem; return reserved;
+      case vmcode::R15: return &regs.r15;      
       case vmcode::XMM0: return (uint64_t*)(&regs.xmm0);
       case vmcode::XMM1: return (uint64_t*)(&regs.xmm1);
       case vmcode::XMM2: return (uint64_t*)(&regs.xmm2);
@@ -903,6 +893,23 @@ namespace
       case vmcode::XMM13:return (uint64_t*)(&regs.xmm13);
       case vmcode::XMM14:return (uint64_t*)(&regs.xmm14);
       case vmcode::XMM15:return (uint64_t*)(&regs.xmm15);
+      case vmcode::NUMBER: *reserved = operand_mem; return reserved;
+      case vmcode::MEM_RAX: return (uint64_t*)(regs.rax + operand_mem);
+      case vmcode::MEM_RBX: return (uint64_t*)(regs.rbx + operand_mem);
+      case vmcode::MEM_RCX: return (uint64_t*)(regs.rcx + operand_mem);
+      case vmcode::MEM_RDX: return (uint64_t*)(regs.rdx + operand_mem);
+      case vmcode::MEM_RDI: return (uint64_t*)(regs.rdi + operand_mem);
+      case vmcode::MEM_RSI: return (uint64_t*)(regs.rsi + operand_mem);
+      case vmcode::MEM_RSP: return (uint64_t*)(regs.rsp + operand_mem);
+      case vmcode::MEM_RBP: return (uint64_t*)(regs.rbp + operand_mem);
+      case vmcode::MEM_R8:  return (uint64_t*)(regs.r8 + operand_mem);
+      case vmcode::MEM_R9:  return (uint64_t*)(regs.r9 + operand_mem);
+      case vmcode::MEM_R10: return (uint64_t*)(regs.r10 + operand_mem);
+      case vmcode::MEM_R11: return (uint64_t*)(regs.r11 + operand_mem);
+      case vmcode::MEM_R12: return (uint64_t*)(regs.r12 + operand_mem);
+      case vmcode::MEM_R13: return (uint64_t*)(regs.r13 + operand_mem);
+      case vmcode::MEM_R14: return (uint64_t*)(regs.r14 + operand_mem);
+      case vmcode::MEM_R15: return (uint64_t*)(regs.r15 + operand_mem);      
       case vmcode::LABELADDRESS: *reserved = operand_mem; return reserved;
       default: return nullptr;
       }
@@ -1840,17 +1847,6 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       execute_operation<AndOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
       }
-      case vmcode::CALLEXTERNAL:
-      {
-      uint64_t tmp;
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
-      uint64_t address = *oprnd1;
-      auto it = std::find_if(externals.begin(), externals.end(), [&](const external_function& f) { return f.address == address; });
-      if (it == externals.end())
-        throw std::logic_error("Call to unknown external function\n");
-      call_external(*it, regs);
-      break;
-      }
       case vmcode::CALL:
       {
       if (operand1 == vmcode::NUMBER) // local call
@@ -1873,6 +1869,17 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
         }
       break;
       }
+      case vmcode::CALLEXTERNAL:
+      {
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
+      uint64_t address = *oprnd1;
+      auto it = std::find_if(externals.begin(), externals.end(), [&](const external_function& f) { return f.address == address; });
+      if (it == externals.end())
+        throw std::logic_error("Call to unknown external function\n");
+      call_external(*it, regs);
+      break;
+      }      
       case vmcode::CMP:
       {
       compare_operation(operand1, operand2, operand1_mem, operand2_mem, regs);
@@ -2087,6 +2094,23 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
 
       break;
       }
+      case vmcode::JMP:
+      {
+      if (operand1 == vmcode::NUMBER)
+        {
+        int32_t local_offset = (int32_t)operand1_mem;
+        bytecode_ptr += local_offset;
+        sz = 0;
+        }
+      else
+        {
+        uint64_t tmp;
+        uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
+        bytecode_ptr = (const uint8_t*)(*oprnd1);
+        sz = 0;
+        }
+      break;
+      }
       case vmcode::JA:      
       {
       if (((regs.eflags & zero_flag) | (regs.eflags & carry_flag)) == 0)
@@ -2138,40 +2162,6 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
         }
       break;
       }
-      case vmcode::JG:
-      {
-      if ((((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)) | (regs.eflags & zero_flag)) == 0)
-        {
-        if (operand1 == vmcode::NUMBER)
-          {
-          int32_t local_offset = (int32_t)operand1_mem;
-          bytecode_ptr += local_offset;
-          sz = 0;
-          }
-        else
-          {
-          throw std::logic_error("jg(s) not implemented");
-          }
-        }
-      break;
-      }
-      case vmcode::JGE:
-      {
-      if (((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)) == 0)
-        {
-        if (operand1 == vmcode::NUMBER)
-          {
-          int32_t local_offset = (int32_t)operand1_mem;
-          bytecode_ptr += local_offset;
-          sz = 0;
-          }
-        else
-          {
-          throw std::logic_error("jge(s) not implemented");
-          }
-        }
-      break;
-      }
       case vmcode::JL:
       {
       if (((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)))
@@ -2206,6 +2196,40 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
         }
       break;
       }
+      case vmcode::JG:
+      {
+      if ((((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)) | (regs.eflags & zero_flag)) == 0)
+        {
+        if (operand1 == vmcode::NUMBER)
+          {
+          int32_t local_offset = (int32_t)operand1_mem;
+          bytecode_ptr += local_offset;
+          sz = 0;
+          }
+        else
+          {
+          throw std::logic_error("jg(s) not implemented");
+          }
+        }
+      break;
+      }
+      case vmcode::JGE:
+      {
+      if (((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)) == 0)
+        {
+        if (operand1 == vmcode::NUMBER)
+          {
+          int32_t local_offset = (int32_t)operand1_mem;
+          bytecode_ptr += local_offset;
+          sz = 0;
+          }
+        else
+          {
+          throw std::logic_error("jge(s) not implemented");
+          }
+        }
+      break;
+      }      
       case vmcode::JNE:
       {
       if ((regs.eflags & zero_flag) == 0)
@@ -2222,24 +2246,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
           }
         }
       break;
-      }
-      case vmcode::JMP:
-      {
-      if (operand1 == vmcode::NUMBER)
-        {
-        int32_t local_offset = (int32_t)operand1_mem;
-        bytecode_ptr += local_offset;
-        sz = 0;
-        }
-      else
-        {
-        uint64_t tmp;
-        uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
-        bytecode_ptr = (const uint8_t*)(*oprnd1);
-        sz = 0;
-        }
-      break;
-      }
+      }     
       case vmcode::MOD:
       {
       execute_operation<ModOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
@@ -2250,17 +2257,17 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       execute_double_operation<ModsdOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
       }
+      case vmcode::MOV:
+      {
+      execute_operation<MovOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
       case vmcode::MOVMSKPD:
       {
       uint64_t tmp;
       uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
       uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
       *oprnd1 = (*oprnd2) ? 1 : 0;
-      break;
-      }
-      case vmcode::MOV:
-      {
-      execute_operation<MovOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
       }
       case vmcode::MUL:
@@ -2361,16 +2368,6 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
         *oprnd1 = 0;
       break;
       }
-      case vmcode::SETLE:
-      {
-      uint64_t tmp;
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
-      if ((((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)) | (regs.eflags & zero_flag)) == 0)
-        *oprnd1 = 0;
-      else
-        *oprnd1 = 1;
-      break;
-      }
       case vmcode::SETG:
       {
       uint64_t tmp;
@@ -2379,6 +2376,16 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
         *oprnd1 = 1;
       else
         *oprnd1 = 0;
+      break;
+      }
+      case vmcode::SETLE:
+      {
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
+      if ((((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)) | (regs.eflags & zero_flag)) == 0)
+        *oprnd1 = 0;
+      else
+        *oprnd1 = 1;
       break;
       }
       case vmcode::SETGE:
