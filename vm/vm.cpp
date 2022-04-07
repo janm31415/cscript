@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cmath>
 #include <algorithm>
+#include <array>
 
 VM_BEGIN
 
@@ -29,7 +30,7 @@ namespace
     return int64_t(b) == (int64_t)number;
     }
 
-  int number_of_operands(const vmcode::operation& op)
+  int8_t _number_of_operands(const vmcode::operation& op)
     {
     switch (op)
       {
@@ -118,11 +119,28 @@ namespace
       case vmcode::ADDSHL: return 3;
       default:
       {
-      std::stringstream str;
-      str << vmcode::operation_to_string(op) << " number of operands unknown!";
-      throw std::logic_error(str.str());
+      //std::stringstream str;
+      //str << vmcode::operation_to_string(op) << " number of operands unknown!";
+      //throw std::logic_error(str.str());
+      return -1;
       }
       }
+    }
+
+  std::array<int8_t, 128> build_number_of_operands_array()
+    {
+    std::array<int8_t, 128> arr;
+    for (int i = 0; i < 128; ++i)
+      {
+      arr[i] = _number_of_operands((VM::vmcode::operation)i);
+      }
+    return arr;
+    }
+
+  int8_t number_of_operands(const vmcode::operation& op)
+    {
+    static std::array<int8_t, 128> nr_oprnds = build_number_of_operands_array();
+    return nr_oprnds[(int)op];
     }
 
   enum operand_immediate_type
@@ -162,7 +180,7 @@ namespace
       case vmcode::COMMENT: return true;
       default: return false;
       }
-    }
+    }  
 
   void get_memory_size_type(uint8_t& opmem, bool& save_mem_size, const vmcode::operation& op, const vmcode::operand& oprnd, uint64_t oprnd_mem)
     {
@@ -187,24 +205,6 @@ namespace
       case  vmcode::R13:
       case  vmcode::R14:
       case  vmcode::R15:
-#ifdef EXTRA_REGISTERS
-      case  vmcode::R16:
-      case  vmcode::R17:
-      case  vmcode::R18:
-      case  vmcode::R19:
-      case  vmcode::R20:
-      case  vmcode::R21:
-      case  vmcode::R22:
-      case  vmcode::R23:
-      case  vmcode::R24:
-      case  vmcode::R25:
-      case  vmcode::R26:
-      case  vmcode::R27:
-      case  vmcode::R28:
-      case  vmcode::R29:
-      case  vmcode::R30:
-      case  vmcode::R31:
-#endif
       case  vmcode::XMM0:
       case  vmcode::XMM1:
       case  vmcode::XMM2:
@@ -221,24 +221,6 @@ namespace
       case  vmcode::XMM13:
       case  vmcode::XMM14:
       case  vmcode::XMM15:
-#ifdef EXTRA_REGISTERS
-      case  vmcode::XMM16:
-      case  vmcode::XMM17:
-      case  vmcode::XMM18:
-      case  vmcode::XMM19:
-      case  vmcode::XMM20:
-      case  vmcode::XMM21:
-      case  vmcode::XMM22:
-      case  vmcode::XMM23:
-      case  vmcode::XMM24:
-      case  vmcode::XMM25:
-      case  vmcode::XMM26:
-      case  vmcode::XMM27:
-      case  vmcode::XMM28:
-      case  vmcode::XMM29:
-      case  vmcode::XMM30:
-      case  vmcode::XMM31:
-#endif
         return;
       case vmcode::NUMBER:
       {
@@ -328,6 +310,7 @@ namespace
     uint8_t op2mem = 0;
     uint8_t op3mem = 0;
     int nr_ops = number_of_operands(instr.oper);
+    assert(nr_ops >= 0);
     if (nr_ops == 1)
       {
       assert((int)instr.oper < SUPEROPERATOR_START);
@@ -745,14 +728,12 @@ uint64_t disassemble_bytecode(vmcode::operation& op,
   uint8_t op3mem = 0;
   op = (vmcode::operation)bytecode[sz++];
   int nr_ops = number_of_operands(op);
+  assert(nr_ops >= 0);
   if (nr_ops == 0)
     return sz;
-  if (nr_ops == 1)
+  else if (nr_ops == 1)
     {
     uint8_t op1 = bytecode[sz++];
-    //bool savemem = true;
-    //get_memory_size_type(op1mem, savemem, op, operand1, 0);
-    //if (savemem)
     if ((op1 & operand_has_8bit_mem) == 0)
       {
       op1mem = bytecode[sz++];
@@ -890,24 +871,6 @@ namespace
       case vmcode::R13: return &regs.r13;
       case vmcode::R14: return &regs.r14;
       case vmcode::R15: return &regs.r15;
-#ifdef EXTRA_REGISTERS
-      case vmcode::R16: return &regs.r16;
-      case vmcode::R17: return &regs.r17;
-      case vmcode::R18: return &regs.r18;
-      case vmcode::R19: return &regs.r19;
-      case vmcode::R20: return &regs.r20;
-      case vmcode::R21: return &regs.r21;
-      case vmcode::R22: return &regs.r22;
-      case vmcode::R23: return &regs.r23;
-      case vmcode::R24: return &regs.r24;
-      case vmcode::R25: return &regs.r25;
-      case vmcode::R26: return &regs.r26;
-      case vmcode::R27: return &regs.r27;
-      case vmcode::R28: return &regs.r28;
-      case vmcode::R29: return &regs.r29;
-      case vmcode::R30: return &regs.r30;
-      case vmcode::R31: return &regs.r31;
-#endif
       case vmcode::MEM_RAX: return (uint64_t*)(regs.rax + operand_mem);
       case vmcode::MEM_RBX: return (uint64_t*)(regs.rbx + operand_mem);
       case vmcode::MEM_RCX: return (uint64_t*)(regs.rcx + operand_mem);
@@ -924,24 +887,6 @@ namespace
       case vmcode::MEM_R13: return (uint64_t*)(regs.r13 + operand_mem);
       case vmcode::MEM_R14: return (uint64_t*)(regs.r14 + operand_mem);
       case vmcode::MEM_R15: return (uint64_t*)(regs.r15 + operand_mem);
-#ifdef EXTRA_REGISTERS
-      case vmcode::MEM_R16: return (uint64_t*)(regs.r16 + operand_mem);
-      case vmcode::MEM_R17: return (uint64_t*)(regs.r17 + operand_mem);
-      case vmcode::MEM_R18: return (uint64_t*)(regs.r18 + operand_mem);
-      case vmcode::MEM_R19: return (uint64_t*)(regs.r19 + operand_mem);
-      case vmcode::MEM_R20: return (uint64_t*)(regs.r20 + operand_mem);
-      case vmcode::MEM_R21: return (uint64_t*)(regs.r21 + operand_mem);
-      case vmcode::MEM_R22: return (uint64_t*)(regs.r22 + operand_mem);
-      case vmcode::MEM_R23: return (uint64_t*)(regs.r23 + operand_mem);
-      case vmcode::MEM_R24: return (uint64_t*)(regs.r24 + operand_mem);
-      case vmcode::MEM_R25: return (uint64_t*)(regs.r25 + operand_mem);
-      case vmcode::MEM_R26: return (uint64_t*)(regs.r26 + operand_mem);
-      case vmcode::MEM_R27: return (uint64_t*)(regs.r27 + operand_mem);
-      case vmcode::MEM_R28: return (uint64_t*)(regs.r28 + operand_mem);
-      case vmcode::MEM_R29: return (uint64_t*)(regs.r29 + operand_mem);
-      case vmcode::MEM_R30: return (uint64_t*)(regs.r30 + operand_mem);
-      case vmcode::MEM_R31: return (uint64_t*)(regs.r31 + operand_mem);
-#endif
       case vmcode::NUMBER: *reserved = operand_mem; return reserved;
       case vmcode::XMM0: return (uint64_t*)(&regs.xmm0);
       case vmcode::XMM1: return (uint64_t*)(&regs.xmm1);
@@ -959,24 +904,6 @@ namespace
       case vmcode::XMM13:return (uint64_t*)(&regs.xmm13);
       case vmcode::XMM14:return (uint64_t*)(&regs.xmm14);
       case vmcode::XMM15:return (uint64_t*)(&regs.xmm15);
-#ifdef EXTRA_REGISTERS
-      case vmcode::XMM16:return (uint64_t*)(&regs.xmm16);
-      case vmcode::XMM17:return (uint64_t*)(&regs.xmm17);
-      case vmcode::XMM18:return (uint64_t*)(&regs.xmm18);
-      case vmcode::XMM19:return (uint64_t*)(&regs.xmm19);
-      case vmcode::XMM20:return (uint64_t*)(&regs.xmm20);
-      case vmcode::XMM21:return (uint64_t*)(&regs.xmm21);
-      case vmcode::XMM22:return (uint64_t*)(&regs.xmm22);
-      case vmcode::XMM23:return (uint64_t*)(&regs.xmm23);
-      case vmcode::XMM24:return (uint64_t*)(&regs.xmm24);
-      case vmcode::XMM25:return (uint64_t*)(&regs.xmm25);
-      case vmcode::XMM26:return (uint64_t*)(&regs.xmm26);
-      case vmcode::XMM27:return (uint64_t*)(&regs.xmm27);
-      case vmcode::XMM28:return (uint64_t*)(&regs.xmm28);
-      case vmcode::XMM29:return (uint64_t*)(&regs.xmm29);
-      case vmcode::XMM30:return (uint64_t*)(&regs.xmm30);
-      case vmcode::XMM31:return (uint64_t*)(&regs.xmm31);
-#endif
       case vmcode::LABELADDRESS: *reserved = operand_mem; return reserved;
       default: return nullptr;
       }
@@ -1376,47 +1303,6 @@ namespace
       }
     }
 
-  bool is_floating_point_register(vmcode::operand reg)
-    {
-    switch (reg)
-      {
-      case vmcode::XMM0: return true;
-      case vmcode::XMM1: return true;
-      case vmcode::XMM2: return true;
-      case vmcode::XMM3: return true;
-      case vmcode::XMM4: return true;
-      case vmcode::XMM5: return true;
-      case vmcode::XMM6: return true;
-      case vmcode::XMM7: return true;
-      case vmcode::XMM8: return true;
-      case vmcode::XMM9: return true;
-      case vmcode::XMM10: return true;
-      case vmcode::XMM11: return true;
-      case vmcode::XMM12: return true;
-      case vmcode::XMM13: return true;
-      case vmcode::XMM14: return true;
-      case vmcode::XMM15: return true;
-#ifdef EXTRA_REGISTERS
-      case vmcode::XMM16: return true;
-      case vmcode::XMM17: return true;
-      case vmcode::XMM18: return true;
-      case vmcode::XMM19: return true;
-      case vmcode::XMM20: return true;
-      case vmcode::XMM21: return true;
-      case vmcode::XMM22: return true;
-      case vmcode::XMM23: return true;
-      case vmcode::XMM24: return true;
-      case vmcode::XMM25: return true;
-      case vmcode::XMM26: return true;
-      case vmcode::XMM27: return true;
-      case vmcode::XMM28: return true;
-      case vmcode::XMM29: return true;
-      case vmcode::XMM30: return true;
-      case vmcode::XMM31: return true;
-#endif
-      default: return false;
-      }
-    }
 
   std::vector<vmcode::operand> _get_arguments(const external_function& f)
     {
