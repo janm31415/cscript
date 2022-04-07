@@ -1,10 +1,60 @@
 #include "peephole.h"
 #include "defines.h"
+#include <set>
+#include <cassert>
 
 COMPILER_BEGIN
 
 namespace
   {
+  VM::vmcode::operand get_register(VM::vmcode::operand reg)
+    {
+    switch (reg)
+      {
+      case VM::vmcode::MEM_RAX: return VM::vmcode::RAX;
+      case VM::vmcode::MEM_RBX: return VM::vmcode::RBX;
+      case VM::vmcode::MEM_RCX: return VM::vmcode::RCX;
+      case VM::vmcode::MEM_RDX: return VM::vmcode::RDX;
+      case VM::vmcode::MEM_RDI: return VM::vmcode::RDI;
+      case VM::vmcode::MEM_RSI: return VM::vmcode::RSI;
+      case VM::vmcode::MEM_RSP: return VM::vmcode::RSP;
+      case VM::vmcode::MEM_RBP: return VM::vmcode::RBP;
+      case VM::vmcode::MEM_R8: return VM::vmcode::R8;
+      case VM::vmcode::MEM_R9: return VM::vmcode::R9;
+      case VM::vmcode::MEM_R10: return VM::vmcode::R10;
+      case VM::vmcode::MEM_R11: return VM::vmcode::R11;
+      case VM::vmcode::MEM_R12: return VM::vmcode::R12;
+      case VM::vmcode::MEM_R13: return VM::vmcode::R13;
+      case VM::vmcode::MEM_R14: return VM::vmcode::R14;
+      case VM::vmcode::MEM_R15: return VM::vmcode::R15;
+      }
+    return reg;
+    }
+
+  VM::vmcode::operand get_memory_register(VM::vmcode::operand reg)
+    {
+    switch (reg)
+      {
+      case VM::vmcode::RAX: return VM::vmcode::MEM_RAX;
+      case VM::vmcode::RBX: return VM::vmcode::MEM_RBX;
+      case VM::vmcode::RCX: return VM::vmcode::MEM_RCX;
+      case VM::vmcode::RDX: return VM::vmcode::MEM_RDX;
+      case VM::vmcode::RDI: return VM::vmcode::MEM_RDI;
+      case VM::vmcode::RSI: return VM::vmcode::MEM_RSI;
+      case VM::vmcode::RSP: return VM::vmcode::MEM_RSP;
+      case VM::vmcode::RBP: return VM::vmcode::MEM_RBP;
+      case VM::vmcode::R8: return VM::vmcode::MEM_R8;
+      case VM::vmcode::R9: return VM::vmcode::MEM_R9;
+      case VM::vmcode::R10: return VM::vmcode::MEM_R10;
+      case VM::vmcode::R11: return VM::vmcode::MEM_R11;
+      case VM::vmcode::R12: return VM::vmcode::MEM_R12;
+      case VM::vmcode::R13: return VM::vmcode::MEM_R13;
+      case VM::vmcode::R14: return VM::vmcode::MEM_R14;
+      case VM::vmcode::R15: return VM::vmcode::MEM_R15;
+      }
+    return reg;
+    }
+
   bool operand_is_temp(VM::vmcode::operand op)
     {
     return op == FIRST_TEMP_INTEGER_REG || op == SECOND_TEMP_INTEGER_REG || op == FIRST_TEMP_REAL_REG || op == SECOND_TEMP_REAL_REG;
@@ -40,6 +90,24 @@ namespace
         return true;
       default:
         return false;
+      }
+    return false;
+    }
+
+  bool is_operation_that_sets_first_register(VM::vmcode::operation op)
+    {
+    switch (op)
+      {
+      case VM::vmcode::MOV:
+      case VM::vmcode::CVTSI2SD:
+      case VM::vmcode::CVTTSD2SI:
+      case VM::vmcode::SETE:
+      case VM::vmcode::SETNE:
+      case VM::vmcode::SETL:
+      case VM::vmcode::SETG:
+      case VM::vmcode::SETLE:
+      case VM::vmcode::SETGE:
+        return true;
       }
     return false;
     }
@@ -194,8 +262,92 @@ namespace
     return it;
     }
 
+
+  std::set<VM::vmcode::operand> get_placeholder_operands(const std::vector<VM::vmcode::instruction>& vec)
+    {
+    std::set<VM::vmcode::operand> non_placeholders;
+    non_placeholders.insert(VM::vmcode::XMM0);
+    for (const auto& instr : vec)
+      {
+      if (instr.operand1 != VM::vmcode::NUMBER && instr.operand1 != VM::vmcode::EMPTY)
+        {
+        if (get_memory_register(instr.operand1) == instr.operand1 && get_register(instr.operand1) != instr.operand1) // any memory register is not a placeholder
+          non_placeholders.insert(get_register(instr.operand1));
+        }
+      if (!is_operation_that_sets_first_register(instr.oper))
+        {
+        non_placeholders.insert(get_register(instr.operand1));
+        }
+      }
+    size_t non_placeholders_size = non_placeholders.size();
+    bool repeat = true;
+    while (repeat)
+      {
+      for (const auto& instr : vec)
+        {
+        if (is_operation_that_sets_first_register(instr.oper))
+          {
+          auto it = non_placeholders.find(get_register(instr.operand2));
+          if (it != non_placeholders.end())
+            non_placeholders.insert(get_register(instr.operand1));
+          }
+        }
+      repeat = non_placeholders_size != non_placeholders.size();
+      non_placeholders_size = non_placeholders.size();
+      }
+    std::set<VM::vmcode::operand> placeholders;
+    for (int i = VM::vmcode::RAX; i <= VM::vmcode::XMM15; ++i)
+      {
+      auto reg = get_register((VM::vmcode::operand)i);
+      auto it = non_placeholders.find(reg);
+      if (it == non_placeholders.end())
+        placeholders.insert(reg);
+      }
+    return placeholders;
+    }
+
+  std::vector<VM::vmcode::instruction>::iterator transitive_numbers(std::vector<VM::vmcode::instruction>::iterator it, std::vector<VM::vmcode::instruction>& vec, const std::set<VM::vmcode::operand>& placeholder_operands)
+    {
+    if (it->oper != VM::vmcode::MOV)
+      return it;
+    if (it->operand2 != VM::vmcode::NUMBER)
+      return it;
+    auto find_placeholder = placeholder_operands.find(it->operand1);
+    if (find_placeholder == placeholder_operands.end())
+      return it;
+    // we have so far MOV local_register number
+    auto local_register = it->operand1;
+    uint64_t number_value = it->operand2_mem;
+    it = vec.erase(it);
+    auto it2 = it;
+    bool done = it2 == vec.end();
+    while (!done)
+      {
+      if (it2->oper == VM::vmcode::LABEL || it->oper == VM::vmcode::LABEL_ALIGNED || it->oper == VM::vmcode::GLOBAL)
+        {
+        done = true;
+        }
+      else if (is_operation_that_sets_first_register(it2->oper) && it2->operand1 == local_register)
+        {
+        done = true;
+        }
+      else if (it2->operand2 == local_register)
+        {
+        assert(it2->operand2_mem == 0);
+        it2->operand2 = VM::vmcode::NUMBER;
+        it2->operand2_mem = number_value;
+        }
+      ++it2;
+      if (it2 == vec.end())
+        done = true;
+      }
+
+    return it;
+    }
+
   void peephole(std::vector<VM::vmcode::instruction>& vec)
     {
+    auto placeholder_operands = get_placeholder_operands(vec);
     auto it = vec.begin();
     while (it != vec.end())
       {
@@ -203,10 +355,11 @@ namespace
       it = peephole_mov_2(it, vec);
       it = peephole_mov_3(it, vec);
       it = remove_duplicates(it, vec);
+      it = transitive_numbers(it, vec, placeholder_operands);
       ++it;
       }
     }
-  }
+  } // namespace
 
 void peephole_optimization(VM::vmcode& code)
   {

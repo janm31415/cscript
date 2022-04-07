@@ -224,6 +224,27 @@ void test_optimize_unused_variables()
   code.stream(std::cout);
   }
 
+void test_optimize_number_transition()
+  {
+  pretty_print_visitor ppv;
+  //auto tokens = tokenize("() float f; int i; f = 3.1415; i = 1; i += f; i;");
+  auto tokens = tokenize("(int i) int a = 0; int b = 1; for (int j = 0; j < i; ++j) { int c = a+b; a = b; b = c; } a;");
+  auto prog = make_program(tokens);
+  visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
+  //optimize(prog);
+  visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
+  VM::vmcode code;
+  compile(code, prog);
+  peephole_optimization(code);
+  uint64_t size;
+  uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
+  VM::registers regs;
+  VM::run_bytecode(f, size, regs);
+  //std::cout << "Byte size: " << size << "\n";
+  VM::free_bytecode(f, size);
+  code.stream(std::cout);
+  }
+
 COMPILER_END
 
 void run_all_optimize_tests()
@@ -234,10 +255,11 @@ void run_all_optimize_tests()
   //test_optimize_harmonic();
   //test_optimize_fibonacci();
   //test_optimize_hamming();
-  test_optimize_qsort();
+  //test_optimize_qsort();
   //test_optimize_add_zero();
   //test_optimize_mul_zero();
   //test_optimize_div_one();
   //test_optimize_constant_variables();
   //test_optimize_unused_variables();
+  //test_optimize_number_transition();
   }
