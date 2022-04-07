@@ -267,6 +267,24 @@ namespace
       case vmcode::R13: return "r13";
       case vmcode::R14: return "r14";
       case vmcode::R15: return "r15";
+#ifdef EXTRA_REGISTERS
+      case vmcode::R16: return "r16";
+      case vmcode::R17: return "r17";
+      case vmcode::R18: return "r18";
+      case vmcode::R19: return "r19";
+      case vmcode::R20: return "r20";
+      case vmcode::R21: return "r21";
+      case vmcode::R22: return "r22";
+      case vmcode::R23: return "r23";
+      case vmcode::R24: return "r24";
+      case vmcode::R25: return "r25";
+      case vmcode::R26: return "r26";
+      case vmcode::R27: return "r27";
+      case vmcode::R28: return "r28";
+      case vmcode::R29: return "r29";
+      case vmcode::R30: return "r30";
+      case vmcode::R31: return "r31";
+#endif
       case vmcode::XMM0: return "xmm0";
       case vmcode::XMM1: return "xmm1";
       case vmcode::XMM2: return "xmm2";
@@ -283,6 +301,24 @@ namespace
       case vmcode::XMM13: return "xmm13";
       case vmcode::XMM14: return "xmm14";
       case vmcode::XMM15: return "xmm15";
+#ifdef EXTRA_REGISTERS
+      case vmcode::XMM16: return "xmm16";
+      case vmcode::XMM17: return "xmm17";
+      case vmcode::XMM18: return "xmm18";
+      case vmcode::XMM19: return "xmm19";
+      case vmcode::XMM20: return "xmm20";
+      case vmcode::XMM21: return "xmm21";
+      case vmcode::XMM22: return "xmm22";
+      case vmcode::XMM23: return "xmm23";
+      case vmcode::XMM24: return "xmm24";
+      case vmcode::XMM25: return "xmm25";
+      case vmcode::XMM26: return "xmm26";
+      case vmcode::XMM27: return "xmm27";
+      case vmcode::XMM28: return "xmm28";
+      case vmcode::XMM29: return "xmm29";
+      case vmcode::XMM30: return "xmm30";
+      case vmcode::XMM31: return "xmm31";
+#endif
       case vmcode::NUMBER: return uint64_to_hex(mem);
       case vmcode::MEM_RAX: return mem ? ("[rax" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[rax]";
       case vmcode::MEM_RBX: return mem ? ("[rbx" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[rbx]";
@@ -300,6 +336,24 @@ namespace
       case vmcode::MEM_R13: return mem ? ("[r13" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[r13]";
       case vmcode::MEM_R14: return mem ? ("[r14" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[r14]";
       case vmcode::MEM_R15: return mem ? ("[r15" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[r15]";
+#ifdef EXTRA_REGISTERS
+      case vmcode::MEM_R16: return mem ? ("[r16" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[r16]";
+      case vmcode::MEM_R17: return mem ? ("[r17" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[r17]";
+      case vmcode::MEM_R18: return mem ? ("[r18" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[r18]";
+      case vmcode::MEM_R19: return mem ? ("[r19" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[r19]";
+      case vmcode::MEM_R20: return mem ? ("[r20" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[r20]";
+      case vmcode::MEM_R21: return mem ? ("[r21" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[r21]";
+      case vmcode::MEM_R22: return mem ? ("[r22" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[r22]";
+      case vmcode::MEM_R23: return mem ? ("[r23" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[r23]";
+      case vmcode::MEM_R24: return mem ? ("[r24" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[r24]";
+      case vmcode::MEM_R25: return mem ? ("[r25" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[r25]";
+      case vmcode::MEM_R26: return mem ? ("[r26" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[r26]";
+      case vmcode::MEM_R27: return mem ? ("[r27" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[r27]";
+      case vmcode::MEM_R28: return mem ? ("[r28" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[r28]";
+      case vmcode::MEM_R29: return mem ? ("[r29" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[r29]";
+      case vmcode::MEM_R30: return mem ? ("[r30" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[r30]";
+      case vmcode::MEM_R31: return mem ? ("[r31" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[r31]";
+#endif
       case vmcode::LABELADDRESS: return text;
       }
     return "";
@@ -577,6 +631,24 @@ std::string vmcode::operand_to_string(operand op)
     case vmcode::R13: return std::string("R13");
     case vmcode::R14: return std::string("R14");
     case vmcode::R15: return std::string("R15");
+#ifdef EXTRA_REGISTERS
+    case vmcode::R16: return std::string("R16");
+    case vmcode::R17: return std::string("R17");
+    case vmcode::R18: return std::string("R18");
+    case vmcode::R19: return std::string("R19");
+    case vmcode::R20: return std::string("R20");
+    case vmcode::R21: return std::string("R21");
+    case vmcode::R22: return std::string("R22");
+    case vmcode::R23: return std::string("R23");
+    case vmcode::R24: return std::string("R24");
+    case vmcode::R25: return std::string("R25");
+    case vmcode::R26: return std::string("R26");
+    case vmcode::R27: return std::string("R27");
+    case vmcode::R28: return std::string("R28");
+    case vmcode::R29: return std::string("R29");
+    case vmcode::R30: return std::string("R30");
+    case vmcode::R31: return std::string("R31");
+#endif
     case vmcode::MEM_RAX: return std::string("MEM_RAX");
     case vmcode::MEM_RBX: return std::string("MEM_RBX");
     case vmcode::MEM_RCX: return std::string("MEM_RCX");
@@ -593,6 +665,24 @@ std::string vmcode::operand_to_string(operand op)
     case vmcode::MEM_R13: return std::string("MEM_R13");
     case vmcode::MEM_R14: return std::string("MEM_R14");
     case vmcode::MEM_R15: return std::string("MEM_R15");
+#ifdef EXTRA_REGISTERS
+    case vmcode::MEM_R16: return std::string("MEM_R16");
+    case vmcode::MEM_R17: return std::string("MEM_R17");
+    case vmcode::MEM_R18: return std::string("MEM_R18");
+    case vmcode::MEM_R19: return std::string("MEM_R19");
+    case vmcode::MEM_R20: return std::string("MEM_R20");
+    case vmcode::MEM_R21: return std::string("MEM_R21");
+    case vmcode::MEM_R22: return std::string("MEM_R22");
+    case vmcode::MEM_R23: return std::string("MEM_R23");
+    case vmcode::MEM_R24: return std::string("MEM_R24");
+    case vmcode::MEM_R25: return std::string("MEM_R25");
+    case vmcode::MEM_R26: return std::string("MEM_R26");
+    case vmcode::MEM_R27: return std::string("MEM_R27");
+    case vmcode::MEM_R28: return std::string("MEM_R28");
+    case vmcode::MEM_R29: return std::string("MEM_R29");
+    case vmcode::MEM_R30: return std::string("MEM_R30");
+    case vmcode::MEM_R31: return std::string("MEM_R31");
+#endif
     case vmcode::NUMBER: return std::string("NUMBER");
     case vmcode::XMM0: return std::string("XMM0");
     case vmcode::XMM1: return std::string("XMM1");
@@ -610,6 +700,24 @@ std::string vmcode::operand_to_string(operand op)
     case vmcode::XMM13:return std::string("XMM13");
     case vmcode::XMM14:return std::string("XMM14");
     case vmcode::XMM15:return std::string("XMM15");
+#ifdef EXTRA_REGISTERS
+    case vmcode::XMM16: return std::string("XMM16");
+    case vmcode::XMM17: return std::string("XMM17");
+    case vmcode::XMM18: return std::string("XMM18");
+    case vmcode::XMM19: return std::string("XMM19");
+    case vmcode::XMM20: return std::string("XMM20");
+    case vmcode::XMM21: return std::string("XMM21");
+    case vmcode::XMM22: return std::string("XMM22");
+    case vmcode::XMM23: return std::string("XMM23");
+    case vmcode::XMM24: return std::string("XMM24");
+    case vmcode::XMM25: return std::string("XMM25");
+    case vmcode::XMM26:return std::string("XMM26");
+    case vmcode::XMM27:return std::string("XMM27");
+    case vmcode::XMM28:return std::string("XMM28");
+    case vmcode::XMM29:return std::string("XMM29");
+    case vmcode::XMM30:return std::string("XMM30");
+    case vmcode::XMM31:return std::string("XMM31");
+#endif
     case vmcode::LABELADDRESS: return std::string("LABELADDRESS");
     }
   return std::string();

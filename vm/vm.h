@@ -40,7 +40,9 @@ VM_API uint64_t disassemble_bytecode(vmcode::operation& op,
 struct registers
   {
   VM_API registers();
+  uint64_t stack[256];
   uint64_t eflags;
+  uint64_t reserved;
   uint64_t rax;
   uint64_t rbx;
   uint64_t rcx;
@@ -57,6 +59,24 @@ struct registers
   uint64_t r13;
   uint64_t r14;
   uint64_t r15;
+#ifdef EXTRA_REGISTERS
+  uint64_t r16;
+  uint64_t r17;
+  uint64_t r18;
+  uint64_t r19;
+  uint64_t r20;
+  uint64_t r21;
+  uint64_t r22;
+  uint64_t r23;
+  uint64_t r24;
+  uint64_t r25;
+  uint64_t r26;
+  uint64_t r27;
+  uint64_t r28;
+  uint64_t r29;
+  uint64_t r30;
+  uint64_t r31;  
+#endif
   double xmm0;
   double xmm1;
   double xmm2;
@@ -73,8 +93,24 @@ struct registers
   double xmm13;
   double xmm14;
   double xmm15;
-  uint64_t stack[256];
-  uint64_t reserved;
+#ifdef EXTRA_REGISTERS
+  double xmm16;
+  double xmm17;
+  double xmm18;
+  double xmm19;
+  double xmm20;
+  double xmm21;
+  double xmm22;
+  double xmm23;
+  double xmm24;
+  double xmm25;
+  double xmm26;
+  double xmm27;
+  double xmm28;
+  double xmm29;
+  double xmm30;
+  double xmm31;
+#endif  
   };
 
 struct external_function
