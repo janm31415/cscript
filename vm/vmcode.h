@@ -109,6 +109,7 @@ class vmcode
       MOVDIV,
       MOVSHL,
       MOVSHR,
+      ADDSHL
       };
 
     enum operand

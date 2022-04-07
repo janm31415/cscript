@@ -2372,7 +2372,8 @@ namespace
         }
       else
         {
-        code.add(VM::vmcode::XORPD, op, op);
+        //code.add(VM::vmcode::XORPD, op, op);
+        code.add(VM::vmcode::MOV, op, VM::vmcode::NUMBER, 0);
         }
       }
     rt = RT_REAL;

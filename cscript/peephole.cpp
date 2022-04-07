@@ -255,7 +255,8 @@ namespace
     if (it2 == vec.end())
       return it;
     if (it2->oper == it->oper && it2->operand1 == it->operand1 && it2->operand1_mem == it->operand1_mem &&
-      it2->operand2 == it->operand2 && it2->operand2_mem == it->operand2_mem)
+      it2->operand2 == it->operand2 && it2->operand2_mem == it->operand2_mem &&
+      it2->operand3 == it->operand3 && it2->operand3_mem == it->operand3_mem)
       {
       it = vec.erase(it);
       }
@@ -290,6 +291,12 @@ namespace
           auto it = non_placeholders.find(get_register(instr.operand2));
           if (it != non_placeholders.end())
             non_placeholders.insert(get_register(instr.operand1));
+          if (instr.operand3 != VM::vmcode::EMPTY)
+            {
+            it = non_placeholders.find(get_register(instr.operand3));
+            if (it != non_placeholders.end())
+              non_placeholders.insert(get_register(instr.operand1));
+            }
           }
         }
       repeat = non_placeholders_size != non_placeholders.size();
@@ -331,11 +338,20 @@ namespace
         {
         done = true;
         }
-      else if (it2->operand2 == local_register)
+      if (!done)
         {
-        assert(it2->operand2_mem == 0);
-        it2->operand2 = VM::vmcode::NUMBER;
-        it2->operand2_mem = number_value;
+        if (it2->operand2 == local_register)
+          {
+          assert(it2->operand2_mem == 0);
+          it2->operand2 = VM::vmcode::NUMBER;
+          it2->operand2_mem = number_value;
+          }
+        if (it2->operand3 == local_register)
+          {
+          assert(it2->operand3_mem == 0);
+          it2->operand3 = VM::vmcode::NUMBER;
+          it2->operand3_mem = number_value;
+          }
         }
       ++it2;
       if (it2 == vec.end())
@@ -347,54 +363,75 @@ namespace
 
   std::vector<VM::vmcode::instruction>::iterator peephole_superoperators(std::vector<VM::vmcode::instruction>::iterator it, std::vector<VM::vmcode::instruction>& vec)
     {
-    if (it->oper != VM::vmcode::MOV)
-      return it;
-    auto it2 = it;
-    ++it2;
-    if (it2 == vec.end())
-      return it;
-    if (it2->operand1 != it->operand1 || it2->operand1_mem != it->operand1_mem)
-      return it;
-    switch (it2->oper)
+    if (it->oper == VM::vmcode::MOV)
       {
-      case VM::vmcode::ADD:
-        it->oper = VM::vmcode::MOVADD;
-        it->operand3 = it2->operand2;
-        it->operand3_mem = it2->operand2_mem;
+      auto it2 = it;
+      ++it2;
+      if (it2 == vec.end())
+        return it;
+      if (it2->operand1 != it->operand1 || it2->operand1_mem != it->operand1_mem)
+        return it;
+      switch (it2->oper)
+        {
+        case VM::vmcode::ADD:
+          it->oper = VM::vmcode::MOVADD;
+          it->operand3 = it2->operand2;
+          it->operand3_mem = it2->operand2_mem;
+          it = vec.erase(it2);
+          break;
+        case VM::vmcode::SUB:
+          it->oper = VM::vmcode::MOVSUB;
+          it->operand3 = it2->operand2;
+          it->operand3_mem = it2->operand2_mem;
+          it = vec.erase(it2);
+          break;
+        case VM::vmcode::MUL:
+          it->oper = VM::vmcode::MOVMUL;
+          it->operand3 = it2->operand2;
+          it->operand3_mem = it2->operand2_mem;
+          it = vec.erase(it2);
+          break;
+        case VM::vmcode::DIV:
+          it->oper = VM::vmcode::MOVDIV;
+          it->operand3 = it2->operand2;
+          it->operand3_mem = it2->operand2_mem;
+          it = vec.erase(it2);
+          break;
+        case VM::vmcode::SHL:
+          it->oper = VM::vmcode::MOVSHL;
+          it->operand3 = it2->operand2;
+          it->operand3_mem = it2->operand2_mem;
+          it = vec.erase(it2);
+          break;
+        case VM::vmcode::SHR:
+          it->oper = VM::vmcode::MOVSHR;
+          it->operand3 = it2->operand2;
+          it->operand3_mem = it2->operand2_mem;
+          it = vec.erase(it2);
+          break;
+        default:
+          break;
+        }
+      }
+    else if (it->oper == VM::vmcode::SHL)
+      {
+      auto it2 = it;
+      ++it2;
+      if (it2 == vec.end())
+        return it;
+      if (it2->operand2 != it->operand1 || it2->operand2_mem != it->operand1_mem)
+        return it;
+      if (it2->oper == VM::vmcode::ADD)
+        {
+        it->oper = VM::vmcode::ADDSHL;
+        it->operand3 = it->operand2;
+        it->operand3_mem = it->operand2_mem;
+        it->operand2 = it->operand1;
+        it->operand2_mem = it->operand1_mem;
+        it->operand1 = it2->operand1;
+        it->operand1_mem = it2->operand1_mem;
         it = vec.erase(it2);
-        break;
-      case VM::vmcode::SUB:
-        it->oper = VM::vmcode::MOVSUB;
-        it->operand3 = it2->operand2;
-        it->operand3_mem = it2->operand2_mem;
-        it = vec.erase(it2);
-        break;
-      case VM::vmcode::MUL:
-        it->oper = VM::vmcode::MOVMUL;
-        it->operand3 = it2->operand2;
-        it->operand3_mem = it2->operand2_mem;
-        it = vec.erase(it2);
-        break;
-      case VM::vmcode::DIV:
-        it->oper = VM::vmcode::MOVDIV;
-        it->operand3 = it2->operand2;
-        it->operand3_mem = it2->operand2_mem;
-        it = vec.erase(it2);
-        break;
-      case VM::vmcode::SHL:
-        it->oper = VM::vmcode::MOVSHL;
-        it->operand3 = it2->operand2;
-        it->operand3_mem = it2->operand2_mem;
-        it = vec.erase(it2);
-        break;
-      case VM::vmcode::SHR:
-        it->oper = VM::vmcode::MOVSHR;
-        it->operand3 = it2->operand2;
-        it->operand3_mem = it2->operand2_mem;
-        it = vec.erase(it2);
-        break;
-      default:
-        break;
+        }
       }
     return it;
     }

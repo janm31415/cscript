@@ -395,6 +395,28 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     return res;
     }
 
+  double runpfpii(const std::string& script, double* i1, int64_t* i2, int64_t i3, bool _optimize = true, bool _peephole = true, bool use_all_variable_registers = false)
+    {
+    double res = std::numeric_limits<double>::quiet_NaN();
+    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
+    uint64_t size;
+    uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
+    VM::registers reg;
+    reg.rcx = (uint64_t)i1;
+    reg.rdx = (uint64_t)i2;
+    reg.r8 = (uint64_t)i3;
+    try {
+      VM::run_bytecode(f, size, reg);
+      res = reg.xmm0;
+      }
+    catch (std::logic_error e)
+      {
+      std::cout << e.what() << "\n";
+      }
+    VM::free_bytecode(f, size);
+    return res;
+    }
+
   double runpf(const std::string& script, double* f1, bool _optimize = true, bool _peephole = true, bool use_all_variable_registers = false)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
@@ -1040,6 +1062,86 @@ struct quicksort : public compile_fixture
     }
   };
 
+struct quicksortdouble : public compile_fixture
+  {
+  void test(bool optimize = false, bool peephole = true, bool use_all_variable_registers = false)
+    {
+    uint64_t max_size = 10000;
+    uint32_t x = 0x76543513;
+    std::vector<double> a;
+    std::vector<int64_t> st;
+    a.resize(max_size);
+    st.resize(max_size);
+    for (auto& v : a)
+      {
+      x ^= x << 13;
+      x ^= x >> 17;
+      x ^= x << 5;
+      v = (double)(x % max_size)/(double)max_size;
+      }
+    auto tic = std::chrono::high_resolution_clock::now();
+    runpfpii(R"((float* a, int* stack, int size)
+      int lo = 0;
+      int hi = size-1;
+      // initialize top of stack
+      int top = -1;
+      // push initial values of l and h to stack
+      stack[++top] = lo;
+      stack[++top] = hi;
+      while (top >= 0)
+        {
+        hi = stack[top];
+        --top;
+        lo = stack[top];
+        --top;
+        // partitioning algorithm
+        // Set pivot element at its correct position
+        // in sorted array
+        float x = a[hi];
+        int i = (lo - 1);
+        for (int j = lo; j <= hi - 1; ++j)
+          {
+          if (a[j] <= x)
+            {
+            ++i;
+            float tmp = a[i];
+            a[i] = a[j];
+            a[j] = tmp;
+            }
+          }
+        float tmp2 = a[i+1];
+        a[i+1] = a[hi];
+        a[hi] = tmp2;
+        int p = i+1;
+        // end partitioning algorithm
+
+        // If there are elements on left side of pivot,
+        // then push left side to stack
+        if (p - 1 > lo)
+          {
+          stack[++top] = lo;
+          stack[++top] = p-1;
+          }
+
+        // If there are elements on right side of pivot,
+        // then push right side to stack
+        if (p + 1 < hi)
+          {
+          stack[++top] = p+1;
+          stack[++top] = hi;
+          }
+        }
+)", a.data(), st.data(), max_size, optimize, peephole, use_all_variable_registers);
+    auto toc = std::chrono::high_resolution_clock::now();
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
+    printf("qsort double timing: %lldms\n", ms);
+    bool array_is_sorted = true;
+    for (uint64_t i = 0; i < max_size - 1; ++i)
+      array_is_sorted &= a[i] <= a[i + 1];
+    TEST_ASSERT(array_is_sorted);
+    }
+  };
+
 struct test_strength_reduction : public compile_fixture
   {
   void test()
@@ -1127,6 +1229,7 @@ void run_all_compile_tests()
     fibonacci().test(optimize, peephole, use_all_variable_registers);
     hamming().test(optimize, peephole, use_all_variable_registers);
     quicksort().test(optimize, peephole, use_all_variable_registers);
+    quicksortdouble().test(optimize, peephole, use_all_variable_registers);
     }
   test_strength_reduction().test();
   }

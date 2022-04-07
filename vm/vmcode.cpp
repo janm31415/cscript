@@ -254,6 +254,7 @@ namespace
       case vmcode::MOVDIV: return "movdiv";
       case vmcode::MOVSHL: return "movshl";
       case vmcode::MOVSHR: return "movshr";
+      case vmcode::ADDSHL: return "addshl";
       }
     return "";
     }
@@ -627,6 +628,7 @@ std::string vmcode::operation_to_string(operation oper)
     case vmcode::MOVDIV: return std::string("MOVDIV");
     case vmcode::MOVSHL: return std::string("MOVSHL");
     case vmcode::MOVSHR: return std::string("MOVSHR");
+    case vmcode::ADDSHL: return std::string("ADDSHL");
     }
   return std::string();
   }

@@ -62,7 +62,7 @@ namespace
       case vmcode::DIV: return 1;
       case vmcode::DIV2: return 2;
       case vmcode::DIVSD: return 2;
-      case vmcode::EXTERN: return 0;     
+      case vmcode::EXTERN: return 0;
       case vmcode::GLOBAL:return 0;
       case vmcode::LABEL:return 0;
       case vmcode::LABEL_ALIGNED:return 0;
@@ -124,6 +124,7 @@ namespace
       case vmcode::MOVDIV: return 3;
       case vmcode::MOVSHL: return 3;
       case vmcode::MOVSHR: return 3;
+      case vmcode::ADDSHL: return 3;
       default:
       {
       std::stringstream str;
@@ -145,25 +146,27 @@ namespace
     {
     switch (op)
       {
-      case vmcode::CALL: return _32BIT;
-      case vmcode::JE: return _32BIT;
-      case vmcode::JL: return _32BIT;
-      case vmcode::JLE:return _32BIT;
-      case vmcode::JA: return _32BIT;
-      case vmcode::JB: return _32BIT;
-      case vmcode::JG: return _32BIT;
-      case vmcode::JGE:return _32BIT;
-      case vmcode::JNE:return _32BIT;
-      case vmcode::JMP:return _32BIT;
-      case vmcode::JES: return _8BIT;
-      case vmcode::JLS: return _8BIT;
-      case vmcode::JLES: return _8BIT;
-      case vmcode::JAS: return _8BIT;
-      case vmcode::JBS: return _8BIT;
-      case vmcode::JGS: return _8BIT;
-      case vmcode::JGES: return _8BIT;
-      case vmcode::JNES: return _8BIT;
-      case vmcode::JMPS: return _8BIT;
+      case vmcode::CALL:
+      case vmcode::JE:
+      case vmcode::JL:
+      case vmcode::JLE:
+      case vmcode::JA:
+      case vmcode::JB:
+      case vmcode::JG:
+      case vmcode::JGE:
+      case vmcode::JNE:
+      case vmcode::JMP:
+        return _32BIT;
+      case vmcode::JES:
+      case vmcode::JLS:
+      case vmcode::JLES:
+      case vmcode::JAS:
+      case vmcode::JBS:
+      case vmcode::JGS:
+      case vmcode::JGES:
+      case vmcode::JNES:
+      case vmcode::JMPS:
+        return _8BIT;
       default: return _VARIABLE;
       }
     }
@@ -202,7 +205,7 @@ namespace
       case  vmcode::R12:
       case  vmcode::R13:
       case  vmcode::R14:
-      case  vmcode::R15:   
+      case  vmcode::R15:
 #ifdef EXTRA_REGISTERS
       case  vmcode::R16:
       case  vmcode::R17:
@@ -320,7 +323,7 @@ namespace
           First two bits equal to : 0 => instr.operand1_mem equals zero
                                   : 1 => instr.operand1_mem needs 8 bits
                                   : 2 => instr.operand1_mem needs 32 bits
-                                  : 3 => instr.operand1_mem needs 64 bits                                  
+                                  : 3 => instr.operand1_mem needs 64 bits
           Bits three to five equal to : 0 => instr.operand2_mem equals zero
                                       : 1 => instr.operand2_mem needs 8 bits
                                       : 2 => instr.operand2_mem needs 16 bits
@@ -431,7 +434,7 @@ namespace
       case 4: *(reinterpret_cast<uint64_t*>(opcode_stream + sz)) = (uint64_t)instr.operand3_mem; sz += 8; break;
       default: break;
       }
-    return sz;  
+    return sz;
     }
 
 
@@ -844,7 +847,7 @@ uint64_t disassemble_bytecode(vmcode::operation& op,
       get_memory_size_type(op2mem, savemem, op, operand2, 0);
       }
     }
-  else 
+  else
     {
     assert(nr_ops == 3);
     uint8_t op1 = bytecode[sz++];
@@ -910,7 +913,7 @@ uint64_t disassemble_bytecode(vmcode::operation& op,
     default: operand3_mem = 0; break;
     }
   return sz;
- 
+
   }
 
 registers::registers()
@@ -1034,7 +1037,7 @@ namespace
       case vmcode::LABELADDRESS: *reserved = operand_mem; return reserved;
       default: return nullptr;
       }
-    }
+      }
 
   struct AddOper
     {
@@ -1157,7 +1160,7 @@ namespace
       left -= right;
       }
     };
- 
+
   struct CSinOper
     {
     static void apply(double& left, double right)
@@ -1266,10 +1269,10 @@ namespace
     {
     uint64_t tmp;
     uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
-    assert(oprnd1);    
+    assert(oprnd1);
     uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
     assert(oprnd2);
-    TOper::apply(*oprnd1, *oprnd2);    
+    TOper::apply(*oprnd1, *oprnd2);
     }
 
   template <class TOper>
@@ -1295,7 +1298,7 @@ namespace
     assert(oprnd2);
     TOper::apply(*reinterpret_cast<double*>(oprnd1), *reinterpret_cast<double*>(oprnd2));
 #endif
-    }
+      }
 
   template <class TOper>
   inline uint64_t execute_operation_const(vmcode::operand operand1,
@@ -1311,7 +1314,7 @@ namespace
     uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
     assert(oprnd2);
     TOper::apply(left, *oprnd2);
-    return left;          
+    return left;
     }
 
   inline void get_values(int64_t& left_signed, int64_t& right_signed, uint64_t& left_unsigned, uint64_t right_unsigned, vmcode::operand operand1,
@@ -1326,7 +1329,7 @@ namespace
     left_unsigned = *oprnd1;
     left_signed = (int64_t)left_unsigned;
     uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
-    assert(oprnd2);      
+    assert(oprnd2);
     right_unsigned = *oprnd2;
     right_signed = (int64_t)right_unsigned;
     }
@@ -1527,9 +1530,9 @@ namespace
         break;
         }
         }
-      }
+        }
     return args;
-    }
+        }
 
   template <class T>
   T _call_external_0(const external_function& f)
@@ -1971,7 +1974,7 @@ namespace
       }
     }
 
-  } // namespace
+      } // namespace
 void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const std::vector<external_function>& externals)
   {
   (void*)size;
@@ -2211,7 +2214,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       {
       execute_double_operation<DivsdOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
-      }  
+      }
       case vmcode::IDIV:
       {
       uint64_t tmp;
@@ -2481,7 +2484,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
       assert(oprnd1);
       int64_t val = (int64_t)(*oprnd1);
-      *oprnd1 = -val;      
+      *oprnd1 = -val;
       break;
       }
       case vmcode::NOP: break;
@@ -2507,7 +2510,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       if (oprnd1)
         *((uint64_t*)regs.rsp) = *oprnd1;
       else if (operand1 == vmcode::NUMBER || operand1 == vmcode::LABELADDRESS)
-        *((uint64_t*)regs.rsp) = operand1_mem;     
+        *((uint64_t*)regs.rsp) = operand1_mem;
       break;
       }
       case vmcode::RET:
@@ -2743,6 +2746,20 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       uint64_t* oprnd3 = get_address_64bit(operand3, operand3_mem, regs, &tmp2);
       assert(oprnd3);
       *oprnd1 = *oprnd2 >> *oprnd3;
+      break;
+      }
+      case vmcode::ADDSHL:
+      {
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
+      assert(oprnd1);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
+      assert(oprnd2);
+      uint64_t tmp2;
+      uint64_t* oprnd3 = get_address_64bit(operand3, operand3_mem, regs, &tmp2);
+      assert(oprnd3);
+      *oprnd2 <<= *oprnd3;
+      *oprnd1 += *oprnd2;
       break;
       }
       default:
