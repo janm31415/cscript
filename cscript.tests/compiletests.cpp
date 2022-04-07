@@ -908,7 +908,7 @@ struct harmonic : public compile_fixture
     TEST_EQ_CLOSE(14.3927, run("() float sum = 0.0; for (int i = 1; i<1000000; ++i) { sum += 1.0/i; } sum;", optimize, peephole), 1e-4);
     auto toc = std::chrono::high_resolution_clock::now();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
-    printf("Harmonic timing: %dms\n", ms);
+    printf("Harmonic timing: %lldms\n", ms);
     }
   };
 
@@ -931,7 +931,7 @@ struct hamming : public compile_fixture
     TEST_EQ(2, runpipii("(int* a, int* b, int size) int hamming = 0; for (int i = 0; i < size; ++i) { hamming += a[i] != b[i];} hamming;", a.data(), b.data(), max_size, optimize, peephole));
     auto toc = std::chrono::high_resolution_clock::now();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
-    printf("Hamming distance timing: %dms\n", ms);
+    printf("Hamming distance timing: %lldms\n", ms);
     }
   };
 
@@ -943,11 +943,11 @@ struct fibonacci : public compile_fixture
     TEST_EQ(102334155, runi("(int i) int a = 0; int b = 1; for (int j = 0; j < i; ++j) { int c = a+b; a = b; b = c; } a;", 40, optimize, peephole));
     auto toc = std::chrono::high_resolution_clock::now();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
-    printf("Fibonacci timing: %dms\n", ms);
+    printf("Fibonacci timing: %lldms\n", ms);
     }
   };
 
-struct qsorter : public compile_fixture
+struct quicksort : public compile_fixture
   {
   void test(bool optimize = false, bool peephole = true)
     {
@@ -1018,7 +1018,7 @@ struct qsorter : public compile_fixture
 )", a.data(), st.data(), max_size);
     auto toc = std::chrono::high_resolution_clock::now();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
-    printf("qsort timing: %dms\n", ms);
+    printf("qsort timing: %lldms\n", ms);
     bool array_is_sorted = true;
     for (uint64_t i = 0; i < max_size-1; ++i)
       array_is_sorted &= a[i]<=a[i+1];
@@ -1103,7 +1103,7 @@ void run_all_compile_tests()
     harmonic().test(optimize, peephole);
     fibonacci().test(optimize, peephole);
     hamming().test(optimize, peephole);
-    qsorter().test(optimize, peephole);
+    quicksort().test(optimize, peephole);
     }
   test_strength_reduction().test();
   }

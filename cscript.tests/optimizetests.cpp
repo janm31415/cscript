@@ -234,7 +234,7 @@ void run_all_optimize_tests()
   //test_optimize_harmonic();
   //test_optimize_fibonacci();
   //test_optimize_hamming();
-  //test_optimize_qsort();
+  test_optimize_qsort();
   //test_optimize_add_zero();
   //test_optimize_mul_zero();
   //test_optimize_div_one();

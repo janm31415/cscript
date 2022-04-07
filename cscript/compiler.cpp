@@ -25,6 +25,8 @@ namespace
     reg.push_back(REGISTER_FOR_INT_VARIABLE_2);
     reg.push_back(REGISTER_FOR_INT_VARIABLE_3);
     reg.push_back(REGISTER_FOR_INT_VARIABLE_4);
+    reg.push_back(REGISTER_FOR_INT_VARIABLE_5);
+    reg.push_back(REGISTER_FOR_INT_VARIABLE_6);
     return reg;
     }
 
@@ -39,6 +41,10 @@ namespace
     reg.push_back(REGISTER_FOR_REAL_VARIABLE_2);
     reg.push_back(REGISTER_FOR_REAL_VARIABLE_3);
     reg.push_back(REGISTER_FOR_REAL_VARIABLE_4);
+    reg.push_back(REGISTER_FOR_REAL_VARIABLE_5);
+    reg.push_back(REGISTER_FOR_REAL_VARIABLE_6);
+    reg.push_back(REGISTER_FOR_REAL_VARIABLE_7);
+    reg.push_back(REGISTER_FOR_REAL_VARIABLE_8);
     return reg;
     }
 
