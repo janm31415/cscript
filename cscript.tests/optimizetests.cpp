@@ -336,6 +336,43 @@ void test_optimize_super_operators()
   code.stream(std::cout);
   }
 
+void test_optimize_digitspi()
+  {
+  pretty_print_visitor ppv;
+  std::string script = R"((int nr_of_terms)
+/* This method computes pi by using the power series expansion of 
+   atan(x) = x - x^3/3 + x^5/5 - ... together with formulas like 
+   pi = 16*atan(1/5) - 4*atan(1/239). 
+   This gives about 1.4 decimals per term.
+*/
+    float x1 = 1.0/5.0;
+    float x2 = 1.0/239.0;
+    float pi = 0;
+    for (int i = 0; i < nr_of_terms; ++i)
+      {
+      float sign = pow(-1.0, i);
+      float power = 2*i+1;
+      pi += 16*sign * pow(x1, power)/power - 4*sign * pow(x2, power)/power;
+      }
+    pi;
+)";
+  auto tokens = tokenize(script);
+  auto prog = make_program(tokens);
+  visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
+  optimize(prog);
+  visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
+  VM::vmcode code;
+  compile(code, prog);
+  peephole_optimization(code);
+  code.stream(std::cout);
+  uint64_t size;
+  uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
+  VM::registers regs;
+  VM::run_bytecode(f, size, regs);
+  std::cout << "Byte size: " << size << "\n";
+  VM::free_bytecode(f, size);
+  }
+
 COMPILER_END
 
 void run_all_optimize_tests()
@@ -355,4 +392,5 @@ void run_all_optimize_tests()
   //test_optimize_unused_variables();
   //test_optimize_number_transition();
   //test_optimize_super_operators();
+  test_optimize_digitspi();
   }

@@ -1142,6 +1142,37 @@ struct quicksortdouble : public compile_fixture
     }
   };
 
+struct digitspi : public compile_fixture
+  {
+  void test(bool optimize = false, bool peephole = true, bool use_all_variable_registers = false)
+    {
+    uint64_t nr_terms = 10000;
+    std::string script = R"((int nr_of_terms)
+/* This method computes pi by using the power series expansion of 
+   atan(x) = x - x^3/3 + x^5/5 - ... together with formulas like 
+   pi = 16*atan(1/5) - 4*atan(1/239). 
+   This gives about 1.4 decimals per term.
+*/
+    float x1 = 1.0/5.0;
+    float x2 = 1.0/239.0;
+    float pi = 0;
+    for (int i = 0; i < nr_of_terms; ++i)
+      {
+      float sign = pow(-1.0, i);
+      float power = 2*i+1;
+      pi += 16*sign * pow(x1, power)/power - 4*sign * pow(x2, power)/power;
+      }
+    pi;
+)";
+    auto tic = std::chrono::high_resolution_clock::now();
+    double result = runi(script, nr_terms, optimize, peephole, use_all_variable_registers);
+    TEST_EQ_CLOSE(3.1415926535, result, 1e-8);
+    auto toc = std::chrono::high_resolution_clock::now();
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
+    printf("digitspi timing: %lldms\n", ms);
+    }
+  };
+
 struct test_strength_reduction : public compile_fixture
   {
   void test()
@@ -1226,10 +1257,11 @@ void run_all_compile_tests()
     if_test().test(optimize, peephole, use_all_variable_registers);
     dead_code_test().test(optimize, peephole, use_all_variable_registers);
     harmonic().test(optimize, peephole, use_all_variable_registers);
-    fibonacci().test(optimize, peephole, use_all_variable_registers);
-    hamming().test(optimize, peephole, use_all_variable_registers);
-    quicksort().test(optimize, peephole, use_all_variable_registers);
-    quicksortdouble().test(optimize, peephole, use_all_variable_registers);
+    //fibonacci().test(optimize, peephole, use_all_variable_registers);
+    //hamming().test(optimize, peephole, use_all_variable_registers);
+    //quicksort().test(optimize, peephole, use_all_variable_registers);
+    //quicksortdouble().test(optimize, peephole, use_all_variable_registers);
+    digitspi().test(optimize, peephole, use_all_variable_registers);
     }
   test_strength_reduction().test();
   }
