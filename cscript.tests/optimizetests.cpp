@@ -392,5 +392,5 @@ void run_all_optimize_tests()
   //test_optimize_unused_variables();
   //test_optimize_number_transition();
   //test_optimize_super_operators();
-  test_optimize_digitspi();
+  //test_optimize_digitspi();
   }

@@ -136,9 +136,10 @@ namespace
     return arr;
     }
 
+  static std::array<int8_t, 128> nr_oprnds = build_number_of_operands_array();
+
   int8_t number_of_operands(const vmcode::operation& op)
-    {
-    static std::array<int8_t, 128> nr_oprnds = build_number_of_operands_array();
+    {    
     return nr_oprnds[(int)op];
     }
 
@@ -263,6 +264,87 @@ namespace
       save_mem_size = true;
       opmem = 4;
       }
+    }
+
+  uint8_t _get_memory_size_type_fast(const vmcode::operand& oprnd)
+    {
+    switch (oprnd)
+      {
+      case  vmcode::EMPTY:
+      case  vmcode::RAX:
+      case  vmcode::RBX:
+      case  vmcode::RCX:
+      case  vmcode::RDX:
+      case  vmcode::RSI:
+      case  vmcode::RDI:
+      case  vmcode::RSP:
+      case  vmcode::RBP:
+      case  vmcode::R8:
+      case  vmcode::R9:
+      case  vmcode::R10:
+      case  vmcode::R11:
+      case  vmcode::R12:
+      case  vmcode::R13:
+      case  vmcode::R14:
+      case  vmcode::R15:
+      case  vmcode::XMM0:
+      case  vmcode::XMM1:
+      case  vmcode::XMM2:
+      case  vmcode::XMM3:
+      case  vmcode::XMM4:
+      case  vmcode::XMM5:
+      case  vmcode::XMM6:
+      case  vmcode::XMM7:
+      case  vmcode::XMM8:
+      case  vmcode::XMM9:
+      case  vmcode::XMM10:
+      case  vmcode::XMM11:
+      case  vmcode::XMM12:
+      case  vmcode::XMM13:
+      case  vmcode::XMM14:
+      case  vmcode::XMM15:
+        return 0;
+      case vmcode::NUMBER:
+      {      
+      return 1;
+      }
+      case vmcode::LABELADDRESS:
+      {
+      return 4;      
+      }
+      default:
+        break;      
+      }
+    return 1;
+    }
+
+  std::array<uint8_t, (int)vmcode::LABELADDRESS+1> _build_memory_size_type_fast_array_1()
+    {
+    std::array<uint8_t, (int)vmcode::LABELADDRESS + 1> arr;
+    for (int i = 0; i <= (int)vmcode::LABELADDRESS; ++i)
+      {
+      arr[i] = _get_memory_size_type_fast((vmcode::operand)i);
+      }
+    return arr;
+    }
+
+  std::array<uint8_t, 128> _build_memory_size_type_fast_array_2()
+    {
+    std::array<uint8_t, 128> arr;
+    for (int i = 0; i <128; ++i)
+      {
+      auto memtype = get_operand_immediate_type((vmcode::operation)i);
+      arr[i] = memtype == _32BIT ? 3 : 1;
+      }
+    return arr;
+    }
+
+  static std::array<uint8_t, (int)vmcode::LABELADDRESS + 1> arr1 = _build_memory_size_type_fast_array_1();
+  static std::array<uint8_t, 128> arr2 = _build_memory_size_type_fast_array_2();
+
+  inline uint8_t get_memory_size_type_fast(const vmcode::operation& op, const vmcode::operand& oprnd)
+    {
+    return arr1[(int)oprnd]*arr2[(int)op];    
     }
 
   /*
@@ -749,8 +831,7 @@ uint64_t disassemble_bytecode(vmcode::operation& op,
       {
       op1 &= ~operand_has_8bit_mem;
       operand1 = (vmcode::operand)op1;
-      bool savemem;
-      get_memory_size_type(op1mem, savemem, op, operand1, 0);
+      op1mem = get_memory_size_type_fast(op, operand1);
       }
     }
   else if (nr_ops == 2)
@@ -772,9 +853,8 @@ uint64_t disassemble_bytecode(vmcode::operation& op,
       op2 &= ~operand_has_8bit_mem;
       operand1 = (vmcode::operand)op1;
       operand2 = (vmcode::operand)op2;
-      bool savemem;
-      get_memory_size_type(op1mem, savemem, op, operand1, 0);
-      get_memory_size_type(op2mem, savemem, op, operand2, 0);
+      op1mem = get_memory_size_type_fast(op, operand1);
+      op2mem = get_memory_size_type_fast(op, operand2);
       }
     }
   else
@@ -812,10 +892,9 @@ uint64_t disassemble_bytecode(vmcode::operation& op,
       operand1 = (vmcode::operand)op1;
       operand2 = (vmcode::operand)op2;
       operand3 = (vmcode::operand)op3;
-      bool savemem;
-      get_memory_size_type(op1mem, savemem, op, operand1, 0);
-      get_memory_size_type(op2mem, savemem, op, operand2, 0);
-      get_memory_size_type(op3mem, savemem, op, operand3, 0);
+      op1mem = get_memory_size_type_fast(op, operand1);
+      op2mem = get_memory_size_type_fast(op, operand2);
+      op3mem = get_memory_size_type_fast(op, operand3);
       }
     }
   switch (op1mem)
@@ -1355,7 +1434,7 @@ namespace
         break;
         }
         }
-      }
+    }
     return args;
     }
 
@@ -2015,7 +2094,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case vmcode::DIV2:
       {
-      uint64_t tmp;   
+      uint64_t tmp;
       uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
       uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
       uint64_t result = *oprnd1 / *oprnd2;

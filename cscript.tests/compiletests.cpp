@@ -1257,10 +1257,10 @@ void run_all_compile_tests()
     if_test().test(optimize, peephole, use_all_variable_registers);
     dead_code_test().test(optimize, peephole, use_all_variable_registers);
     harmonic().test(optimize, peephole, use_all_variable_registers);
-    //fibonacci().test(optimize, peephole, use_all_variable_registers);
-    //hamming().test(optimize, peephole, use_all_variable_registers);
-    //quicksort().test(optimize, peephole, use_all_variable_registers);
-    //quicksortdouble().test(optimize, peephole, use_all_variable_registers);
+    fibonacci().test(optimize, peephole, use_all_variable_registers);
+    hamming().test(optimize, peephole, use_all_variable_registers);
+    quicksort().test(optimize, peephole, use_all_variable_registers);
+    quicksortdouble().test(optimize, peephole, use_all_variable_registers);
     digitspi().test(optimize, peephole, use_all_variable_registers);
     }
   test_strength_reduction().test();
