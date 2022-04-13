@@ -1217,6 +1217,64 @@ struct test_strength_reduction : public compile_fixture
     }
   };
 
+struct test_many_variables : public compile_fixture
+  {
+  void test(bool optimize = false, bool peephole = true, bool use_all_variable_registers = false)
+    {
+    std::string script = R"(
+()
+int a=1,b=2,c=3,d=4,e=5,f=6,g=7,h=8,i=9,j=10,k=11,l=12,m=13,n=14,o=15,p=16,q=17,r=18;
+float s = pow(1+2*pow(7+5*9, 2+3*8), 5);
+a+b+c+d+e+f+g+h+i+j+k+l+m+n+o+p+q+r;
+)";
+    TEST_EQ(9*19, run(script, optimize, peephole, use_all_variable_registers));
+    std::string script2 = R"(
+()
+float a=1,b=2,c=3,d=4,e=5,f=6,g=7,h=8,i=9,j=10,k=11,l=12,m=13,n=14,o=15,p=16,q=17,r=18;
+int result[3];
+result[3] = 0;
+float s = pow(1+2*pow(7+5*9, 2+3*8+result[pow(1,0)]), 5);
+a+b+c+d+e+f+g+h+i+j+k+l+m+n+o+p+q+r;
+)";
+    TEST_EQ(9 * 19, run(script2, optimize, peephole, use_all_variable_registers));
+
+    std::string script3 = R"(
+()
+int result[3];
+result[0] = 0;
+result[1] = 0;
+float s = pow(1+2*pow(7+5*9, 1+1*1+(++result[pow(1,0)])), 1);
+s;
+)";
+    TEST_EQ(281217, run(script3, optimize, peephole, use_all_variable_registers));
+
+    std::string script4 = R"(
+()
+float a=1,b=2,c=3,d=4,e=5,f=6,g=7,h=8,i=9,j=10,k=11,l=12,m=13,n=14,o=15,p=16,q=17,r=18;
+float result[3];
+result[0] = 0;
+float s = pow(1+2*pow(7+5*9, 2+3*8+(++result[pow(1,0)])), 5);
+a+b+c+d+e+f+g+h+i+j+k+l+m+n+o+p+q+r;
+)";
+    TEST_EQ(9 * 19, run(script4, optimize, peephole, use_all_variable_registers));
+    
+
+    std::string script5 = R"(
+()
+float a=1,b=2,c=3,d=4,e=5,f=6,g=7,h=8,i=9,j=10,k=11,l=12,m=13,n=14,o=15,p=16,q=17,r=18;
+int result[3];
+result[0] = 0;
+result[1] = 0;
+result[2] = 0;
+float s = ++result[pow(1,0)+1];
+a+b+c+d+e+f+g+h+i+j+k+l+m+n+o+p+q+r;
+)";
+    TEST_EQ(9 * 19, run(script5, optimize, peephole, use_all_variable_registers));
+
+    }
+
+  };
+
 COMPILER_END
 
 void run_all_compile_tests()
@@ -1234,7 +1292,7 @@ void run_all_compile_tests()
       case 1: optimize = true; peephole = false; use_all_variable_registers = false; break;
       case 2: optimize = false; peephole = true; use_all_variable_registers = false; break;
       case 3: optimize = false; peephole = false; use_all_variable_registers = false; break;
-      case 4: optimize = false; peephole = true; use_all_variable_registers = true; break;
+      case 4: optimize = false; peephole = false; use_all_variable_registers = true; break;
       }
     compiler_float().test(optimize, peephole, use_all_variable_registers);
     compiler_int().test(optimize, peephole, use_all_variable_registers);
@@ -1256,12 +1314,15 @@ void run_all_compile_tests()
     modulo_test().test(optimize, peephole, use_all_variable_registers);
     if_test().test(optimize, peephole, use_all_variable_registers);
     dead_code_test().test(optimize, peephole, use_all_variable_registers);
+#if 0
     harmonic().test(optimize, peephole, use_all_variable_registers);
     fibonacci().test(optimize, peephole, use_all_variable_registers);
     hamming().test(optimize, peephole, use_all_variable_registers);
     quicksort().test(optimize, peephole, use_all_variable_registers);
     quicksortdouble().test(optimize, peephole, use_all_variable_registers);
     digitspi().test(optimize, peephole, use_all_variable_registers);
+#endif
+    test_many_variables().test(optimize, peephole, use_all_variable_registers);
     }
   test_strength_reduction().test();
   }

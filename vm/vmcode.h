@@ -10,8 +10,6 @@
 
 VM_BEGIN
 
-#define SUPEROPERATOR_START 100
-
 class vmcode
   {
   public:    
@@ -93,7 +91,7 @@ class vmcode
       XOR,
       XORPD,
       // super operators with three operands
-      MOVADD = SUPEROPERATOR_START,
+      MOVADD,
       MOVSUB,
       MOVMUL,
       MOVDIV,

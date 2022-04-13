@@ -365,8 +365,8 @@ namespace
                                   : 4 => instr.operand2_mem needs 64 bits
   byte 5+: instr.operand1_mem using as many bytes as warranted by byte 4, followed by instr.operand2_mem using as many bytes as warranted by byte4.
 
-  Byte settings for super operators:
-  byte 1: operation opcode: equal to (int)vmcode::operation value of instr.oper, but value is larger or equal than SUPEROPERATOR_START
+  Byte settings for super operators (i.e. 3 operands):
+  byte 1: operation opcode: equal to (int)vmcode::operation value of instr.oper
   byte 2: first operand: equal to (int)vmcode::operand of instr.operand1
   byte 3: second operand: equal to (int)vmcode::operand of instr.operand2
   byte 4: third operand: equal to (int)vmcode::operand of instr.operand3
@@ -401,7 +401,6 @@ namespace
     assert(nr_ops >= 0);
     if (nr_ops == 1)
       {
-      assert((int)instr.oper < SUPEROPERATOR_START);
       bool savemem = true;
       get_memory_size_type(op1mem, savemem, instr.oper, instr.operand1, instr.operand1_mem);
       if (savemem)
@@ -416,7 +415,6 @@ namespace
       }
     else if (nr_ops == 2)
       {
-      assert((int)instr.oper < SUPEROPERATOR_START);
       bool savemem1 = true;
       bool savemem2 = true;
       get_memory_size_type(op1mem, savemem1, instr.oper, instr.operand1, instr.operand1_mem);
@@ -434,8 +432,7 @@ namespace
         }
       }
     else if (nr_ops == 3)
-      {
-      assert((int)instr.oper >= SUPEROPERATOR_START);
+      {      
       bool savemem1 = true;
       bool savemem2 = true;
       bool savemem3 = true;
@@ -772,8 +769,8 @@ byte 4: information on operand1_mem and operand2_mem
                                 : 4 => instr.operand2_mem needs 64 bits
 byte 5+: instr.operand1_mem using as many bytes as warranted by byte 4, followed by instr.operand2_mem using as many bytes as warranted by byte4.
 
-Byte settings for super operators:
-byte 1: operation opcode: equal to (int)vmcode::operation value of instr.oper, but value is larger or equal than SUPEROPERATOR_START
+Byte settings for super operators (i.e. 3 operands):
+byte 1: operation opcode: equal to (int)vmcode::operation value of instr.oper
 byte 2: first operand: equal to (int)vmcode::operand of instr.operand1
 byte 3: second operand: equal to (int)vmcode::operand of instr.operand2
 byte 4: third operand: equal to (int)vmcode::operand of instr.operand3

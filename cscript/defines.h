@@ -15,7 +15,7 @@
 #define SECOND_TEMP_REAL_REG VM::vmcode::XMM5
 #define THIRD_TEMP_REAL_REG VM::vmcode::XMM6
 
-#define RESERVED_INTEGER_REG VM::vmcode::R11
+#define GLOBAL_VARIABLE_REG VM::vmcode::R11
 
 #define RESERVED_REAL_REG VM::vmcode::XMM7
 #define RESERVED_REAL_REG_2 VM::vmcode::XMM8
