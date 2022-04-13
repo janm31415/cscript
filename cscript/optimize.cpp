@@ -463,14 +463,19 @@ namespace
         if (!constant_dims)
           variables_that_are_used.insert(i.name);
         }
+      if (i.name.front() == '$') // global variable
+        {
+        variables_that_are_used.insert(i.name);
+        variables_that_change_value.insert(i.name);
+        }
       }
 
     virtual void _postvisit(Float& f)
       {
       if (!f.dims.empty())
-        variable_to_type_map[f.name] = single_array;
+        variable_to_type_map[f.name] = real_array;
       else
-        variable_to_type_map[f.name] = single;
+        variable_to_type_map[f.name] = real;
       if (!f.dims.empty())
         {
         bool constant_dims = true;
@@ -478,6 +483,11 @@ namespace
           constant_dims &= is_constant(d);
         if (!constant_dims)
           variables_that_are_used.insert(f.name);
+        }
+      if (f.name.front() == '$') // global variable
+        {
+        variables_that_are_used.insert(f.name);
+        variables_that_change_value.insert(f.name);
         }
       }
 
@@ -493,15 +503,19 @@ namespace
     virtual void _postvisit(FloatParameter& f)
       {
       if (f.pointer)
-        variable_to_type_map[f.name] = pointer_to_single;
+        variable_to_type_map[f.name] = pointer_to_real;
       else
-        variable_to_type_map[f.name] = single;
+        variable_to_type_map[f.name] = real;
       variables_that_are_used.insert(f.name);
       }
 
     virtual void _postvisit(Assignment& a)
       {
       variables_that_change_value.insert(a.name);
+      if (a.name.front() == '$') // global variable
+        {
+        variables_that_are_used.insert(a.name);        
+        }
       }
 
     virtual void _postvisit(Variable& v)
@@ -689,11 +703,11 @@ namespace
       assert(it != p_variable_to_type_map->end());
       switch (it->second)
         {
-        case single: return false;
+        case real: return false;
         case integer: return true;
-        case single_array: return false;
+        case real_array: return false;
         case integer_array: return true;
-        case pointer_to_single: return false;
+        case pointer_to_real: return false;
         case pointer_to_integer: return true;
         }
       return false;

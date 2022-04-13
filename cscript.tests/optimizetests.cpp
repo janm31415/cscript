@@ -50,7 +50,8 @@ void test_optimize_harmonic()
   optimize(prog);
   visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
   VM::vmcode code;
-  compile(code, prog);
+  environment env;
+  compile(code, env, prog);
   peephole_optimization(code);
   code.stream(std::cout);
   }
@@ -64,7 +65,8 @@ void test_optimize_fibonacci()
   optimize(prog);
   visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
   VM::vmcode code;
-  compile(code, prog);
+  environment env;
+  compile(code, env, prog);
   peephole_optimization(code);
   code.stream(std::cout);
   }
@@ -78,7 +80,8 @@ void test_optimize_hamming()
   optimize(prog);
   visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
   VM::vmcode code;
-  compile(code, prog);
+  environment env;
+  compile(code, env, prog);
   peephole_optimization(code);
   code.stream(std::cout);
   }
@@ -144,7 +147,8 @@ void test_optimize_qsort()
   optimize(prog);
   visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
   VM::vmcode code;
-  compile(code, prog);
+  environment env;
+  compile(code, env, prog);
   peephole_optimization(code);
   code.stream(std::cout);
   uint64_t size;
@@ -215,7 +219,8 @@ void test_optimize_qsort_double()
   optimize(prog);
   visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
   VM::vmcode code;
-  compile(code, prog);
+  environment env;
+  compile(code, env, prog);
   peephole_optimization(code);
   code.stream(std::cout);
   uint64_t size;
@@ -233,7 +238,8 @@ void test_optimize_add_zero()
   optimize(prog);
   visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
   VM::vmcode code;
-  compile(code, prog);
+  environment env;
+  compile(code, env, prog);
   peephole_optimization(code);
   code.stream(std::cout);
   }
@@ -247,7 +253,8 @@ void test_optimize_mul_zero()
   optimize(prog);
   visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
   VM::vmcode code;
-  compile(code, prog);
+  environment env;
+  compile(code, env, prog);
   peephole_optimization(code);
   code.stream(std::cout);
   }
@@ -261,7 +268,8 @@ void test_optimize_div_one()
   optimize(prog);
   visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
   VM::vmcode code;
-  compile(code, prog);
+  environment env;
+  compile(code, env, prog);
   peephole_optimization(code);
   code.stream(std::cout);
   }
@@ -275,7 +283,8 @@ void test_optimize_constant_variables()
   optimize(prog);
   visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
   VM::vmcode code;
-  compile(code, prog);
+  environment env;
+  compile(code, env, prog);
   peephole_optimization(code);
   code.stream(std::cout);
   }
@@ -289,7 +298,8 @@ void test_optimize_unused_variables()
   optimize(prog);
   visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
   VM::vmcode code;
-  compile(code, prog);
+  environment env;
+  compile(code, env, prog);
   peephole_optimization(code);
   code.stream(std::cout);
   }
@@ -304,7 +314,8 @@ void test_optimize_number_transition()
   //optimize(prog);
   visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
   VM::vmcode code;
-  compile(code, prog);
+  environment env;
+  compile(code, env, prog);
   peephole_optimization(code);
   uint64_t size;
   uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
@@ -325,7 +336,8 @@ void test_optimize_super_operators()
   //optimize(prog);
   visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
   VM::vmcode code;
-  compile(code, prog);
+  environment env;
+  compile(code, env, prog);
   peephole_optimization(code);
   uint64_t size;
   uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
@@ -362,7 +374,8 @@ void test_optimize_digitspi()
   optimize(prog);
   visitor<Program, pretty_print_visitor>::visit(prog, &ppv);
   VM::vmcode code;
-  compile(code, prog);
+  environment env;
+  compile(code, env, prog);
   peephole_optimization(code);
   code.stream(std::cout);
   uint64_t size;

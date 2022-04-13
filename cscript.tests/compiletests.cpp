@@ -23,6 +23,10 @@ COMPILER_BEGIN
 struct compile_fixture
   {
   typedef float(__cdecl* fun_ptr)(...);
+
+  environment env;
+  VM::registers reg;
+
   compile_fixture()
     {
     }
@@ -50,7 +54,7 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     if (_optimize)
       optimize(prog);
     VM::vmcode code;
-    compile(code, prog);
+    compile(code, env, prog);
     if (_peephole)
       peephole_optimization(code);
     if (false)
@@ -67,7 +71,6 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
-    VM::registers reg;
     try {
       VM::run_bytecode(f, size, reg);
       res = reg.xmm0;
@@ -87,7 +90,6 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
-    VM::registers reg;
     reg.rcx = i1;
     try {
       VM::run_bytecode(f, size, reg);
@@ -107,7 +109,6 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
-    VM::registers reg;
     reg.rcx = i1;
     reg.rdx = i2;
     try {
@@ -128,7 +129,6 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
-    VM::registers reg;
     reg.rcx = i1;
     reg.rdx = i2;
     reg.r8 = i3;
@@ -150,7 +150,6 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
-    VM::registers reg;
     reg.rcx = i1;
     reg.rdx = i2;
     reg.r8 = i3;
@@ -173,7 +172,6 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
-    VM::registers reg;
     reg.rcx = i1;
     reg.rdx = i2;
     reg.r8 = i3;
@@ -199,7 +197,6 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
-    VM::registers reg;
     reg.xmm0 = i1;
     try {
       VM::run_bytecode(f, size, reg);
@@ -219,7 +216,6 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
-    VM::registers reg;
     reg.xmm0 = i1;
     reg.xmm1 = i2;
     try {
@@ -240,7 +236,6 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
-    VM::registers reg;
     reg.xmm0 = i1;
     reg.xmm1 = i2;
     reg.xmm2 = i3;
@@ -262,7 +257,6 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
-    VM::registers reg;
     reg.xmm0 = i1;
     reg.xmm1 = i2;
     reg.xmm2 = i3;
@@ -285,7 +279,6 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
-    VM::registers reg;
     reg.xmm0 = i1;
     reg.xmm1 = i2;
     reg.xmm2 = i3;
@@ -311,7 +304,6 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
-    VM::registers reg;
     reg.rcx = i1;
     reg.xmm1 = f2;
     reg.r8 = i3;
@@ -338,7 +330,6 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
-    VM::registers reg;
     reg.rcx = (uint64_t)i1;
     try {
       VM::run_bytecode(f, size, reg);
@@ -358,7 +349,6 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
-    VM::registers reg;
     reg.rcx = (uint64_t)i1;
     reg.rdx = (uint64_t)i2;
     try {
@@ -379,7 +369,6 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
-    VM::registers reg;
     reg.rcx = (uint64_t)i1;
     reg.rdx = (uint64_t)i2;
     reg.r8 = (uint64_t)i3;
@@ -401,7 +390,6 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
-    VM::registers reg;
     reg.rcx = (uint64_t)i1;
     reg.rdx = (uint64_t)i2;
     reg.r8 = (uint64_t)i3;
@@ -423,7 +411,6 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
-    VM::registers reg;
     reg.rcx = (uint64_t)f1;
     try {
       VM::run_bytecode(f, size, reg);
@@ -631,7 +618,7 @@ struct compiler_assignment : public compile_fixture
     TEST_EQ(1.5707500000000001, run("() float f; int i; f = 3.1415; i = 2; f/=i;f;", optimize, peephole, use_all_variable_registers));
     TEST_EQ(3.0, run("() float f; int i; f = 3.1415; i = 9; i/=f;i;", optimize, peephole, use_all_variable_registers));
 
-    TEST_EQ(4.0, run("() int i = 9; i/=(1+1);i;", optimize, peephole, use_all_variable_registers));    
+    TEST_EQ(4.0, run("() int i = 9; i/=(1+1);i;", optimize, peephole, use_all_variable_registers));
     }
   };
 
@@ -1056,8 +1043,8 @@ struct quicksort : public compile_fixture
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
     printf("qsort timing: %lldms\n", ms);
     bool array_is_sorted = true;
-    for (uint64_t i = 0; i < max_size-1; ++i)
-      array_is_sorted &= a[i]<=a[i+1];
+    for (uint64_t i = 0; i < max_size - 1; ++i)
+      array_is_sorted &= a[i] <= a[i + 1];
     TEST_ASSERT(array_is_sorted);
     }
   };
@@ -1077,7 +1064,7 @@ struct quicksortdouble : public compile_fixture
       x ^= x << 13;
       x ^= x >> 17;
       x ^= x << 5;
-      v = (double)(x % max_size)/(double)max_size;
+      v = (double)(x % max_size) / (double)max_size;
       }
     auto tic = std::chrono::high_resolution_clock::now();
     runpfpii(R"((float* a, int* stack, int size)
@@ -1213,7 +1200,7 @@ struct test_strength_reduction : public compile_fixture
     TEST_EQ(0, runii("(int a, int b) 1+a > b;", 2, 3));
     TEST_EQ(1, runii("(int a, int b) 1+a > b;", 3, 3));
 
-    TEST_EQ(0, runff("(float a, float b) a <= b-1;", 2.8, 3.5));    
+    TEST_EQ(0, runff("(float a, float b) a <= b-1;", 2.8, 3.5));
     }
   };
 
@@ -1227,7 +1214,7 @@ int a=1,b=2,c=3,d=4,e=5,f=6,g=7,h=8,i=9,j=10,k=11,l=12,m=13,n=14,o=15,p=16,q=17,
 float s = pow(1+2*pow(7+5*9, 2+3*8), 5);
 a+b+c+d+e+f+g+h+i+j+k+l+m+n+o+p+q+r;
 )";
-    TEST_EQ(9*19, run(script, optimize, peephole, use_all_variable_registers));
+    TEST_EQ(9 * 19, run(script, optimize, peephole, use_all_variable_registers));
     std::string script2 = R"(
 ()
 float a=1,b=2,c=3,d=4,e=5,f=6,g=7,h=8,i=9,j=10,k=11,l=12,m=13,n=14,o=15,p=16,q=17,r=18;
@@ -1257,7 +1244,7 @@ float s = pow(1+2*pow(7+5*9, 2+3*8+(++result[pow(1,0)])), 5);
 a+b+c+d+e+f+g+h+i+j+k+l+m+n+o+p+q+r;
 )";
     TEST_EQ(9 * 19, run(script4, optimize, peephole, use_all_variable_registers));
-    
+
 
     std::string script5 = R"(
 ()
@@ -1275,6 +1262,19 @@ a+b+c+d+e+f+g+h+i+j+k+l+m+n+o+p+q+r;
 
   };
 
+struct test_global_variables : public compile_fixture
+  {
+  void test(bool optimize = false, bool peephole = true, bool use_all_variable_registers = false)
+    {
+    TEST_EQ(3, run("()int $g1=3; float $g2 = 3.14; $g1;", optimize, peephole, use_all_variable_registers));
+    TEST_EQ(3.14, run("()$g2;", optimize, peephole, use_all_variable_registers));
+    TEST_EQ(6.1400000000000006, run("()$g1+$g2;", optimize, peephole, use_all_variable_registers));
+    TEST_EQ(3.14, run("()$g1=2;$g2;", optimize, peephole, use_all_variable_registers));
+    TEST_EQ(5.1400000000000006, run("()$g1+$g2;", optimize, peephole, use_all_variable_registers));
+    TEST_EQ(10, run("()$g2=8;$g1+$g2;", optimize, peephole, use_all_variable_registers));
+    }
+  };
+
 COMPILER_END
 
 void run_all_compile_tests()
@@ -1282,7 +1282,7 @@ void run_all_compile_tests()
   using namespace COMPILER;
 
   for (int i = 0; i < 5; ++i)
-    {    
+    {
     bool optimize = true;
     bool peephole = true;
     bool use_all_variable_registers = false;
@@ -1314,7 +1314,7 @@ void run_all_compile_tests()
     modulo_test().test(optimize, peephole, use_all_variable_registers);
     if_test().test(optimize, peephole, use_all_variable_registers);
     dead_code_test().test(optimize, peephole, use_all_variable_registers);
-#if 0
+#if 1
     harmonic().test(optimize, peephole, use_all_variable_registers);
     fibonacci().test(optimize, peephole, use_all_variable_registers);
     hamming().test(optimize, peephole, use_all_variable_registers);
@@ -1323,6 +1323,7 @@ void run_all_compile_tests()
     digitspi().test(optimize, peephole, use_all_variable_registers);
 #endif
     test_many_variables().test(optimize, peephole, use_all_variable_registers);
+    test_global_variables().test(optimize, peephole, use_all_variable_registers);
     }
   test_strength_reduction().test();
   }

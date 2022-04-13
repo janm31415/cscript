@@ -27,22 +27,6 @@ namespace
     reg.push_back(REGISTER_FOR_INT_VARIABLE_4);
     reg.push_back(REGISTER_FOR_INT_VARIABLE_5);
     reg.push_back(REGISTER_FOR_INT_VARIABLE_6);
-    //reg.push_back(VM::vmcode::R16);
-    //reg.push_back(VM::vmcode::R17);
-    //reg.push_back(VM::vmcode::R18);
-    //reg.push_back(VM::vmcode::R19);
-    //reg.push_back(VM::vmcode::R20);
-    //reg.push_back(VM::vmcode::R21);
-    //reg.push_back(VM::vmcode::R22);
-    //reg.push_back(VM::vmcode::R23);
-    //reg.push_back(VM::vmcode::R24);
-    //reg.push_back(VM::vmcode::R25);
-    //reg.push_back(VM::vmcode::R26);
-    //reg.push_back(VM::vmcode::R27);
-    //reg.push_back(VM::vmcode::R28);
-    //reg.push_back(VM::vmcode::R29);
-    //reg.push_back(VM::vmcode::R30);
-    //reg.push_back(VM::vmcode::R31);
     return reg;
     }
 
@@ -60,22 +44,6 @@ namespace
     reg.push_back(REGISTER_FOR_REAL_VARIABLE_5);
     reg.push_back(REGISTER_FOR_REAL_VARIABLE_6);
     reg.push_back(REGISTER_FOR_REAL_VARIABLE_7);
-    //reg.push_back(VM::vmcode::XMM16);
-    //reg.push_back(VM::vmcode::XMM17);
-    //reg.push_back(VM::vmcode::XMM18);
-    //reg.push_back(VM::vmcode::XMM19);
-    //reg.push_back(VM::vmcode::XMM20);
-    //reg.push_back(VM::vmcode::XMM21);
-    //reg.push_back(VM::vmcode::XMM22);
-    //reg.push_back(VM::vmcode::XMM23);
-    //reg.push_back(VM::vmcode::XMM24);
-    //reg.push_back(VM::vmcode::XMM25);
-    //reg.push_back(VM::vmcode::XMM26);
-    //reg.push_back(VM::vmcode::XMM27);
-    //reg.push_back(VM::vmcode::XMM28);
-    //reg.push_back(VM::vmcode::XMM29);
-    //reg.push_back(VM::vmcode::XMM30);
-    //reg.push_back(VM::vmcode::XMM31);
     return reg;
     }
 
@@ -122,8 +90,8 @@ namespace
 
   return_type rt;
 
-  void compile_expression(VM::vmcode& code, compile_data& data, const Expression& expr);
-  void compile_statement(VM::vmcode& code, compile_data& data, const Statement& stm);
+  void compile_expression(VM::vmcode& code, compile_data& data, environment& env, const Expression& expr);
+  void compile_statement(VM::vmcode& code, compile_data& data, environment& env, const Statement& stm);
 
   std::string label_to_string(uint64_t lab)
     {
@@ -1152,7 +1120,7 @@ namespace
       {"pow", compile_pow}
     };
 
-  void compile_make_int_array(VM::vmcode& /*code*/, compile_data& data, const Int& make_i)
+  void compile_make_int_array(VM::vmcode& /*code*/, compile_data& data, environment& /*env*/, const Int& make_i)
     {
     if (make_i.dims.size() != 1)
       throw_compile_error(make_i.line_nr, "compile error: only single dimension arrays are allowed");
@@ -1176,14 +1144,51 @@ namespace
       }
     }
 
-  void compile_make_int_single(VM::vmcode& code, compile_data& data, const Int& make_i)
+  void compile_make_global_int_single(VM::vmcode& code, compile_data& data, environment& env, const Int& make_i)
     {
     bool init = !make_i.expr.operands.empty();
     VM::vmcode::operand int_op;
     int64_t int_offset = 0;
     if (init)
       {
-      compile_expression(code, data, make_i.expr);
+      compile_expression(code, data, env, make_i.expr);
+      if (rt == RT_REAL)
+        {
+        convert_real_to_integer(code, data.stack_index);
+        }
+      rt = RT_INTEGER;
+      index_to_integer_operand(int_op, int_offset, data.stack_index);
+      }
+    auto it = env.globals.find(make_i.name);
+    if (it == env.globals.end())
+      {
+      global_variable_type new_global;
+      new_global.address = env.global_var_offset;
+      new_global.vt = global_value_integer;
+      env.globals.insert(std::make_pair(make_i.name, new_global));
+      if (init)
+        {
+        if (int_offset)
+          code.add(VM::vmcode::MOV, GLOBAL_VARIABLE_MEM_REG, env.global_var_offset, VM::vmcode::MEM_RSP, int_offset);
+        else
+          code.add(VM::vmcode::MOV, GLOBAL_VARIABLE_MEM_REG, env.global_var_offset, int_op);
+        }
+      env.global_var_offset += 8;
+      }
+    else
+      {
+      throw_compile_error(make_i.line_nr, "Global variable " + make_i.name + " already exists");
+      }
+    }
+
+  void compile_make_int_single(VM::vmcode& code, compile_data& data, environment& env, const Int& make_i)
+    {
+    bool init = !make_i.expr.operands.empty();
+    VM::vmcode::operand int_op;
+    int64_t int_offset = 0;
+    if (init)
+      {
+      compile_expression(code, data, env, make_i.expr);
       if (rt == RT_REAL)
         {
         convert_real_to_integer(code, data.stack_index);
@@ -1227,16 +1232,26 @@ namespace
       }
     }
 
-  void compile_make_int(VM::vmcode& code, compile_data& data, const Int& make_i)
+  void compile_make_int(VM::vmcode& code, compile_data& data, environment& env, const Int& make_i)
     {
     if (!make_i.dims.empty())
-      compile_make_int_array(code, data, make_i);
+      {
+      if (make_i.name.front() == '$')
+        throw_compile_error(make_i.line_nr, "Global variables can't be arrays");
+      else
+        compile_make_int_array(code, data, env, make_i);
+      }
     else
-      compile_make_int_single(code, data, make_i);
+      {
+      if (make_i.name.front() == '$')
+        compile_make_global_int_single(code, data, env, make_i);
+      else
+        compile_make_int_single(code, data, env, make_i);
+      }
     }
 
 
-  void compile_make_float_array(VM::vmcode& /*code*/, compile_data& data, const Float& make_f)
+  void compile_make_float_array(VM::vmcode& /*code*/, compile_data& data, environment& /*env*/, const Float& make_f)
     {
     if (make_f.dims.size() != 1)
       throw_compile_error(make_f.line_nr, "compile error: only single dimension arrays are allowed");
@@ -1251,7 +1266,7 @@ namespace
     if (it == data.vars.end())
       {
       int64_t var_id = data.var_offset | variable_tag;
-      data.vars.insert(std::make_pair(make_f.name, make_variable(var_id, constant, single_array, memory_address)));
+      data.vars.insert(std::make_pair(make_f.name, make_variable(var_id, constant, real_array, memory_address)));
       data.var_offset += 8 * val;
       }
     else
@@ -1260,14 +1275,51 @@ namespace
       }
     }
 
-  void compile_make_float_single(VM::vmcode& code, compile_data& data, const Float& make_f)
+  void compile_make_global_float_real(VM::vmcode& code, compile_data& data, environment& env, const Float& make_f)
+    {
+    bool init = !make_f.expr.operands.empty();
+    VM::vmcode::operand int_op;
+    int64_t int_offset = 0;
+    if (init)
+      {
+      compile_expression(code, data, env, make_f.expr);
+      if (rt == RT_INTEGER)
+        {
+        convert_integer_to_real(code, data.stack_index);
+        }
+      rt = RT_REAL;
+      index_to_real_operand(int_op, int_offset, data.stack_index);
+      }
+    auto it = env.globals.find(make_f.name);
+    if (it == env.globals.end())
+      {
+      global_variable_type new_global;
+      new_global.address = env.global_var_offset;
+      new_global.vt = global_value_real;
+      env.globals.insert(std::make_pair(make_f.name, new_global));
+      if (init)
+        {
+        if (int_offset)
+          code.add(VM::vmcode::MOV, GLOBAL_VARIABLE_MEM_REG, env.global_var_offset, VM::vmcode::MEM_RSP, int_offset);
+        else
+          code.add(VM::vmcode::MOV, GLOBAL_VARIABLE_MEM_REG, env.global_var_offset, int_op);
+        }
+      env.global_var_offset += 8;
+      }
+    else
+      {
+      throw_compile_error(make_f.line_nr, "Global variable " + make_f.name + " already exists");
+      }
+    }
+
+  void compile_make_float_single(VM::vmcode& code, compile_data& data, environment& env, const Float& make_f)
     {
     bool init = !make_f.expr.operands.empty();
     VM::vmcode::operand float_op;
     int64_t float_offset = 0;
     if (init)
       {
-      compile_expression(code, data, make_f.expr);
+      compile_expression(code, data, env, make_f.expr);
       if (rt == RT_INTEGER)
         {
         convert_integer_to_real(code, data.stack_index);
@@ -1290,7 +1342,7 @@ namespace
           else
             code.add(VM::vmcode::MOV, reg, float_op);
           }
-        data.vars.insert(std::make_pair(make_f.name, make_variable(reg, constant, single, register_address)));
+        data.vars.insert(std::make_pair(make_f.name, make_variable(reg, constant, real, register_address)));
         }
       else
         {
@@ -1302,7 +1354,7 @@ namespace
           else
             code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, float_op);
           }
-        data.vars.insert(std::make_pair(make_f.name, make_variable(var_id, constant, single, memory_address)));
+        data.vars.insert(std::make_pair(make_f.name, make_variable(var_id, constant, real, memory_address)));
         data.var_offset += 8;
         }
       }
@@ -1312,21 +1364,31 @@ namespace
       }
     }
 
-  void compile_make_float(VM::vmcode& code, compile_data& data, const Float& make_f)
+  void compile_make_float(VM::vmcode& code, compile_data& data, environment& env, const Float& make_f)
     {
     if (!make_f.dims.empty())
-      compile_make_float_array(code, data, make_f);
+      {
+      if (make_f.name.front() == '$')
+        throw_compile_error(make_f.line_nr, "Global variables can't be arrays");
+      else
+        compile_make_float_array(code, data, env, make_f);
+      }
     else
-      compile_make_float_single(code, data, make_f);
+      {
+      if (make_f.name.front() == '$')
+        compile_make_global_float_real(code, data, env, make_f);
+      else
+        compile_make_float_single(code, data, env, make_f);
+      }
     }
 
-  void compile_variable(VM::vmcode& code, compile_data& data, const Variable& v)
+  void compile_local_variable(VM::vmcode& code, compile_data& data, environment& /*env*/, const Variable& v)
     {
     auto it = data.vars.find(v.name);
     if (it == data.vars.end())
       throw_compile_error(v.line_nr, "Cannot find variable " + v.name);
     int64_t var_id = it->second.address;
-    rt = (it->second.vt == single) ? RT_REAL : RT_INTEGER;
+    rt = (it->second.vt == real) ? RT_REAL : RT_INTEGER;
     if (it->second.st == constant)
       {
       if (rt == RT_INTEGER)
@@ -1392,13 +1454,58 @@ namespace
       }
     }
 
-  void compile_assignment_pointer(VM::vmcode& code, compile_data& data, const Assignment& a)
+  void compile_global_variable(VM::vmcode& code, compile_data& data, environment& env, const Variable& v)
+    {
+    auto it = env.globals.find(v.name);
+    if (it == env.globals.end())
+      throw_compile_error(v.line_nr, "Cannot find global variable " + v.name);
+    int64_t address = it->second.address;
+    rt = (it->second.vt == global_value_real) ? RT_REAL : RT_INTEGER;
+    if (rt == RT_INTEGER)
+      {
+      VM::vmcode::operand int_op;
+      int64_t int_offset;
+      index_to_integer_operand(int_op, int_offset, data.stack_index);
+      if (int_offset)
+        {
+        code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, int_offset, GLOBAL_VARIABLE_MEM_REG, address);
+        }
+      else
+        {
+        code.add(VM::vmcode::MOV, int_op, GLOBAL_VARIABLE_MEM_REG, address);
+        }
+      }
+    else
+      {
+      VM::vmcode::operand real_op;
+      int64_t real_offset;
+      index_to_real_operand(real_op, real_offset, data.stack_index);
+      if (real_offset)
+        {
+        code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, real_offset, GLOBAL_VARIABLE_MEM_REG, address);
+        }
+      else
+        {
+        code.add(VM::vmcode::MOV, real_op, GLOBAL_VARIABLE_MEM_REG, address);
+        }
+      }
+    }
+
+  void compile_variable(VM::vmcode& code, compile_data& data, environment& env, const Variable& v)
+    {
+    if (v.name.front() == '$')
+      compile_global_variable(code, data, env, v);
+    else
+      compile_local_variable(code, data, env, v);
+    }
+
+  void compile_assignment_pointer(VM::vmcode& code, compile_data& data, environment& env, const Assignment& a)
     {
     if (a.dims.size() != 1)
       throw_compile_error(a.line_nr, "only single dimension arrays are allowed");
     if (data.stack_index != 0)
       throw_compile_error(a.line_nr, "assignment only as single statement allowed");
-    compile_expression(code, data, a.dims.front());
+    compile_expression(code, data, env, a.dims.front());
     if (rt == RT_REAL)
       {
       convert_real_to_integer(code, data.stack_index);
@@ -1407,16 +1514,16 @@ namespace
     code.add(VM::vmcode::SHL, FIRST_TEMP_INTEGER_REG, VM::vmcode::NUMBER, 3);
     ++data.stack_index;
     update_data(data);
-    compile_expression(code, data, a.expr);
+    compile_expression(code, data, env, a.expr);
     auto it = data.vars.find(a.name);
     if (it == data.vars.end())
       throw_compile_error(a.line_nr, "variable " + a.name + " is not declared.");
     //if (it->second.st != constant)
     //  throw_compile_error(a.line_nr, "variable " + a.name + " cannot be assigned.");
     int64_t var_id = it->second.address;
-    if (it->second.vt != pointer_to_single && it->second.vt != pointer_to_integer)
+    if (it->second.vt != pointer_to_real && it->second.vt != pointer_to_integer)
       throw_compile_error(a.line_nr, "I expect " + a.name + " to be a pointer.");
-    if (it->second.vt == pointer_to_single && rt == RT_INTEGER)
+    if (it->second.vt == pointer_to_real && rt == RT_INTEGER)
       {
       convert_integer_to_real(code, data.stack_index);
       rt = RT_REAL;
@@ -1510,13 +1617,13 @@ namespace
       };
     }
 
-  void compile_assignment_array(VM::vmcode& code, compile_data& data, const Assignment& a)
+  void compile_assignment_array(VM::vmcode& code, compile_data& data, environment& env, const Assignment& a)
     {
     if (a.dims.size() != 1)
       throw_compile_error(a.line_nr, "only single dimension arrays are allowed");
     if (data.stack_index != 0)
       throw_compile_error(a.line_nr, "assignment only as single statement allowed");
-    compile_expression(code, data, a.dims.front());
+    compile_expression(code, data, env, a.dims.front());
     if (rt == RT_REAL)
       {
       convert_real_to_integer(code, data.stack_index);
@@ -1525,18 +1632,18 @@ namespace
     code.add(VM::vmcode::SHL, FIRST_TEMP_INTEGER_REG, VM::vmcode::NUMBER, 3);
     ++data.stack_index;
     update_data(data);
-    compile_expression(code, data, a.expr);
+    compile_expression(code, data, env, a.expr);
     auto it = data.vars.find(a.name);
     if (it == data.vars.end())
       throw_compile_error(a.line_nr, "variable " + a.name + " is not declared.");
     if (it->second.st != constant)
       throw_compile_error(a.line_nr, "variable " + a.name + " cannot be assigned.");
     int64_t var_id = it->second.address;
-    if (it->second.vt != single_array && it->second.vt != integer_array)
+    if (it->second.vt != real_array && it->second.vt != integer_array)
       throw_compile_error(a.line_nr, "I expect " + a.name + " to be array.");
     if (it->second.at != memory_address)
       throw_compile_error(a.line_nr, "I expect " + a.name + " to be an array on the stack.");
-    if (it->second.vt == single_array && rt == RT_INTEGER)
+    if (it->second.vt == real_array && rt == RT_INTEGER)
       {
       convert_integer_to_real(code, data.stack_index);
       rt = RT_REAL;
@@ -1644,7 +1751,7 @@ namespace
       };
     }
 
-  void compile_assignment_dereference(VM::vmcode& code, compile_data& data, const Assignment& a)
+  void compile_assignment_dereference(VM::vmcode& code, compile_data& data, environment& env, const Assignment& a)
     {
     if (!a.dims.empty())
       throw_compile_error(a.line_nr, "dereference without dimensions expected");
@@ -1652,14 +1759,14 @@ namespace
       throw_compile_error(a.line_nr, "assignment only as single statement allowed");
     ++data.stack_index;
     update_data(data);
-    compile_expression(code, data, a.expr);
+    compile_expression(code, data, env, a.expr);
     auto it = data.vars.find(a.name);
     if (it == data.vars.end())
       throw_compile_error(a.line_nr, "variable " + a.name + " is not declared.");
     int64_t var_id = it->second.address;
-    if (it->second.vt != pointer_to_single && it->second.vt != pointer_to_integer)
+    if (it->second.vt != pointer_to_real && it->second.vt != pointer_to_integer)
       throw_compile_error(a.line_nr, "I expect " + a.name + " to be a pointer.");
-    if (it->second.vt == pointer_to_single && rt == RT_INTEGER)
+    if (it->second.vt == pointer_to_real && rt == RT_INTEGER)
       {
       convert_integer_to_real(code, data.stack_index);
       rt = RT_REAL;
@@ -1752,18 +1859,18 @@ namespace
       };
     }
 
-  void compile_assignment_single(VM::vmcode& code, compile_data& data, const Assignment& a)
+  void compile_assignment_single(VM::vmcode& code, compile_data& data, environment& env, const Assignment& a)
     {
-    compile_expression(code, data, a.expr);
+    compile_expression(code, data, env, a.expr);
     auto it = data.vars.find(a.name);
     if (it == data.vars.end())
       throw_compile_error(a.line_nr, "variable " + a.name + " is not declared.");
     if (it->second.st != constant)
       throw_compile_error(a.line_nr, "variable " + a.name + " cannot be assigned.");
     int64_t var_id = it->second.address;
-    if (it->second.vt != single && it->second.vt != integer)
+    if (it->second.vt != real && it->second.vt != integer)
       throw_compile_error(a.line_nr, "I expect " + a.name + " to be an integer or a float.");
-    if (it->second.vt == single && rt == RT_INTEGER)
+    if (it->second.vt == real && rt == RT_INTEGER)
       {
       convert_integer_to_real(code, data.stack_index);
       rt = RT_REAL;
@@ -2060,39 +2167,225 @@ namespace
       }
     }
 
-  void compile_assignment(VM::vmcode& code, compile_data& data, const Assignment& a)
+  void compile_global_assignment_single(VM::vmcode& code, compile_data& data, environment& env, const Assignment& a)
+    {
+    compile_expression(code, data, env, a.expr);
+    auto it = env.globals.find(a.name);
+    if (it == env.globals.end())
+      throw_compile_error(a.line_nr, "global variable " + a.name + " is not declared.");
+    int64_t address = it->second.address;
+    if (it->second.vt != global_value_real && it->second.vt != global_value_integer)
+      throw_compile_error(a.line_nr, "I expect " + a.name + " to be an integer or a float.");
+    if (it->second.vt == global_value_real && rt == RT_INTEGER)
+      {
+      convert_integer_to_real(code, data.stack_index);
+      rt = RT_REAL;
+      }
+    else if (it->second.vt == global_value_integer && rt == RT_REAL)
+      {
+      convert_real_to_integer(code, data.stack_index);
+      rt = RT_INTEGER;
+      }
+    VM::vmcode::operand int_op, real_op;
+    int64_t int_offset, real_offset;
+    index_to_integer_operand(int_op, int_offset, data.stack_index);
+    index_to_real_operand(real_op, real_offset, data.stack_index);
+    switch (a.op.front())
+      {
+      case '=':
+      {
+      if (rt == RT_REAL)
+        {
+        if (real_offset)
+          {
+          code.add(VM::vmcode::MOV, GLOBAL_VARIABLE_MEM_REG, address, VM::vmcode::MEM_RSP, real_offset);
+          }
+        else
+          {
+          code.add(VM::vmcode::MOV, GLOBAL_VARIABLE_MEM_REG, address, real_op);
+          }
+        }
+      else
+        {
+        if (int_offset)
+          {
+          code.add(VM::vmcode::MOV, GLOBAL_VARIABLE_MEM_REG, address, VM::vmcode::MEM_RSP, int_offset);
+          }
+        else
+          code.add(VM::vmcode::MOV, GLOBAL_VARIABLE_MEM_REG, address, int_op);
+        }
+      break;
+      }
+      case '+':
+      {
+
+      if (rt == RT_REAL)
+        {
+        if (real_offset)
+          {
+          //code.add(VM::vmcode::MOV, RESERVED_REAL_REG_2, VM::vmcode::MEM_RSP, real_offset);
+          //real_op = RESERVED_REAL_REG_2;
+          code.add(VM::vmcode::MOV, RESERVED_REAL_REG, GLOBAL_VARIABLE_MEM_REG, address);
+          code.add(VM::vmcode::ADDSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, real_offset);
+          code.add(VM::vmcode::MOV, GLOBAL_VARIABLE_MEM_REG, address, RESERVED_REAL_REG);
+          }
+        else
+          {
+          code.add(VM::vmcode::MOV, RESERVED_REAL_REG, GLOBAL_VARIABLE_MEM_REG, address);
+          code.add(VM::vmcode::ADDSD, RESERVED_REAL_REG, real_op);
+          code.add(VM::vmcode::MOV, GLOBAL_VARIABLE_MEM_REG, address, RESERVED_REAL_REG);
+          }
+        }
+      else
+        {
+        if (int_offset)
+          {
+          code.add(VM::vmcode::ADD, GLOBAL_VARIABLE_MEM_REG, address, VM::vmcode::MEM_RSP, int_offset);
+          }
+        else
+          {
+          code.add(VM::vmcode::ADD, GLOBAL_VARIABLE_MEM_REG, address, int_op);
+          }
+        }
+
+      break;
+      }
+      case '-':
+      {
+
+      if (rt == RT_REAL)
+        {
+        if (real_offset)
+          {
+          code.add(VM::vmcode::MOV, RESERVED_REAL_REG, GLOBAL_VARIABLE_MEM_REG, address);
+          code.add(VM::vmcode::SUBSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, real_offset);
+          code.add(VM::vmcode::MOV, GLOBAL_VARIABLE_MEM_REG, address, RESERVED_REAL_REG);
+          }
+        else
+          {
+          code.add(VM::vmcode::MOV, RESERVED_REAL_REG, GLOBAL_VARIABLE_MEM_REG, address);
+          code.add(VM::vmcode::SUBSD, RESERVED_REAL_REG, real_op);
+          code.add(VM::vmcode::MOV, GLOBAL_VARIABLE_MEM_REG, address, RESERVED_REAL_REG);
+          }
+        }
+      else
+        {
+        if (int_offset)
+          {
+          code.add(VM::vmcode::SUB, GLOBAL_VARIABLE_MEM_REG, address, VM::vmcode::MEM_RSP, int_offset);
+          }
+        else
+          {
+          code.add(VM::vmcode::SUB, GLOBAL_VARIABLE_MEM_REG, address, int_op);
+          }
+        }
+      break;
+      }
+      case '*':
+      {
+      if (rt == RT_REAL)
+        {
+        if (real_offset)
+          {
+          code.add(VM::vmcode::MOV, RESERVED_REAL_REG, GLOBAL_VARIABLE_MEM_REG, address);
+          code.add(VM::vmcode::MULSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, real_offset);
+          code.add(VM::vmcode::MOV, GLOBAL_VARIABLE_MEM_REG, address, RESERVED_REAL_REG);
+          }
+        else
+          {
+          code.add(VM::vmcode::MOV, RESERVED_REAL_REG, GLOBAL_VARIABLE_MEM_REG, address);
+          code.add(VM::vmcode::MULSD, RESERVED_REAL_REG, real_op);
+          code.add(VM::vmcode::MOV, GLOBAL_VARIABLE_MEM_REG, address, RESERVED_REAL_REG);
+          }
+        }
+      else
+        {
+        if (int_offset)
+          {
+          code.add(VM::vmcode::IMUL, GLOBAL_VARIABLE_MEM_REG, address, VM::vmcode::MEM_RSP, int_offset);
+          }
+        else
+          {
+          code.add(VM::vmcode::IMUL, GLOBAL_VARIABLE_MEM_REG, address, int_op);
+          }
+        }
+      break;
+      }
+      case '/':
+      {
+
+      if (rt == RT_REAL)
+        {
+        if (real_offset)
+          {
+          code.add(VM::vmcode::MOV, RESERVED_REAL_REG, GLOBAL_VARIABLE_MEM_REG, address);
+          code.add(VM::vmcode::DIVSD, RESERVED_REAL_REG, VM::vmcode::MEM_RSP, real_offset);
+          code.add(VM::vmcode::MOV, GLOBAL_VARIABLE_MEM_REG, address, RESERVED_REAL_REG);
+          }
+        else
+          {
+          code.add(VM::vmcode::MOV, RESERVED_REAL_REG, GLOBAL_VARIABLE_MEM_REG, address);
+          code.add(VM::vmcode::DIVSD, RESERVED_REAL_REG, real_op);
+          code.add(VM::vmcode::MOV, GLOBAL_VARIABLE_MEM_REG, address, RESERVED_REAL_REG);
+          }
+        }
+      else
+        {
+        code.add(VM::vmcode::IDIV2, GLOBAL_VARIABLE_MEM_REG, address, int_op);
+        }
+      break;
+      }
+      default: throw std::runtime_error("not implemented");
+      }
+    }
+
+  void compile_assignment(VM::vmcode& code, compile_data& data, environment& env, const Assignment& a)
     {
     if (data.stack_index != 0)
       throw_compile_error(a.line_nr, "assignment only as single statement allowed");
 
-    auto it = data.vars.find(a.name);
-    if (it == data.vars.end())
-      throw_compile_error(a.line_nr, "variable " + a.name + " is not declared.");
-
-    if (!a.dims.empty())
+    if (a.name.front() == '$')
       {
-      if (it->second.vt == pointer_to_single || it->second.vt == pointer_to_integer)
-        compile_assignment_pointer(code, data, a);
-      else
-        compile_assignment_array(code, data, a);
+      auto it = env.globals.find(a.name);
+      if (it == env.globals.end())
+        throw_compile_error(a.line_nr, "global variable " + a.name + " is not declared.");
+      if (!a.dims.empty())
+        throw_compile_error(a.line_nr, "global variable " + a.name + " is not an array.");
+      if (a.dereference)
+        throw_compile_error(a.line_nr, "global variable " + a.name + " cannot be dereferenced.");
+      compile_global_assignment_single(code, data, env, a);
       }
-    else if (a.dereference)
-      compile_assignment_dereference(code, data, a);
     else
-      compile_assignment_single(code, data, a);
+      {
+      auto it = data.vars.find(a.name);
+      if (it == data.vars.end())
+        throw_compile_error(a.line_nr, "variable " + a.name + " is not declared.");
+
+      if (!a.dims.empty())
+        {
+        if (it->second.vt == pointer_to_real || it->second.vt == pointer_to_integer)
+          compile_assignment_pointer(code, data, env, a);
+        else
+          compile_assignment_array(code, data, env, a);
+        }
+      else if (a.dereference)
+        compile_assignment_dereference(code, data, env, a);
+      else
+        compile_assignment_single(code, data, env, a);
+      }
     }
 
 
-  void compile_array_call(VM::vmcode& code, compile_data& data, const ArrayCall& a)
+  void compile_array_call(VM::vmcode& code, compile_data& data, environment& env, const ArrayCall& a)
     {
     auto it = data.vars.find(a.name);
     if (it == data.vars.end())
       throw_compile_error(a.line_nr, "variable " + a.name + " is unknown");
     if (a.exprs.size() != 1)
       throw_compile_error(a.line_nr, "only single dimension arrays are allowed.");
-    if (it->second.vt == single || it->second.vt == integer)
+    if (it->second.vt == real || it->second.vt == integer)
       throw_compile_error(a.line_nr, "I expect an array or a pointer.");
-    compile_expression(code, data, a.exprs.front());
+    compile_expression(code, data, env, a.exprs.front());
     if (rt == RT_REAL)
       {
       convert_real_to_integer(code, data.stack_index);
@@ -2100,7 +2393,7 @@ namespace
       }
     int64_t var_id = it->second.address;
 
-    if (it->second.vt == single_array)
+    if (it->second.vt == real_array)
       {
       if (it->second.at != memory_address)
         throw_compile_error(a.line_nr, "I expect " + a.name + " to be an array on the stack.");
@@ -2149,7 +2442,7 @@ namespace
         code.add(VM::vmcode::MOV, op, STACK_MEM_BACKUP_REGISTER, -var_id);
       rt = RT_INTEGER;
       }
-    else if (it->second.vt == pointer_to_single)
+    else if (it->second.vt == pointer_to_real)
       {
       if (it->second.at == memory_address)
         code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::MEM_RSP, -var_id); // address to pointer
@@ -2206,19 +2499,19 @@ namespace
       throw std::runtime_error("not implemented");
     }
 
-  void compile_dereference(VM::vmcode& code, compile_data& data, const Dereference& d)
+  void compile_dereference(VM::vmcode& code, compile_data& data, environment& /*env*/, const Dereference& d)
     {
     auto it = data.vars.find(d.name);
     if (it == data.vars.end())
       throw_compile_error(d.line_nr, "variable " + d.name + " is unknown");
-    if (it->second.vt != pointer_to_single && it->second.vt != pointer_to_integer)
+    if (it->second.vt != pointer_to_real && it->second.vt != pointer_to_integer)
       throw_compile_error(d.line_nr, "I expect a pointer to dereference.");
     int64_t var_id = it->second.address;
     if (it->second.at == memory_address)
       code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::MEM_RSP, -var_id);
     else
       code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, (VM::vmcode::operand)var_id);
-    if (it->second.vt == pointer_to_single)
+    if (it->second.vt == pointer_to_real)
       {
       VM::vmcode::operand op;
       int64_t offset;
@@ -2248,7 +2541,7 @@ namespace
       }
     }
 
-  void compile_real(VM::vmcode& code, compile_data& data, const value_t& v)
+  void compile_real(VM::vmcode& code, compile_data& data, environment& /*env*/, const value_t& v)
     {
     double f = (double)std::get<double>(v);
     VM::vmcode::operand op;
@@ -2273,7 +2566,7 @@ namespace
     rt = RT_REAL;
     }
 
-  void compile_integer(VM::vmcode& code, compile_data& data, const value_t& v)
+  void compile_integer(VM::vmcode& code, compile_data& data, environment& /*env*/, const value_t& v)
     {
     int64_t i = (int64_t)std::get<int64_t>(v);
     VM::vmcode::operand op;
@@ -2293,16 +2586,16 @@ namespace
     rt = RT_INTEGER;
     }
 
-  void compile_value(VM::vmcode& code, compile_data& data, const value_t& v)
+  void compile_value(VM::vmcode& code, compile_data& data, environment& env, const value_t& v)
     {
     if (std::holds_alternative<double>(v))
-      compile_real(code, data, v);
+      compile_real(code, data, env, v);
     else
-      compile_integer(code, data, v);
+      compile_integer(code, data, env, v);
     }
 
 
-  void compile_lvalue_operator(VM::vmcode& code, compile_data& data, const LValueOperator& lvo)
+  void compile_lvalue_operator(VM::vmcode& code, compile_data& data, environment& env, const LValueOperator& lvo)
     {
     if (std::holds_alternative<Variable>(lvo.lvalue->lvalue))
       {
@@ -2314,7 +2607,7 @@ namespace
       uint64_t var_id = it->second.address;
       if (it->second.st != constant)
         throw_compile_error(v.line_nr, "Can only change constant space variables");
-      rt = (it->second.vt == single) ? RT_REAL : RT_INTEGER;
+      rt = (it->second.vt == real) ? RT_REAL : RT_INTEGER;
       if (rt == RT_INTEGER)
         {
         if (lvo.name == "++")
@@ -2401,7 +2694,7 @@ namespace
       auto it = data.vars.find(a.name);
       if (it == data.vars.end())
         throw_compile_error(a.line_nr, "Cannot find variable " + a.name);
-      compile_expression(code, data, a.exprs.front());
+      compile_expression(code, data, env, a.exprs.front());
       if (rt == RT_REAL)
         {
         convert_real_to_integer(code, data.stack_index);
@@ -2409,7 +2702,7 @@ namespace
         }
       int64_t var_id = it->second.address;
 
-      if (it->second.vt == single_array)
+      if (it->second.vt == real_array)
         {
         if (it->second.at != memory_address)
           throw_compile_error(a.line_nr, "I expect " + a.name + " to be an array on the stack.");
@@ -2482,7 +2775,7 @@ namespace
           code.add(VM::vmcode::MOV, op, STACK_MEM_BACKUP_REGISTER, -var_id);
         rt = RT_INTEGER;
         }
-      else if (it->second.vt == pointer_to_single)
+      else if (it->second.vt == pointer_to_real)
         {
         if (it->second.at == memory_address)
           code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::MEM_RSP, -var_id); // address to pointer
@@ -2562,10 +2855,10 @@ namespace
       auto it = data.vars.find(d.name);
       if (it == data.vars.end())
         throw_compile_error(d.line_nr, "Cannot find variable " + d.name);
-      if (it->second.vt != pointer_to_single && it->second.vt != pointer_to_integer)
+      if (it->second.vt != pointer_to_real && it->second.vt != pointer_to_integer)
         throw_compile_error(d.line_nr, "I expect a pointer to dereference.");
       int64_t var_id = it->second.address;
-      if (it->second.vt == pointer_to_single)
+      if (it->second.vt == pointer_to_real)
         {
         if (it->second.at == memory_address)
           code.add(VM::vmcode::MOV, STACK_BACKUP_REGISTER, VM::vmcode::MEM_RSP, -var_id); // address to pointer
@@ -2623,12 +2916,12 @@ namespace
       throw_compile_error("compile_lvalue_operator: not implemented");
     }
 
-  void compile_funccall(VM::vmcode& code, compile_data& data, const FuncCall& f)
+  void compile_funccall(VM::vmcode& code, compile_data& data, environment& env, const FuncCall& f)
     {
     auto stack_save = data.stack_index;
     for (size_t i = 0; i < f.exprs.size(); ++i)
       {
-      compile_expression(code, data, f.exprs[i]);
+      compile_expression(code, data, env, f.exprs[i]);
       if (rt == RT_INTEGER)
         {
         convert_integer_to_real(code, data.stack_index);
@@ -2644,35 +2937,35 @@ namespace
     it->second(code, data);
     }
 
-  void compile_factor(VM::vmcode& code, compile_data& data, const Factor& f)
+  void compile_factor(VM::vmcode& code, compile_data& data, environment& env, const Factor& f)
     {
     if (std::holds_alternative<value_t>(f.factor))
       {
-      compile_value(code, data, std::get<value_t>(f.factor));
+      compile_value(code, data, env, std::get<value_t>(f.factor));
       }
     else if (std::holds_alternative<Expression>(f.factor))
       {
-      compile_expression(code, data, std::get<Expression>(f.factor));
+      compile_expression(code, data, env, std::get<Expression>(f.factor));
       }
     else if (std::holds_alternative<Variable>(f.factor))
       {
-      compile_variable(code, data, std::get<Variable>(f.factor));
+      compile_variable(code, data, env, std::get<Variable>(f.factor));
       }
     else if (std::holds_alternative<ArrayCall>(f.factor))
       {
-      compile_array_call(code, data, std::get<ArrayCall>(f.factor));
+      compile_array_call(code, data, env, std::get<ArrayCall>(f.factor));
       }
     else if (std::holds_alternative<Dereference>(f.factor))
       {
-      compile_dereference(code, data, std::get<Dereference>(f.factor));
+      compile_dereference(code, data, env, std::get<Dereference>(f.factor));
       }
     else if (std::holds_alternative<LValueOperator>(f.factor))
       {
-      compile_lvalue_operator(code, data, std::get<LValueOperator>(f.factor));
+      compile_lvalue_operator(code, data, env, std::get<LValueOperator>(f.factor));
       }
     else if (std::holds_alternative<FuncCall>(f.factor))
       {
-      compile_funccall(code, data, std::get<FuncCall>(f.factor));
+      compile_funccall(code, data, env, std::get<FuncCall>(f.factor));
       }
     else
       throw std::runtime_error("compile_factor: not implemented");
@@ -2685,15 +2978,15 @@ namespace
       }
     }
 
-  void compile_term(VM::vmcode& code, compile_data& data, const Term& t)
+  void compile_term(VM::vmcode& code, compile_data& data, environment& env, const Term& t)
     {
-    compile_factor(code, data, t.operands[0]);
+    compile_factor(code, data, env, t.operands[0]);
     auto target_type = rt;
     for (size_t i = 0; i < t.fops.size(); ++i)
       {
       ++data.stack_index;
       update_data(data);
-      compile_factor(code, data, t.operands[i + 1]);
+      compile_factor(code, data, env, t.operands[i + 1]);
       if (rt != target_type)
         {
         if (rt == RT_INTEGER)
@@ -2715,15 +3008,15 @@ namespace
       }
     }
 
-  void compile_relop(VM::vmcode& code, compile_data& data, const Relop& r)
+  void compile_relop(VM::vmcode& code, compile_data& data, environment& env, const Relop& r)
     {
-    compile_term(code, data, r.operands[0]);
+    compile_term(code, data, env, r.operands[0]);
     auto target_type = rt;
     for (size_t i = 0; i < r.fops.size(); ++i)
       {
       ++data.stack_index;
       update_data(data);
-      compile_term(code, data, r.operands[i + 1]);
+      compile_term(code, data, env, r.operands[i + 1]);
       if (rt != target_type)
         {
         if (rt == RT_INTEGER)
@@ -2745,15 +3038,15 @@ namespace
       }
     }
 
-  void compile_expression(VM::vmcode& code, compile_data& data, const Expression& expr)
+  void compile_expression(VM::vmcode& code, compile_data& data, environment& env, const Expression& expr)
     {
-    compile_relop(code, data, expr.operands[0]);
+    compile_relop(code, data, env, expr.operands[0]);
     auto target_type = rt;
     for (size_t i = 0; i < expr.fops.size(); ++i)
       {
       ++data.stack_index;
       update_data(data);
-      compile_relop(code, data, expr.operands[i + 1]);
+      compile_relop(code, data, env, expr.operands[i + 1]);
       if (rt != target_type)
         {
         if (rt == RT_INTEGER)
@@ -2775,7 +3068,7 @@ namespace
       }
     }
 
-  void compile_for_condition(VM::vmcode& code, compile_data& data, const Statement& stm, uint64_t end_label, int line_nr)
+  void compile_for_condition(VM::vmcode& code, compile_data& data, environment& env, const Statement& stm, uint64_t end_label, int line_nr)
     {
     if (is_simple_relative_operation(stm))
       {
@@ -2784,11 +3077,11 @@ namespace
       const Expression& expr = std::get<Expression>(stm);
       assert(expr.fops.size() == 1);
       assert(expr.operands.size() == 2);
-      compile_relop(code, data, expr.operands[0]);
+      compile_relop(code, data, env, expr.operands[0]);
       auto target_type = rt;
       ++data.stack_index;
       update_data(data);
-      compile_relop(code, data, expr.operands[1]);
+      compile_relop(code, data, env, expr.operands[1]);
       if (rt != target_type)
         {
         if (rt == RT_INTEGER)
@@ -2834,7 +3127,7 @@ namespace
       }
     else
       {
-      compile_statement(code, data, stm);
+      compile_statement(code, data, env, stm);
       if (rt != RT_INTEGER)
         throw_compile_error(line_nr, "for loop condition is not a boolean expression");
       if (data.stack_index != 0)
@@ -2844,16 +3137,16 @@ namespace
       }
     }
 
-  void compile_for(VM::vmcode& code, compile_data& data, const For& f)
+  void compile_for(VM::vmcode& code, compile_data& data, environment& env, const For& f)
     {
-    compile_statement(code, data, f.init_cond_inc[0]);
+    compile_statement(code, data, env, f.init_cond_inc[0]);
     auto start = data.label++;
     auto end = data.label++;
     code.add(VM::vmcode::LABEL, label_to_string(start));
-    compile_for_condition(code, data, f.init_cond_inc[1], end, f.line_nr);
+    compile_for_condition(code, data, env, f.init_cond_inc[1], end, f.line_nr);
     for (const auto& stm : f.statements)
-      compile_statement(code, data, stm);
-    compile_statement(code, data, f.init_cond_inc[2]);
+      compile_statement(code, data, env, stm);
+    compile_statement(code, data, env, f.init_cond_inc[2]);
     auto last_instruction = code.get_instructions_list().back().back();
     while (last_instruction.oper == VM::vmcode::MOV && last_instruction.operand1_mem == 0 &&
       (last_instruction.operand1 == FIRST_TEMP_INTEGER_REG || last_instruction.operand1 == SECOND_TEMP_INTEGER_REG ||
@@ -2868,9 +3161,9 @@ namespace
     code.add(VM::vmcode::LABEL, label_to_string(end));
     }
 
-  void compile_if(VM::vmcode& code, compile_data& data, const If& i)
+  void compile_if(VM::vmcode& code, compile_data& data, environment& env, const If& i)
     {
-    compile_statement(code, data, i.condition[0]);
+    compile_statement(code, data, env, i.condition[0]);
     if (rt != RT_INTEGER)
       throw_compile_error(i.line_nr, "if condition is not a boolean expression");
     if (data.stack_index != 0)
@@ -2881,57 +3174,57 @@ namespace
       {
       code.add(VM::vmcode::JE, label_to_string(end_label));
       for (const auto& stm : i.body)
-        compile_statement(code, data, stm);
+        compile_statement(code, data, env, stm);
       }
     else
       {
       auto else_label = data.label++;
       code.add(VM::vmcode::JE, label_to_string(else_label));
       for (const auto& stm : i.body)
-        compile_statement(code, data, stm);
+        compile_statement(code, data, env, stm);
       code.add(VM::vmcode::JMP, label_to_string(end_label));
       code.add(VM::vmcode::LABEL, label_to_string(else_label));
       for (const auto& stm : i.alternative)
-        compile_statement(code, data, stm);
+        compile_statement(code, data, env, stm);
       }
     code.add(VM::vmcode::LABEL, label_to_string(end_label));
     }
 
-  void compile_seperated_statements(VM::vmcode& code, compile_data& data, const CommaSeparatedStatements& stms)
+  void compile_seperated_statements(VM::vmcode& code, compile_data& data, environment& env, const CommaSeparatedStatements& stms)
     {
     for (const auto& stm : stms.statements)
-      compile_statement(code, data, stm);
+      compile_statement(code, data, env, stm);
     }
 
-  void compile_statement(VM::vmcode& code, compile_data& data, const Statement& stm)
+  void compile_statement(VM::vmcode& code, compile_data& data, environment& env, const Statement& stm)
     {
     if (std::holds_alternative<Expression>(stm))
       {
-      compile_expression(code, data, std::get<Expression>(stm));
+      compile_expression(code, data, env, std::get<Expression>(stm));
       }
     else if (std::holds_alternative<Float>(stm))
       {
-      compile_make_float(code, data, std::get<Float>(stm));
+      compile_make_float(code, data, env, std::get<Float>(stm));
       }
     else if (std::holds_alternative<Int>(stm))
       {
-      compile_make_int(code, data, std::get<Int>(stm));
+      compile_make_int(code, data, env, std::get<Int>(stm));
       }
     else if (std::holds_alternative<Assignment>(stm))
       {
-      compile_assignment(code, data, std::get<Assignment>(stm));
+      compile_assignment(code, data, env, std::get<Assignment>(stm));
       }
     else if (std::holds_alternative<For>(stm))
       {
-      compile_for(code, data, std::get<For>(stm));
+      compile_for(code, data, env, std::get<For>(stm));
       }
     else if (std::holds_alternative<If>(stm))
       {
-      compile_if(code, data, std::get<If>(stm));
+      compile_if(code, data, env, std::get<If>(stm));
       }
     else if (std::holds_alternative<CommaSeparatedStatements>(stm))
       {
-      compile_seperated_statements(code, data, std::get<CommaSeparatedStatements>(stm));
+      compile_seperated_statements(code, data, env, std::get<CommaSeparatedStatements>(stm));
       }
     else if (std::holds_alternative<Nop>(stm))
       {
@@ -2963,7 +3256,7 @@ namespace
       }
     }
 
-  void compile_int_parameter_pointer(VM::vmcode& code, compile_data& data, const IntParameter& ip, int parameter_id)
+  void compile_int_parameter_pointer(VM::vmcode& code, compile_data& data, environment& /*env*/, const IntParameter& ip, int parameter_id)
     {
     auto it = data.vars.find(ip.name);
     if (it != data.vars.end())
@@ -2995,7 +3288,7 @@ namespace
       }
     }
 
-  void compile_int_parameter_single(VM::vmcode& code, compile_data& data, const IntParameter& ip, int parameter_id)
+  void compile_int_parameter_single(VM::vmcode& code, compile_data& data, environment& /*env*/, const IntParameter& ip, int parameter_id)
     {
     auto it = data.vars.find(ip.name);
     if (it != data.vars.end())
@@ -3027,16 +3320,16 @@ namespace
       }
     }
 
-  void compile_int_parameter(VM::vmcode& code, compile_data& data, const IntParameter& ip, int parameter_id)
+  void compile_int_parameter(VM::vmcode& code, compile_data& data, environment& env, const IntParameter& ip, int parameter_id)
     {
     if (ip.pointer)
-      compile_int_parameter_pointer(code, data, ip, parameter_id);
+      compile_int_parameter_pointer(code, data, env, ip, parameter_id);
     else
-      compile_int_parameter_single(code, data, ip, parameter_id);
+      compile_int_parameter_single(code, data, env, ip, parameter_id);
     }
 
 
-  void compile_float_parameter_pointer(VM::vmcode& code, compile_data& data, const FloatParameter& fp, int parameter_id)
+  void compile_float_parameter_pointer(VM::vmcode& code, compile_data& data, environment& /*env*/, const FloatParameter& fp, int parameter_id)
     {
     int64_t var_id = data.var_offset | variable_tag;
     data.var_offset += 8;
@@ -3061,12 +3354,12 @@ namespace
       }
     auto it = data.vars.find(fp.name);
     if (it == data.vars.end())
-      data.vars.insert(std::make_pair(fp.name, make_variable(var_id, external, pointer_to_single, memory_address)));
+      data.vars.insert(std::make_pair(fp.name, make_variable(var_id, external, pointer_to_real, memory_address)));
     else
       throw_compile_error(fp.line_nr, "Variable " + fp.name + " already exists");
     }
 
-  void compile_float_parameter_single(VM::vmcode& code, compile_data& data, const FloatParameter& fp, int parameter_id)
+  void compile_float_parameter_single(VM::vmcode& code, compile_data& data, environment& /*env*/, const FloatParameter& fp, int parameter_id)
     {
     auto it = data.vars.find(fp.name);
     if (it != data.vars.end())
@@ -3085,7 +3378,7 @@ namespace
           throw_compile_error("calling convention error");
         }
       assert(data.ra.is_free_real_register(op));
-      data.vars.insert(std::make_pair(fp.name, make_variable(op, constant, single, register_address)));
+      data.vars.insert(std::make_pair(fp.name, make_variable(op, constant, real, register_address)));
       data.ra.make_real_register_unavailable(op);
       }
     else
@@ -3094,30 +3387,30 @@ namespace
       data.var_offset += 8;
       int addr = parameter_id - 4;
       code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, VM::vmcode::MEM_RSP, rsp_offset + addr * 8 + virtual_machine_rsp_offset);
-      data.vars.insert(std::make_pair(fp.name, make_variable(var_id, constant, single, memory_address)));
+      data.vars.insert(std::make_pair(fp.name, make_variable(var_id, constant, real, memory_address)));
       }
     }
 
-  void compile_float_parameter(VM::vmcode& code, compile_data& data, const FloatParameter& fp, int parameter_id)
+  void compile_float_parameter(VM::vmcode& code, compile_data& data, environment& env, const FloatParameter& fp, int parameter_id)
     {
     if (fp.pointer)
-      compile_float_parameter_pointer(code, data, fp, parameter_id);
+      compile_float_parameter_pointer(code, data, env, fp, parameter_id);
     else
-      compile_float_parameter_single(code, data, fp, parameter_id);
+      compile_float_parameter_single(code, data, env, fp, parameter_id);
     }
-  void compile_parameters(VM::vmcode& code, compile_data& data, const Parameters& pars)
+  void compile_parameters(VM::vmcode& code, compile_data& data, environment& env, const Parameters& pars)
     {
     int calling_convention_id = 0;
     for (auto par : pars)
       {
       if (std::holds_alternative<IntParameter>(par))
         {
-        compile_int_parameter(code, data, std::get<IntParameter>(par), calling_convention_id);
+        compile_int_parameter(code, data, env, std::get<IntParameter>(par), calling_convention_id);
         ++calling_convention_id;
         }
       else if (std::holds_alternative<FloatParameter>(par))
         {
-        compile_float_parameter(code, data, std::get<FloatParameter>(par), calling_convention_id);
+        compile_float_parameter(code, data, env, std::get<FloatParameter>(par), calling_convention_id);
         ++calling_convention_id;
         }
       else
@@ -3127,16 +3420,19 @@ namespace
 
   } // anonymous namespace
 
-void compile(VM::vmcode& code, const Program& prog)
+void compile(VM::vmcode& code, environment& env, const Program& prog)
   {
   compile_data data;
 
-  if (rsp_offset)
+  if constexpr (GLOBAL_VARIABLE_REG != VM::vmcode::RBP)
+    code.add(VM::vmcode::MOV, GLOBAL_VARIABLE_REG, VM::vmcode::RBP); // pointer to global variables
+
+  if constexpr (rsp_offset)
     code.add(VM::vmcode::SUB, VM::vmcode::RSP, VM::vmcode::NUMBER, rsp_offset);
-  compile_parameters(code, data, prog.parameters);
+  compile_parameters(code, data, env, prog.parameters);
 
   for (const auto& stm : prog.statements)
-    compile_statement(code, data, stm);
+    compile_statement(code, data, env, stm);
   if (rt == RT_INTEGER)
     {
     code.add(VM::vmcode::CVTSI2SD, VM::vmcode::XMM0, FIRST_TEMP_INTEGER_REG);
@@ -3145,11 +3441,15 @@ void compile(VM::vmcode& code, const Program& prog)
     {
     code.add(VM::vmcode::MOV, VM::vmcode::XMM0, FIRST_TEMP_REAL_REG);
     }
-  if (rsp_offset)
+  if constexpr (rsp_offset)
     code.add(VM::vmcode::ADD, VM::vmcode::RSP, VM::vmcode::NUMBER, rsp_offset);
   code.add(VM::vmcode::RET);
 
   offset_stack(code, data);
+  }
+
+environment::environment() : global_var_offset(0)
+  {
   }
 
 COMPILER_END

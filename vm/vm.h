@@ -38,11 +38,12 @@ VM_API uint64_t disassemble_bytecode(vmcode::operation& op,
 #define zero_flag 128
 
 #define operand_has_8bit_mem 128
+#define vm_stack_size 512
 
 struct registers
   {
   VM_API registers();
-  uint64_t stack[256];
+  uint64_t stack[vm_stack_size];
   uint64_t eflags;
   uint64_t rax;
   uint64_t rbx;
@@ -75,7 +76,7 @@ struct registers
   double xmm12;
   double xmm13;
   double xmm14;
-  double xmm15; 
+  double xmm15;
   };
 
 struct external_function

@@ -922,11 +922,19 @@ uint64_t disassemble_bytecode(vmcode::operation& op,
 
   }
 
+namespace
+  {
+  void reset_registers(registers& regs)
+    {
+    regs.rbp = (uint64_t)(&regs.stack[0]);
+    regs.rsp = (uint64_t)(&regs.stack[vm_stack_size]);
+    regs.eflags = 0;
+    }
+  }
+
 registers::registers()
   {
-  rbp = (uint64_t)(&stack[0]);
-  rsp = (uint64_t)(&stack[256]);
-  eflags = 0;
+  reset_registers(*this);
   }
 
 namespace
@@ -2335,7 +2343,10 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       uint64_t address = *((uint64_t*)regs.rsp);
       regs.rsp += 8; // to check, might need to pop more
       if (address == 0xffffffffffffffff) // we're at the end of this bytecode function call
+        {
+        reset_registers(regs);
         return;
+        }
       bytecode_ptr = (const uint8_t*)address;
       sz = 0;
       break;

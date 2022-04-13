@@ -6,7 +6,7 @@
 
 #define FIRST_TEMP_INTEGER_REG VM::vmcode::RAX
 #define SECOND_TEMP_INTEGER_REG VM::vmcode::RBX
-#define THIRD_TEMP_INTEGER_REG VM::vmcode::RBP
+#define THIRD_TEMP_INTEGER_REG VM::vmcode::R11
 
 #define STACK_BACKUP_REGISTER VM::vmcode::R10
 #define STACK_MEM_BACKUP_REGISTER VM::vmcode::MEM_R10
@@ -15,7 +15,8 @@
 #define SECOND_TEMP_REAL_REG VM::vmcode::XMM5
 #define THIRD_TEMP_REAL_REG VM::vmcode::XMM6
 
-#define GLOBAL_VARIABLE_REG VM::vmcode::R11
+#define GLOBAL_VARIABLE_REG VM::vmcode::RBP
+#define GLOBAL_VARIABLE_MEM_REG VM::vmcode::MEM_RBP
 
 #define RESERVED_REAL_REG VM::vmcode::XMM7
 #define RESERVED_REAL_REG_2 VM::vmcode::XMM8
@@ -59,10 +60,10 @@ enum address_type
 
 enum value_type
   {
-  single,
+  real,
   integer,
-  single_array,
+  real_array,
   integer_array,
-  pointer_to_single,
+  pointer_to_real,
   pointer_to_integer
   };

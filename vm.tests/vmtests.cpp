@@ -753,7 +753,7 @@ namespace
       run_bytecode(f, size, reg);
       auto toc = std::chrono::high_resolution_clock::now();
       auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
-      printf("Harmonic timing: %dms\n", ms);
+      printf("Harmonic timing: %lldms\n", ms);
       }
     catch (std::logic_error e)
       {
