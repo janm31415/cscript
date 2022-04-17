@@ -71,7 +71,7 @@ Scripting language similar to C in syntax, but without functions, strings, dynam
 
 ### Quicksort
  
-    (int* a, int* stack, int size)// cscript function call parameters
+    (int* a, int* stack, int size) // cscript function call parameters
     /*
     int* a: This list of integers represents the list what we want to sort
     int* stack: Recursion is not possible, therefore we need a stack to store temporary results.
@@ -79,54 +79,54 @@ Scripting language similar to C in syntax, but without functions, strings, dynam
     int size: The length of the input lists.
     */
     
-    int lo = 0;
-    int hi = size-1;
-    // initialize top of stack
-    int top = -1;
-    // push initial values of l and h to stack
-    stack[++top] = lo;
-    stack[++top] = hi;
-    while (top >= 0)
-    {
-      hi = stack[top];
-      --top;
-      lo = stack[top];
-      --top;
-      // partitioning algorithm
-      // Set pivot element at its correct position
-      // in sorted array
-      int x = a[hi];
-      int i = (lo - 1);
-      for (int j = lo; j <= hi - 1; ++j)
-      {
-        if (a[j] <= x)
-        {
-          ++i;
-          int tmp = a[i];
-          a[i] = a[j];
-          a[j] = tmp;
-        }
-      }
-      int tmp2 = a[i+1];
-      a[i+1] = a[hi];
-      a[hi] = tmp2;
-      int p = i+1;
-      // end partitioning algorithm
-
-      // If there are elements on left side of pivot,
-      // then push left side to stack
-      if (p - 1 > lo)
-      {
-        stack[++top] = lo;
-        stack[++top] = p-1;
-      }
-
-      // If there are elements on right side of pivot,
-      // then push right side to stack
-      if (p + 1 < hi)
-      {
-        stack[++top] = p+1;
-        stack[++top] = hi;
-      }
+    int lo = 0;
+    int hi = size-1;
+    // initialize top of stack
+    int top = -1;
+    // push initial values of l and h to stack
+    stack[++top] = lo;
+    stack[++top] = hi;
+    while (top >= 0)
+    {
+      hi = stack[top];
+      --top;
+      lo = stack[top];
+      --top;
+      // partitioning algorithm
+      // Set pivot element at its correct position
+      // in sorted array
+      int x = a[hi];
+      int i = (lo - 1);
+      for (int j = lo; j <= hi - 1; ++j)
+      {
+        if (a[j] <= x)
+        {
+          ++i;
+          int tmp = a[i];
+          a[i] = a[j];
+          a[j] = tmp;
+        }
+      }
+      int tmp2 = a[i+1];
+      a[i+1] = a[hi];
+      a[hi] = tmp2;
+      int p = i+1;
+      // end partitioning algorithm
+
+      // If there are elements on left side of pivot,
+      // then push left side to stack
+      if (p - 1 > lo)
+      {
+        stack[++top] = lo;
+        stack[++top] = p-1;
+      }
+
+      // If there are elements on right side of pivot,
+      // then push right side to stack
+      if (p + 1 < hi)
+      {
+        stack[++top] = p+1;
+        stack[++top] = hi;
+      }
     }
   
