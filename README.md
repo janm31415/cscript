@@ -141,6 +141,7 @@ Scripting language similar to C in syntax, but without functions, strings, dynam
     (float f)
     float $my_global_variable = f;
     
+The compiled function can now be called with a floating point parameter. The global variable will be saved on the stack at a position where the second cscript function can access it.
     
     // second cscript function
     ()
