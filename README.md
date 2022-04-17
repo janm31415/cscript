@@ -54,6 +54,11 @@ Scripting language similar to C in syntax, but without functions, strings, dynam
      * (int* a, float* b)   input pointers to a list of integers named a, and a list of floats named b. These pointers can point to dynamic memory. This is the way to use dynamic memory inside a cscript.
  * After the function call parameters brackets {} should be omitted.
  
+### global variables
+ * You can create variables in a first cscript that can be used in a second cscript.
+ * To create such a global variable, its name should start with $, e.g. int $my_global = 3.
+ * Global variables can only be of type int or float. 
+ 
 ## Examples
 
 ### Fibonacci
@@ -129,4 +134,18 @@ Scripting language similar to C in syntax, but without functions, strings, dynam
         stack[++top] = hi;
       }
     }
+    
+### Global variables example
+
+    // first cscript function
+    (float f)
+    float $my_global_variable = f;
+    
+    
+    // second cscript function
+    ()
+    sin($my_global_variable); // return value will be the sine of the global variable.
+    
+    
+        
   
