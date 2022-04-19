@@ -13,10 +13,10 @@ int main(int /*argc*/, const char* /*argv*/[])
   InitTestEngine();
 
   auto tic = std::clock();
-  //run_all_tokenize_tests();
-  //run_all_parse_tests();
-  //run_all_optimize_tests();
-  //run_all_compile_tests();
+  run_all_tokenize_tests();
+  run_all_parse_tests();
+  run_all_optimize_tests();
+  run_all_compile_tests();
   run_all_cscript_tests();
   auto toc = std::clock();
 
