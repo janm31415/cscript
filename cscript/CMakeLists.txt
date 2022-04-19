@@ -1,5 +1,6 @@
 set(HDRS
 compiler.h
+cscript.h
 cscript_api.h
 defines.h
 namespace.h
@@ -15,6 +16,7 @@ visitor.h
 	
 set(SRCS
 compiler.cpp
+cscript.cpp
 optimize.cpp
 parse.cpp
 peephole.cpp

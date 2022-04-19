@@ -1,5 +1,6 @@
 set(HDRS
 compiletests.h
+cscripttests.h
 optimizetests.h
 parsetests.h
 test_assert.h
@@ -8,6 +9,7 @@ tokenizetests.h
 	
 set(SRCS
 compiletests.cpp
+cscripttests.cpp
 optimizetests.cpp
 parsetests.cpp
 test.cpp
