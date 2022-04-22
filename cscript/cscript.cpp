@@ -57,6 +57,8 @@ cscript_argument make_cscript_argument(double* p_d)
 
 std::unique_ptr<cscript_function> cscript_function::create(const std::string& script, cscript_environment& env, std::string& error_message)
   {
+  if (script.empty())
+    return std::unique_ptr<cscript_function>(nullptr);
   error_message = std::string();
   VM::vmcode code;
   try
@@ -64,6 +66,8 @@ std::unique_ptr<cscript_function> cscript_function::create(const std::string& sc
     auto tok = tokenize(script);
     auto prog = make_program(tok);
     optimize(prog);
+    if (prog.statements.empty())
+      return std::unique_ptr<cscript_function>(nullptr);
     compile(code, env.env, prog);
     peephole_optimization(code);
     }
