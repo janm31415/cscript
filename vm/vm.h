@@ -77,6 +77,10 @@ struct registers
   double xmm13;
   double xmm14;
   double xmm15;
+
+  private:
+    registers(const registers&) = delete;
+    registers& operator = (const registers&) const = delete;
   };
 
 struct external_function

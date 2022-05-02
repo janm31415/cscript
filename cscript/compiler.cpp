@@ -3336,7 +3336,7 @@ namespace
       }
     }
 
-  void compile_int_parameter_pointer(VM::vmcode& code, compile_data& data, environment& /*env*/, const IntParameter& ip, int parameter_id)
+  void compile_int_parameter_pointer(VM::vmcode& code, compile_data& data, environment& /*env*/, const IntParameter& ip, int32_t parameter_id, int32_t nr_of_pars)
     {
     auto it = data.vars.find(ip.name);
     if (it != data.vars.end())
@@ -3362,13 +3362,14 @@ namespace
       {
       int64_t var_id = data.var_offset | variable_tag;
       data.var_offset += 8;
-      int addr = parameter_id - 4;
+      //int32_t addr = parameter_id - 4;
+      int32_t addr = nr_of_pars - parameter_id - 1;
       code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, VM::vmcode::MEM_RSP, rsp_offset + addr * 8 + virtual_machine_rsp_offset);
       data.vars.insert(std::make_pair(ip.name, make_variable(var_id, external, pointer_to_integer, memory_address)));
       }
     }
 
-  void compile_int_parameter_single(VM::vmcode& code, compile_data& data, environment& /*env*/, const IntParameter& ip, int parameter_id)
+  void compile_int_parameter_single(VM::vmcode& code, compile_data& data, environment& /*env*/, const IntParameter& ip, int32_t parameter_id, int32_t nr_of_pars)
     {
     auto it = data.vars.find(ip.name);
     if (it != data.vars.end())
@@ -3394,22 +3395,23 @@ namespace
       {
       int64_t var_id = data.var_offset | variable_tag;
       data.var_offset += 8;
-      int addr = parameter_id - 4;
+      //int32_t addr = parameter_id - 4;
+      int32_t addr = nr_of_pars - parameter_id - 1;
       code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, VM::vmcode::MEM_RSP, rsp_offset + addr * 8 + virtual_machine_rsp_offset);
       data.vars.insert(std::make_pair(ip.name, make_variable(var_id, constant, integer, memory_address)));
       }
     }
 
-  void compile_int_parameter(VM::vmcode& code, compile_data& data, environment& env, const IntParameter& ip, int parameter_id)
+  void compile_int_parameter(VM::vmcode& code, compile_data& data, environment& env, const IntParameter& ip, int parameter_id, int32_t nr_of_pars)
     {
     if (ip.pointer)
-      compile_int_parameter_pointer(code, data, env, ip, parameter_id);
+      compile_int_parameter_pointer(code, data, env, ip, parameter_id, nr_of_pars);
     else
-      compile_int_parameter_single(code, data, env, ip, parameter_id);
+      compile_int_parameter_single(code, data, env, ip, parameter_id, nr_of_pars);
     }
 
 
-  void compile_float_parameter_pointer(VM::vmcode& code, compile_data& data, environment& /*env*/, const FloatParameter& fp, int parameter_id)
+  void compile_float_parameter_pointer(VM::vmcode& code, compile_data& data, environment& /*env*/, const FloatParameter& fp, int parameter_id, int32_t nr_of_pars)
     {
     int64_t var_id = data.var_offset | variable_tag;
     data.var_offset += 8;
@@ -3429,7 +3431,8 @@ namespace
       }
     else
       {
-      int addr = parameter_id - 4;
+      //int32_t addr = parameter_id - 4;
+      int32_t addr = nr_of_pars - parameter_id - 1;
       code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, VM::vmcode::MEM_RSP, rsp_offset + addr * 8 + virtual_machine_rsp_offset);
       }
     auto it = data.vars.find(fp.name);
@@ -3439,7 +3442,7 @@ namespace
       throw_compile_error(fp.line_nr, "Variable " + fp.name + " already exists");
     }
 
-  void compile_float_parameter_single(VM::vmcode& code, compile_data& data, environment& /*env*/, const FloatParameter& fp, int parameter_id)
+  void compile_float_parameter_single(VM::vmcode& code, compile_data& data, environment& /*env*/, const FloatParameter& fp, int32_t parameter_id, int32_t nr_of_pars)
     {
     auto it = data.vars.find(fp.name);
     if (it != data.vars.end())
@@ -3465,19 +3468,21 @@ namespace
       {
       int64_t var_id = data.var_offset | variable_tag;
       data.var_offset += 8;
-      int addr = parameter_id - 4;
+      //int32_t addr = parameter_id - 4;
+      int32_t addr = nr_of_pars - parameter_id - 1;
       code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, VM::vmcode::MEM_RSP, rsp_offset + addr * 8 + virtual_machine_rsp_offset);
       data.vars.insert(std::make_pair(fp.name, make_variable(var_id, constant, real, memory_address)));
       }
     }
 
-  void compile_float_parameter(VM::vmcode& code, compile_data& data, environment& env, const FloatParameter& fp, int parameter_id)
+  void compile_float_parameter(VM::vmcode& code, compile_data& data, environment& env, const FloatParameter& fp, int32_t parameter_id, int32_t nr_of_pars)
     {
     if (fp.pointer)
-      compile_float_parameter_pointer(code, data, env, fp, parameter_id);
+      compile_float_parameter_pointer(code, data, env, fp, parameter_id, nr_of_pars);
     else
-      compile_float_parameter_single(code, data, env, fp, parameter_id);
+      compile_float_parameter_single(code, data, env, fp, parameter_id, nr_of_pars);
     }
+
   void compile_parameters(VM::vmcode& code, compile_data& data, environment& env, const Parameters& pars)
     {
     int calling_convention_id = 0;
@@ -3485,12 +3490,12 @@ namespace
       {
       if (std::holds_alternative<IntParameter>(par))
         {
-        compile_int_parameter(code, data, env, std::get<IntParameter>(par), calling_convention_id);
+        compile_int_parameter(code, data, env, std::get<IntParameter>(par), calling_convention_id, (int32_t)pars.size());
         ++calling_convention_id;
         }
       else if (std::holds_alternative<FloatParameter>(par))
         {
-        compile_float_parameter(code, data, env, std::get<FloatParameter>(par), calling_convention_id);
+        compile_float_parameter(code, data, env, std::get<FloatParameter>(par), calling_convention_id, (int32_t)pars.size());
         ++calling_convention_id;
         }
       else

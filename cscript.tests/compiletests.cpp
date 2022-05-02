@@ -309,8 +309,8 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     reg.r8 = i3;
     reg.xmm3 = f4;
     uint64_t* mem = (uint64_t*)reg.rsp;
-    *(mem - 2) = i5;
-    *(mem - 1) = *reinterpret_cast<uint64_t*>(&f6);
+    *(mem - 1) = i5;
+    *(mem - 2) = *reinterpret_cast<uint64_t*>(&f6);
     reg.rsp -= 16;
     try {
       VM::run_bytecode(f, size, reg);

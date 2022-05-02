@@ -192,6 +192,32 @@ void test_global_variables()
   TEST_EQ(14, res);
   }
 
+void test_external_variable_change()
+  {
+  cscript_environment env;
+  std::string error_message;
+  std::string script = R"((float* a, float* b, float* p, int* function, int pitch, int velocity, float frequency)
+*a = pitch/127.0;
+)";
+  auto fun = cscript_function::create(script, env, error_message);
+  TEST_ASSERT(fun.get() != nullptr);
+  TEST_ASSERT(error_message.empty());
+  std::vector<cscript_argument> args;
+  double a = 0.0;
+  double b = 0.0;
+  double p = 0.0;
+  int64_t f = 0;
+  args.push_back(make_cscript_argument((uint64_t)&a));
+  args.push_back(make_cscript_argument((uint64_t)&b));
+  args.push_back(make_cscript_argument((uint64_t)&p));
+  args.push_back(make_cscript_argument((uint64_t)&f));
+  args.push_back(make_cscript_argument((uint64_t)10));
+  args.push_back(make_cscript_argument((uint64_t)127));
+  args.push_back(make_cscript_argument((double)440.0));
+  fun->run(args, env);  
+  TEST_EQ(10.0/127.0, a);
+  }
+
 COMPILER_END
 
 
@@ -205,4 +231,5 @@ void run_all_cscript_tests()
   test_cscript_with_many_float_input_parameters();
   test_quicksort();
   test_global_variables();
+  test_external_variable_change();
   }
