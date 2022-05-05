@@ -210,8 +210,8 @@ namespace
           c_func f = it->second;
           values v;
           v.reserve(2);
-          v.push_back(v1);
-          v.push_back(v2);
+          v.push_back(v1.front());
+          v.push_back(v2.front());
           auto res = f(v);
           op.fops.erase(op.fops.begin() + j);
           op.operands.erase(op.operands.begin() + j);
@@ -250,7 +250,7 @@ namespace
           values v;
           auto& exprs = std::get<FuncCall>(f.factor).exprs;
           for (auto& expr : exprs)
-            v.push_back(get_constant_value(expr));
+            v.push_back(get_constant_value(expr).front());
           auto res = fun(v);
           if (f.sign == '-')
             {
@@ -662,7 +662,7 @@ namespace
             }
           else if (is_constant(i.expr))
             {
-            value_t v = get_constant_value(i.expr);
+            value_t v = get_constant_value(i.expr).front();
             variable_to_value_map[i.name] = to_d(v);
             stm = Nop();
             }
@@ -681,7 +681,7 @@ namespace
             }
           else if (is_constant(f.expr))
             {
-            value_t v = get_constant_value(f.expr);
+            value_t v = get_constant_value(f.expr).front();
             variable_to_value_map[f.name] = to_d(v);
             stm = Nop();
             }

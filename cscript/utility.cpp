@@ -44,9 +44,11 @@ bool is_empty(const Expression& expr)
 
 bool is_constant(const Factor& f)
   {
-  return (std::holds_alternative<value_t>(f.factor) 
+  return (std::holds_alternative<value_t>(f.factor)
     || (std::holds_alternative<Expression>(f.factor) && is_constant(std::get<Expression>(f.factor)))
-    || (std::holds_alternative<FuncCall>(f.factor) && is_constant(std::get<FuncCall>(f.factor).exprs)));
+    || (std::holds_alternative<FuncCall>(f.factor) && is_constant(std::get<FuncCall>(f.factor).exprs))
+    || (std::holds_alternative<ExpressionList>(f.factor) && is_constant(std::get<ExpressionList>(f.factor).exprs))
+    );
   }
 
 bool is_constant(const Term& t)
@@ -72,36 +74,72 @@ bool is_constant(const std::vector<Expression>& exprs)
   return true;
   }
 
-value_t get_constant_value(const Factor& f)
+std::vector<value_t> get_constant_value(const Factor& f)
   {
-  value_t ret;
+  std::vector<value_t> ret;
   if (std::holds_alternative<value_t>(f.factor))
-    ret = std::get<value_t>(f.factor);
+    ret.push_back(std::get<value_t>(f.factor));
+  else if (std::holds_alternative<ExpressionList>(f.factor))
+    {
+    for (const auto& expr : std::get<ExpressionList>(f.factor).exprs)
+      {
+      auto values = get_constant_value(expr);
+      ret.insert(ret.end(), values.begin(), values.end());
+      }
+    }
   else
     ret = get_constant_value(std::get<Expression>(f.factor));
   if (f.sign == '-')
     {
-    if (std::holds_alternative<double>(ret))
-      ret = -std::get<double>(ret);
-    else
-      ret = -std::get<int64_t>(ret);
+    for (auto& r : ret)
+      {
+      if (std::holds_alternative<double>(r))
+        r = -std::get<double>(r);
+      else
+        r = -std::get<int64_t>(r);
+      }
     }
   return ret;
   }
 
-value_t get_constant_value(const Term& t)
+std::vector<value_t> get_constant_value(const Term& t)
   {
   return get_constant_value(t.operands.front());
   }
 
-value_t get_constant_value(const Relop& r)
+std::vector<value_t> get_constant_value(const Relop& r)
   {
   return get_constant_value(r.operands.front());
   }
 
-value_t get_constant_value(const Expression& expr)
+std::vector<value_t> get_constant_value(const Expression& expr)
   {
   return get_constant_value(expr.operands.front());
+  }
+
+void set_constant_value(Factor& f, const std::vector<value_t>& v)
+  {
+  if (v.size() == 1)
+    set_constant_value(f, v.front());
+  else
+    {
+    f.sign = '+';
+    ExpressionList expr;
+    for (const auto& val : v)
+      {
+      Expression e;
+      Factor ff;
+      ff.factor = val;
+      ff.sign = '+';
+      Term tt;
+      tt.operands.push_back(ff);
+      Relop rr;
+      rr.operands.push_back(tt);
+      e.operands.push_back(rr);
+      expr.exprs.push_back(e);
+      }
+    f.factor = expr;
+    }
   }
 
 void set_constant_value(Factor& f, value_t v)

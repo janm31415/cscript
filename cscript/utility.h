@@ -23,11 +23,12 @@ bool is_constant(const Relop& r);
 bool is_constant(const Expression& expr);
 bool is_constant(const std::vector<Expression>& exprs);
 
-value_t get_constant_value(const Factor& f);
-value_t get_constant_value(const Term& t);
-value_t get_constant_value(const Relop& r);
-value_t get_constant_value(const Expression& expr);
+std::vector<value_t> get_constant_value(const Factor& f);
+std::vector<value_t> get_constant_value(const Term& t);
+std::vector<value_t> get_constant_value(const Relop& r);
+std::vector<value_t> get_constant_value(const Expression& expr);
 
+void set_constant_value(Factor& f, const std::vector<value_t>& v);
 void set_constant_value(Factor& f, value_t v);
 void set_constant_value(Term& t, value_t v);
 void set_constant_value(Relop& r, value_t v);

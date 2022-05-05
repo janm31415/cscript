@@ -228,8 +228,16 @@ If make_if(tokens& tokes)
   if (current(tokes) == std::string("else"))
     {
     require(tokes, "else");
-    require(tokes, "{");
-    i.alternative = make_statements(tokes, "}");
+    if (current(tokes) == "if") // else if
+      {
+      If i2 = make_if(tokes);
+      i.alternative.push_back(i2);
+      }
+    else
+      {
+      require(tokes, "{");
+      i.alternative = make_statements(tokes, "}");
+      }
     }
   return i;
   }
@@ -283,11 +291,13 @@ CommaSeparatedStatements make_float(tokens& tokes)
     if (first_time)
       require(tokes, "float");
     f.name = take(tokes).value;
+    bool is_array = false;
     if (current_type(tokes) == token::T_LEFT_SQUARE_BRACKET)
       {
       advance(tokes);
       f.dims.push_back(make_expression(tokes));
       require(tokes, "]");
+      is_array = true;
       }
     if (current_type(tokes) == token::T_LEFT_SQUARE_BRACKET)
       throw_parse_error(f.line_nr, "only single dimension arrays are allowed");
@@ -358,6 +368,21 @@ FuncCall make_funccall(std::string name, tokens& tokes)
   return fn;
   }
 
+ExpressionList make_expression_list(tokens& tokes)
+  {
+  ExpressionList l;
+  l.line_nr = current_line(tokes);
+  while (current(tokes) != "}")
+    {
+    l.exprs.push_back(make_expression(tokes));
+    if (tokes.empty())
+      throw_parse_error(l.line_nr, "Expression list has no closing }");
+    if (current(tokes) != "}")
+      require(tokes, ",");
+    }
+  return l;
+  }
+
 Factor make_factor(tokens& tokes)
   {
   Factor f;
@@ -375,6 +400,10 @@ Factor make_factor(tokens& tokes)
     case token::T_LEFT_ROUND_BRACKET:
       f.factor = make_expression(tokes);
       require(tokes, ")");
+      break;
+    case token::T_LEFT_CURLY_BRACE:
+      f.factor = make_expression_list(tokes);
+      require(tokes, "}");
       break;
     case token::T_REAL:
       f.factor = value_t(to_double(toke.value.c_str()));

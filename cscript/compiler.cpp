@@ -200,16 +200,16 @@ namespace
 
     if (offset1)
       {
-      code.add(VM::vmcode::CMPEQPD, VM::vmcode::MEM_RSP, offset1, VM::vmcode::MEM_RSP, offset2);      
+      code.add(VM::vmcode::CMPEQPD, VM::vmcode::MEM_RSP, offset1, VM::vmcode::MEM_RSP, offset2);
       }
     else if (offset2)
       {
-      code.add(VM::vmcode::CMPEQPD, op1, VM::vmcode::MEM_RSP, offset2);      
+      code.add(VM::vmcode::CMPEQPD, op1, VM::vmcode::MEM_RSP, offset2);
       }
     else
       {
-      code.add(VM::vmcode::CMPEQPD, op1, op2);      
-      }    
+      code.add(VM::vmcode::CMPEQPD, op1, op2);
+      }
     index_to_integer_operand(op2, offset2, data.stack_index - 1);
     if (offset1)
       {
@@ -236,7 +236,7 @@ namespace
         code.add(VM::vmcode::MOVMSKPD, op2, op1);
         code.add(VM::vmcode::AND, op2, VM::vmcode::NUMBER, 1);
         }
-      }     
+      }
     rt = RT_INTEGER;
     }
 
@@ -1300,22 +1300,47 @@ namespace
       {"pow", compile_pow}
     };
 
-  void compile_make_int_array(VM::vmcode& /*code*/, compile_data& data, environment& /*env*/, const Int& make_i)
+  void compile_make_int_array(VM::vmcode& code, compile_data& data, environment& /*env*/, const Int& make_i)
     {
     if (make_i.dims.size() != 1)
-      throw_compile_error(make_i.line_nr, "compile error: only single dimension arrays are allowed");
-    if (!make_i.expr.operands.empty())
-      throw_compile_error(make_i.line_nr, "compile error: array initialization is not allowed");
+      throw_compile_error(make_i.line_nr, "compile error: only single dimension arrays are allowed");    
     if (!is_constant(make_i.dims.front()))
       throw_compile_error(make_i.line_nr, "compile error: array dimension should be a constant");
-    int64_t val = to_i(get_constant_value(make_i.dims.front()));
+    int64_t val = to_i(get_constant_value(make_i.dims.front()).front());
     if (val <= 0)
       throw_compile_error(make_i.line_nr, "compile error: array dimension should be a non zero positive number");
+    values init_values;
+    bool init = !make_i.expr.operands.empty();
+    if (init)
+      {
+      if (make_i.expr.operands.size() != 1)
+        throw_compile_error(make_i.line_nr, "compile error: array initialization expects an expression list");
+      if (!is_constant(make_i.expr.operands.front()))
+        throw_compile_error(make_i.line_nr, "compile error: array initialization expects a constant expression list");
+      init_values = get_constant_value(make_i.expr);
+      if ((int64_t)init_values.size() != val)
+        throw_compile_error(make_i.line_nr, "compile error: array initializer list has wrong dimension");
+      }
     auto it = data.vars.find(make_i.name);
     if (it == data.vars.end())
       {
       int64_t var_id = data.var_offset | variable_tag;
       data.vars.insert(std::make_pair(make_i.name, make_variable(var_id, constant, integer_array, memory_address)));
+
+      if (init)
+        {
+        for (const auto& iv : init_values)
+          {
+          uint64_t val64 = 0;
+          if (std::holds_alternative<double>(iv))
+            val64 = *(uint64_t*)(&std::get<double>(iv));
+          else
+            val64 = (uint64_t)std::get<int64_t>(iv);
+          code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, VM::vmcode::NUMBER, val64);
+          var_id += 8;
+          }
+        }
+
       data.var_offset += 8 * val;
       }
     else
@@ -1431,22 +1456,47 @@ namespace
     }
 
 
-  void compile_make_float_array(VM::vmcode& /*code*/, compile_data& data, environment& /*env*/, const Float& make_f)
+  void compile_make_float_array(VM::vmcode& code, compile_data& data, environment& /*env*/, const Float& make_f)
     {
     if (make_f.dims.size() != 1)
       throw_compile_error(make_f.line_nr, "compile error: only single dimension arrays are allowed");
-    if (!make_f.expr.operands.empty())
-      throw_compile_error(make_f.line_nr, "compile error: array initialization is not allowed");
     if (!is_constant(make_f.dims.front()))
       throw_compile_error(make_f.line_nr, "compile error: array dimension should be a constant");
-    int64_t val = to_i(get_constant_value(make_f.dims.front()));
+    int64_t val = to_i(get_constant_value(make_f.dims.front()).front());
     if (val <= 0)
       throw_compile_error(make_f.line_nr, "compile error: array dimension should be a non zero positive number");
+    values init_values;
+    bool init = !make_f.expr.operands.empty();
+    if (init)
+      {
+      if (make_f.expr.operands.size() != 1)
+        throw_compile_error(make_f.line_nr, "compile error: array initialization expects an expression list");
+      if (!is_constant(make_f.expr.operands.front()))
+        throw_compile_error(make_f.line_nr, "compile error: array initialization expects a constant expression list");
+      init_values = get_constant_value(make_f.expr);
+      if ((int64_t)init_values.size() != val)
+        throw_compile_error(make_f.line_nr, "compile error: array initializer list has wrong dimension");
+      }
     auto it = data.vars.find(make_f.name);
     if (it == data.vars.end())
       {
       int64_t var_id = data.var_offset | variable_tag;
       data.vars.insert(std::make_pair(make_f.name, make_variable(var_id, constant, real_array, memory_address)));
+
+      if (init)
+        {
+        for (const auto& iv : init_values)
+          {
+          uint64_t val64 = 0;
+          if (std::holds_alternative<double>(iv))
+            val64 = *(uint64_t*)(&std::get<double>(iv));
+          else
+            val64 = (uint64_t)std::get<int64_t>(iv);
+          code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, -var_id, VM::vmcode::NUMBER, val64);
+          var_id += 8;
+          }
+        }
+
       data.var_offset += 8 * val;
       }
     else
@@ -2766,11 +2816,11 @@ namespace
           if (offset == 0 && op == FIRST_TEMP_REAL_REG)  // send through the output to the output register
             {
             code.add(VM::vmcode::MOV, op, VM::vmcode::MEM_RSP, -(int64_t)var_id);
-            }         
+            }
           }
         else
           {
-          double f = 1.0;          
+          double f = 1.0;
           if (lvo.name == "++")
             code.add(VM::vmcode::ADDSD, (VM::vmcode::operand)var_id, VM::vmcode::NUMBER, *(reinterpret_cast<uint64_t*>(&f)));
           else if (lvo.name == "--")
@@ -2890,7 +2940,7 @@ namespace
           }
         else
           code.add(VM::vmcode::MOV, op, STACK_MEM_BACKUP_REGISTER);
-        double f = 1.0;        
+        double f = 1.0;
         if (lvo.name == "++")
           code.add(VM::vmcode::ADDSD, op, VM::vmcode::NUMBER, *(reinterpret_cast<uint64_t*>(&f)));
         else if (lvo.name == "--")

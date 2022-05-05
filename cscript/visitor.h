@@ -213,6 +213,14 @@ struct base_visitor
     _postvisit(i);
     }
 
+  void operator()(ExpressionList& i)
+    {
+    _previsit(i);
+    for (auto& e : i.exprs)
+      operator ()(e);
+    _postvisit(i);
+    }
+
   void operator()(Variable& i)
     {
     _previsit(i);
@@ -269,6 +277,7 @@ struct base_visitor
   virtual void _previsit(CommaSeparatedStatements&) {}
   virtual void _previsit(value_t&) {}
   virtual void _previsit(FuncCall&) {}
+  virtual void _previsit(ExpressionList&) {}
   virtual void _previsit(Variable&) {}
   virtual void _previsit(ArrayCall&) {}
   virtual void _previsit(Dereference&) {}
@@ -293,6 +302,7 @@ struct base_visitor
   virtual void _postvisit(CommaSeparatedStatements&) {}
   virtual void _postvisit(value_t&) {}
   virtual void _postvisit(FuncCall&) {}
+  virtual void _postvisit(ExpressionList&) {}
   virtual void _postvisit(Variable&) {}
   virtual void _postvisit(ArrayCall&) {}
   virtual void _postvisit(Dereference&) {}

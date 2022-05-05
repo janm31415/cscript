@@ -51,7 +51,8 @@ typedef std::variant<Nop, Expression, For, If, Int, Float, Assignment, CommaSepa
 typedef std::vector<Statement> Statements;
 class CommaSeparatedStatements { public: Statements statements; };
 class FuncCall { public: std::string name; std::vector<Expression> exprs; int line_nr; };
-class Factor { public: char sign = '+'; std::variant<value_t, Expression, FuncCall, Variable, ArrayCall, Dereference, LValueOperator> factor; int line_nr; };
+class ExpressionList { public: std::vector<Expression> exprs; int line_nr; };                       
+class Factor { public: char sign = '+'; std::variant<value_t, Expression, FuncCall, Variable, ArrayCall, Dereference, LValueOperator, ExpressionList> factor; int line_nr; };
 class For { public: Statements init_cond_inc; Statements statements; int line_nr; };
 class If { public: Statements condition; Statements body; Statements alternative; int line_nr; };
 class IntParameter { public: std::string name; bool pointer; int line_nr; };

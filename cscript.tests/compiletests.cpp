@@ -907,6 +907,9 @@ struct if_test : public compile_fixture
     TEST_EQ(9.0, run("() float f = 0; if (3 > 2) { f = 9; } f;", optimize, peephole, use_all_variable_registers));
     TEST_EQ(9.0, run("() float f = 0; if (3 < 2) { f = 7; } else { f = 9; } f;", optimize, peephole, use_all_variable_registers));
     TEST_EQ(0.0, run("() float f = 0; if (3 < 2) { f = 9; } f;", optimize, peephole, use_all_variable_registers));
+
+    TEST_EQ(10.0, run("() float f = 0; if (3 < 2) { f = 9; } else if (3 > 2) { f = 10; } else { f = 11; } f;", optimize, peephole, use_all_variable_registers));
+    TEST_EQ(11.0, run("() float f = 0; if (3 < 2) { f = 9; } else if (3 == 2) { f = 10; } else { f = 11; } f;", optimize, peephole, use_all_variable_registers));
     }
   };
 
@@ -920,6 +923,20 @@ struct dead_code_test : public compile_fixture
     TEST_EQ(3.0, run("() float f; f -= 2; int i; int j = 3; j;", optimize, peephole, use_all_variable_registers));
     TEST_EQ(3.0, run("() float f; f *= 4; int i; i = 2; int j = 3; j;", optimize, peephole, use_all_variable_registers));
     TEST_EQ(3.0, run("() float f; f /= 7; int i; i += 5; int j = 3; j;", optimize, peephole, use_all_variable_registers));
+    }
+  };
+
+struct array_assignment_test : public compile_fixture
+  {
+  void test(bool optimize = false, bool peephole = true, bool use_all_variable_registers = false)
+    {
+    TEST_EQ(3.4, run("() float f[3] = {1.2, 3.4, 5.6}; f[1];", optimize, peephole, use_all_variable_registers));    
+    TEST_EQ(34, run("() int i[3] = {12, 34, 56}; i[1];", optimize, peephole, use_all_variable_registers));
+    if (optimize)
+      {
+      TEST_EQ(4.6, run("() float f[3] = {1.2, 3.4+1.2, 5.6}; f[1];", optimize, peephole, use_all_variable_registers));
+      TEST_EQ(38, run("() int i[3] = {12, 34+4, 56}; i[1];", optimize, peephole, use_all_variable_registers));
+      }
     }
   };
 
@@ -1314,7 +1331,7 @@ void run_all_compile_tests()
     modulo_test().test(optimize, peephole, use_all_variable_registers);
     if_test().test(optimize, peephole, use_all_variable_registers);
     dead_code_test().test(optimize, peephole, use_all_variable_registers);
-#if 1
+#if 0
     harmonic().test(optimize, peephole, use_all_variable_registers);
     fibonacci().test(optimize, peephole, use_all_variable_registers);
     hamming().test(optimize, peephole, use_all_variable_registers);
@@ -1324,6 +1341,7 @@ void run_all_compile_tests()
 #endif
     test_many_variables().test(optimize, peephole, use_all_variable_registers);
     test_global_variables().test(optimize, peephole, use_all_variable_registers);
+    array_assignment_test().test(optimize, peephole, use_all_variable_registers);
     }
   test_strength_reduction().test();
   }
