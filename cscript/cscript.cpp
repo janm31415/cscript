@@ -136,4 +136,30 @@ double cscript_function::run(const std::vector<cscript_argument>& args, cscript_
   return env.reg.xmm0;
   }
 
+bool make_cscript_global_variable(const std::string& variable_name, double variable_value, cscript_environment& env)
+  {
+  if (variable_name.empty() || variable_name.front() != '$')
+    return false;
+  global_variable_type new_global;
+  new_global.address = env.env.global_var_offset;
+  new_global.vt = global_value_real;
+  env.env.globals.insert(std::make_pair(variable_name, new_global));
+  env.reg.stack[env.env.global_var_offset/8] = *(const uint64_t*)(&variable_value);
+  env.env.global_var_offset += 8;    
+  return true;
+  }
+
+bool make_cscript_global_variable(const std::string& variable_name, int64_t variable_value, cscript_environment& env)
+  {
+  if (variable_name.empty() || variable_name.front() != '$')
+    return false;
+  global_variable_type new_global;
+  new_global.address = env.env.global_var_offset;
+  new_global.vt = global_value_integer;
+  env.env.globals.insert(std::make_pair(variable_name, new_global));
+  env.reg.stack[env.env.global_var_offset / 8] = (uint64_t)variable_value;
+  env.env.global_var_offset += 8;
+  return true;
+  }
+
 COMPILER_END

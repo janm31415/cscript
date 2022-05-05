@@ -43,6 +43,9 @@ COMPILER_CSCRIPT_API cscript_argument make_cscript_argument(int64_t* p_i);
 COMPILER_CSCRIPT_API cscript_argument make_cscript_argument(uint64_t* p_i);
 COMPILER_CSCRIPT_API cscript_argument make_cscript_argument(double* p_d);
 
+COMPILER_CSCRIPT_API bool make_cscript_global_variable(const std::string& variable_name, double variable_value, cscript_environment& env);
+COMPILER_CSCRIPT_API bool make_cscript_global_variable(const std::string& variable_name, int64_t variable_value, cscript_environment& env);
+
 class cscript_function
   {
   public:

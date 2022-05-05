@@ -218,6 +218,42 @@ void test_external_variable_change()
   TEST_EQ(10.0/127.0, a);
   }
 
+
+void test_external_variable_create()
+  {
+  cscript_environment env;
+  std::string error_message;
+  std::string script = R"((int* a)
+*a = $my_global;
+)";
+  make_cscript_global_variable("$my_global", (int64_t)3, env);
+  auto fun = cscript_function::create(script, env, error_message);
+  TEST_ASSERT(fun.get() != nullptr);
+  TEST_ASSERT(error_message.empty());
+  std::vector<cscript_argument> args;
+  int64_t a = 0; 
+  args.push_back(make_cscript_argument((uint64_t)&a)); 
+  fun->run(args, env);
+  TEST_EQ(3, a);
+  }
+
+void test_external_variable_create_2()
+  {
+  cscript_environment env;
+  std::string error_message;
+  std::string script = R"((float* a)
+*a = $my_global;
+)";
+  make_cscript_global_variable("$my_global", 3.14, env);
+  auto fun = cscript_function::create(script, env, error_message);
+  TEST_ASSERT(fun.get() != nullptr);
+  TEST_ASSERT(error_message.empty());
+  std::vector<cscript_argument> args;
+  double a = 0.0;
+  args.push_back(make_cscript_argument((uint64_t)&a));
+  fun->run(args, env);
+  TEST_EQ(3.14, a);
+  }
 COMPILER_END
 
 
@@ -232,4 +268,6 @@ void run_all_cscript_tests()
   test_quicksort();
   test_global_variables();
   test_external_variable_change();
+  test_external_variable_create();
+  test_external_variable_create_2();
   }

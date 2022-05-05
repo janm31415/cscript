@@ -80,7 +80,7 @@ struct registers
 
   private:
     registers(const registers&) = delete;
-    registers& operator = (const registers&) const = delete;
+    registers& operator = (const registers&) = delete;
   };
 
 struct external_function
