@@ -33,7 +33,7 @@ struct compile_fixture
   ~compile_fixture()
     {
     }
-  VM::vmcode get_vmcode(const std::string& script, bool _optimize, bool _peephole, bool use_all_variable_registers)
+  VM::vmcode get_vmcode(const std::string& script, bool _optimize, bool _peephole, bool use_all_variable_registers, const std::vector<external_function>* p_externals = nullptr)
     {
     auto tokens = tokenize(script);
     auto prog = make_program(tokens);
@@ -54,7 +54,10 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     if (_optimize)
       optimize(prog);
     VM::vmcode code;
-    compile(code, env, prog);
+    if (p_externals)
+      compile(code, env, prog, *p_externals);
+    else
+      compile(code, env, prog);
     if (_peephole)
       peephole_optimization(code);
     if (false)
@@ -73,6 +76,65 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     try {
       VM::run_bytecode(f, size, reg);
+      res = reg.xmm0;
+      }
+    catch (std::logic_error e)
+      {
+      std::cout << e.what() << "\n";
+      }
+    VM::free_bytecode(f, size);
+
+    return res;
+    }
+
+  double run_with_externals(const std::string& script, bool _optimize, bool _peephole, bool use_all_variable_registers, const std::vector<external_function>& externals)
+    {
+    std::vector<VM::external_function> vm_externals;
+    for (const auto& f : externals)
+      {
+      VM::external_function fie;
+      fie.address = (uint64_t)f.func_ptr;
+      fie.name = f.name;
+      switch (f.return_type)
+        {
+        case external_function_return_type::external_function_return_real:
+          fie.return_type = VM::external_function::T_DOUBLE;
+          break;
+        case external_function_return_type::external_function_return_integer:
+          fie.return_type = VM::external_function::T_INT64;
+          break;
+        default:
+          fie.return_type = VM::external_function::T_VOID;
+          break;
+        }
+      for (const auto& a : f.args)
+        {
+        VM::external_function::argtype arg;
+        switch (a)
+          {
+          case external_function_parameter_type::external_function_parameter_integer:
+            arg = VM::external_function::T_INT64;
+            break;
+          case external_function_parameter_type::external_function_parameter_real:
+            arg = VM::external_function::T_DOUBLE;
+            break;
+          case external_function_parameter_type::external_function_parameter_pointer_to_real:
+            arg = VM::external_function::T_CHAR_POINTER;
+            break;
+          case external_function_parameter_type::external_function_parameter_pointer_to_integer:
+            arg = VM::external_function::T_CHAR_POINTER;
+            break;
+          }
+        fie.arguments.push_back(arg);
+        }
+      vm_externals.push_back(fie);
+      }
+    double res = std::numeric_limits<double>::quiet_NaN();
+    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers, &externals);
+    uint64_t size;
+    uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
+    try {
+      VM::run_bytecode(f, size, reg, vm_externals);
       res = reg.xmm0;
       }
     catch (std::logic_error e)
@@ -940,6 +1002,43 @@ struct array_assignment_test : public compile_fixture
     }
   };
 
+namespace
+  {
+  double simple_external_function()
+    {
+    return 5.8;
+    }
+
+  double simple_add_external_function(double a, double b)
+    {
+    return a+b;
+    }
+  }
+
+struct external_function_test : public compile_fixture
+  {
+  void test(bool optimize = false, bool peephole = true, bool use_all_variable_registers = false)
+    {
+    external_function fie;
+    fie.name = "external";
+    fie.func_ptr = &simple_external_function;
+    fie.return_type = external_function_return_real;
+    std::vector<external_function> externals;
+    externals.push_back(fie);
+    TEST_EQ(5.8, run_with_externals("() external();", optimize, peephole, use_all_variable_registers, externals));
+
+    fie.name = "add";
+    fie.func_ptr = &simple_add_external_function;
+    fie.return_type = external_function_return_real;    
+    fie.args.push_back(external_function_parameter_real);
+    fie.args.push_back(external_function_parameter_real);
+    externals.push_back(fie);
+
+    TEST_EQ(3.24, run_with_externals("() add(3.14, 0.1);", optimize, peephole, use_all_variable_registers, externals));
+
+    }
+  };
+
 struct harmonic : public compile_fixture
   {
   void test(bool optimize = false, bool peephole = true, bool use_all_variable_registers = false)
@@ -1331,7 +1430,7 @@ void run_all_compile_tests()
     modulo_test().test(optimize, peephole, use_all_variable_registers);
     if_test().test(optimize, peephole, use_all_variable_registers);
     dead_code_test().test(optimize, peephole, use_all_variable_registers);
-#if 0
+#if 1
     harmonic().test(optimize, peephole, use_all_variable_registers);
     fibonacci().test(optimize, peephole, use_all_variable_registers);
     hamming().test(optimize, peephole, use_all_variable_registers);
@@ -1342,6 +1441,7 @@ void run_all_compile_tests()
     test_many_variables().test(optimize, peephole, use_all_variable_registers);
     test_global_variables().test(optimize, peephole, use_all_variable_registers);
     array_assignment_test().test(optimize, peephole, use_all_variable_registers);
+    external_function_test().test(optimize, peephole, use_all_variable_registers);
     }
   test_strength_reduction().test();
   }

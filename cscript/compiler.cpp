@@ -14,6 +14,26 @@ COMPILER_BEGIN
 namespace
   {
 
+  std::vector<VM::vmcode::operand> get_external_calling_registers()
+    {
+    std::vector<VM::vmcode::operand> calling_registers;
+    calling_registers.push_back(VM::vmcode::RCX);
+    calling_registers.push_back(VM::vmcode::RDX);
+    calling_registers.push_back(VM::vmcode::R8);
+    calling_registers.push_back(VM::vmcode::R9);
+    return calling_registers;
+    }
+
+  std::vector<VM::vmcode::operand> get_external_floating_point_registers()
+    {
+    std::vector<VM::vmcode::operand> calling_registers;
+    calling_registers.push_back(VM::vmcode::XMM0);
+    calling_registers.push_back(VM::vmcode::XMM1);
+    calling_registers.push_back(VM::vmcode::XMM2);
+    calling_registers.push_back(VM::vmcode::XMM3);
+    return calling_registers;
+    }
+
   std::vector<VM::vmcode::operand> get_registers_for_integer_variables()
     {
     std::vector<VM::vmcode::operand> reg;
@@ -92,8 +112,8 @@ namespace
 
   return_type rt;
 
-  void compile_expression(VM::vmcode& code, compile_data& data, environment& env, const Expression& expr);
-  void compile_statement(VM::vmcode& code, compile_data& data, environment& env, const Statement& stm);
+  void compile_expression(VM::vmcode& code, compile_data& data, environment& env, const Expression& expr, const std::vector<external_function>& external_functions);
+  void compile_statement(VM::vmcode& code, compile_data& data, environment& env, const Statement& stm, const std::vector<external_function>& external_functions);
 
   std::string label_to_string(uint64_t lab)
     {
@@ -136,6 +156,11 @@ namespace
       case 2: op = THIRD_TEMP_INTEGER_REG; offset = 0; break;
       default: op = VM::vmcode::MEM_RSP; offset = -(stack_index - 1) * 8; break;
       };
+    }
+
+  void index_to_stack_operand(VM::vmcode::operand& op, int64_t& offset, int64_t stack_index)
+    {
+    op = VM::vmcode::MEM_RSP; offset = -(stack_index - 1) * 8;
     }
 
   void update_data(compile_data& data)
@@ -1303,7 +1328,7 @@ namespace
   void compile_make_int_array(VM::vmcode& code, compile_data& data, environment& /*env*/, const Int& make_i)
     {
     if (make_i.dims.size() != 1)
-      throw_compile_error(make_i.line_nr, "compile error: only single dimension arrays are allowed");    
+      throw_compile_error(make_i.line_nr, "compile error: only single dimension arrays are allowed");
     if (!is_constant(make_i.dims.front()))
       throw_compile_error(make_i.line_nr, "compile error: array dimension should be a constant");
     int64_t val = to_i(get_constant_value(make_i.dims.front()).front());
@@ -1349,14 +1374,14 @@ namespace
       }
     }
 
-  void compile_make_global_int_single(VM::vmcode& code, compile_data& data, environment& env, const Int& make_i)
+  void compile_make_global_int_single(VM::vmcode& code, compile_data& data, environment& env, const Int& make_i, const std::vector<external_function>& external_functions)
     {
     bool init = !make_i.expr.operands.empty();
     VM::vmcode::operand int_op;
     int64_t int_offset = 0;
     if (init)
       {
-      compile_expression(code, data, env, make_i.expr);
+      compile_expression(code, data, env, make_i.expr, external_functions);
       if (rt == RT_REAL)
         {
         convert_real_to_integer(code, data.stack_index);
@@ -1386,14 +1411,14 @@ namespace
       }
     }
 
-  void compile_make_int_single(VM::vmcode& code, compile_data& data, environment& env, const Int& make_i)
+  void compile_make_int_single(VM::vmcode& code, compile_data& data, environment& env, const Int& make_i, const std::vector<external_function>& external_functions)
     {
     bool init = !make_i.expr.operands.empty();
     VM::vmcode::operand int_op;
     int64_t int_offset = 0;
     if (init)
       {
-      compile_expression(code, data, env, make_i.expr);
+      compile_expression(code, data, env, make_i.expr, external_functions);
       if (rt == RT_REAL)
         {
         convert_real_to_integer(code, data.stack_index);
@@ -1437,7 +1462,7 @@ namespace
       }
     }
 
-  void compile_make_int(VM::vmcode& code, compile_data& data, environment& env, const Int& make_i)
+  void compile_make_int(VM::vmcode& code, compile_data& data, environment& env, const Int& make_i, const std::vector<external_function>& external_functions)
     {
     if (!make_i.dims.empty())
       {
@@ -1449,9 +1474,9 @@ namespace
     else
       {
       if (make_i.name.front() == '$')
-        compile_make_global_int_single(code, data, env, make_i);
+        compile_make_global_int_single(code, data, env, make_i, external_functions);
       else
-        compile_make_int_single(code, data, env, make_i);
+        compile_make_int_single(code, data, env, make_i, external_functions);
       }
     }
 
@@ -1505,14 +1530,14 @@ namespace
       }
     }
 
-  void compile_make_global_float_real(VM::vmcode& code, compile_data& data, environment& env, const Float& make_f)
+  void compile_make_global_float_real(VM::vmcode& code, compile_data& data, environment& env, const Float& make_f, const std::vector<external_function>& external_functions)
     {
     bool init = !make_f.expr.operands.empty();
     VM::vmcode::operand int_op;
     int64_t int_offset = 0;
     if (init)
       {
-      compile_expression(code, data, env, make_f.expr);
+      compile_expression(code, data, env, make_f.expr, external_functions);
       if (rt == RT_INTEGER)
         {
         convert_integer_to_real(code, data.stack_index);
@@ -1542,14 +1567,14 @@ namespace
       }
     }
 
-  void compile_make_float_single(VM::vmcode& code, compile_data& data, environment& env, const Float& make_f)
+  void compile_make_float_single(VM::vmcode& code, compile_data& data, environment& env, const Float& make_f, const std::vector<external_function>& external_functions)
     {
     bool init = !make_f.expr.operands.empty();
     VM::vmcode::operand float_op;
     int64_t float_offset = 0;
     if (init)
       {
-      compile_expression(code, data, env, make_f.expr);
+      compile_expression(code, data, env, make_f.expr, external_functions);
       if (rt == RT_INTEGER)
         {
         convert_integer_to_real(code, data.stack_index);
@@ -1594,7 +1619,7 @@ namespace
       }
     }
 
-  void compile_make_float(VM::vmcode& code, compile_data& data, environment& env, const Float& make_f)
+  void compile_make_float(VM::vmcode& code, compile_data& data, environment& env, const Float& make_f, const std::vector<external_function>& external_functions)
     {
     if (!make_f.dims.empty())
       {
@@ -1606,9 +1631,9 @@ namespace
     else
       {
       if (make_f.name.front() == '$')
-        compile_make_global_float_real(code, data, env, make_f);
+        compile_make_global_float_real(code, data, env, make_f, external_functions);
       else
-        compile_make_float_single(code, data, env, make_f);
+        compile_make_float_single(code, data, env, make_f, external_functions);
       }
     }
 
@@ -1729,13 +1754,13 @@ namespace
       compile_local_variable(code, data, env, v);
     }
 
-  void compile_assignment_pointer(VM::vmcode& code, compile_data& data, environment& env, const Assignment& a)
+  void compile_assignment_pointer(VM::vmcode& code, compile_data& data, environment& env, const Assignment& a, const std::vector<external_function>& external_functions)
     {
     if (a.dims.size() != 1)
       throw_compile_error(a.line_nr, "only single dimension arrays are allowed");
     if (data.stack_index != 0)
       throw_compile_error(a.line_nr, "assignment only as single statement allowed");
-    compile_expression(code, data, env, a.dims.front());
+    compile_expression(code, data, env, a.dims.front(), external_functions);
     if (rt == RT_REAL)
       {
       convert_real_to_integer(code, data.stack_index);
@@ -1744,7 +1769,7 @@ namespace
     code.add(VM::vmcode::SHL, FIRST_TEMP_INTEGER_REG, VM::vmcode::NUMBER, 3);
     ++data.stack_index;
     update_data(data);
-    compile_expression(code, data, env, a.expr);
+    compile_expression(code, data, env, a.expr, external_functions);
     auto it = data.vars.find(a.name);
     if (it == data.vars.end())
       throw_compile_error(a.line_nr, "variable " + a.name + " is not declared.");
@@ -1838,13 +1863,13 @@ namespace
       };
     }
 
-  void compile_assignment_array(VM::vmcode& code, compile_data& data, environment& env, const Assignment& a)
+  void compile_assignment_array(VM::vmcode& code, compile_data& data, environment& env, const Assignment& a, const std::vector<external_function>& external_functions)
     {
     if (a.dims.size() != 1)
       throw_compile_error(a.line_nr, "only single dimension arrays are allowed");
     if (data.stack_index != 0)
       throw_compile_error(a.line_nr, "assignment only as single statement allowed");
-    compile_expression(code, data, env, a.dims.front());
+    compile_expression(code, data, env, a.dims.front(), external_functions);
     if (rt == RT_REAL)
       {
       convert_real_to_integer(code, data.stack_index);
@@ -1853,7 +1878,7 @@ namespace
     code.add(VM::vmcode::SHL, FIRST_TEMP_INTEGER_REG, VM::vmcode::NUMBER, 3);
     ++data.stack_index;
     update_data(data);
-    compile_expression(code, data, env, a.expr);
+    compile_expression(code, data, env, a.expr, external_functions);
     auto it = data.vars.find(a.name);
     if (it == data.vars.end())
       throw_compile_error(a.line_nr, "variable " + a.name + " is not declared.");
@@ -1964,7 +1989,7 @@ namespace
       };
     }
 
-  void compile_assignment_dereference(VM::vmcode& code, compile_data& data, environment& env, const Assignment& a)
+  void compile_assignment_dereference(VM::vmcode& code, compile_data& data, environment& env, const Assignment& a, const std::vector<external_function>& external_functions)
     {
     if (!a.dims.empty())
       throw_compile_error(a.line_nr, "dereference without dimensions expected");
@@ -1972,7 +1997,7 @@ namespace
       throw_compile_error(a.line_nr, "assignment only as single statement allowed");
     ++data.stack_index;
     update_data(data);
-    compile_expression(code, data, env, a.expr);
+    compile_expression(code, data, env, a.expr, external_functions);
     auto it = data.vars.find(a.name);
     if (it == data.vars.end())
       throw_compile_error(a.line_nr, "variable " + a.name + " is not declared.");
@@ -2063,9 +2088,9 @@ namespace
       };
     }
 
-  void compile_assignment_single(VM::vmcode& code, compile_data& data, environment& env, const Assignment& a)
+  void compile_assignment_single(VM::vmcode& code, compile_data& data, environment& env, const Assignment& a, const std::vector<external_function>& external_functions)
     {
-    compile_expression(code, data, env, a.expr);
+    compile_expression(code, data, env, a.expr, external_functions);
     auto it = data.vars.find(a.name);
     if (it == data.vars.end())
       throw_compile_error(a.line_nr, "variable " + a.name + " is not declared.");
@@ -2338,9 +2363,9 @@ namespace
       }
     }
 
-  void compile_global_assignment_single(VM::vmcode& code, compile_data& data, environment& env, const Assignment& a)
+  void compile_global_assignment_single(VM::vmcode& code, compile_data& data, environment& env, const Assignment& a, const std::vector<external_function>& external_functions)
     {
-    compile_expression(code, data, env, a.expr);
+    compile_expression(code, data, env, a.expr, external_functions);
     auto it = env.globals.find(a.name);
     if (it == env.globals.end())
       throw_compile_error(a.line_nr, "global variable " + a.name + " is not declared.");
@@ -2492,7 +2517,7 @@ namespace
       }
     }
 
-  void compile_assignment(VM::vmcode& code, compile_data& data, environment& env, const Assignment& a)
+  void compile_assignment(VM::vmcode& code, compile_data& data, environment& env, const Assignment& a, const std::vector<external_function>& external_functions)
     {
     if (data.stack_index != 0)
       throw_compile_error(a.line_nr, "assignment only as single statement allowed");
@@ -2506,7 +2531,7 @@ namespace
         throw_compile_error(a.line_nr, "global variable " + a.name + " is not an array.");
       if (a.dereference)
         throw_compile_error(a.line_nr, "global variable " + a.name + " cannot be dereferenced.");
-      compile_global_assignment_single(code, data, env, a);
+      compile_global_assignment_single(code, data, env, a, external_functions);
       }
     else
       {
@@ -2517,19 +2542,19 @@ namespace
       if (!a.dims.empty())
         {
         if (it->second.vt == pointer_to_real || it->second.vt == pointer_to_integer)
-          compile_assignment_pointer(code, data, env, a);
+          compile_assignment_pointer(code, data, env, a, external_functions);
         else
-          compile_assignment_array(code, data, env, a);
+          compile_assignment_array(code, data, env, a, external_functions);
         }
       else if (a.dereference)
-        compile_assignment_dereference(code, data, env, a);
+        compile_assignment_dereference(code, data, env, a, external_functions);
       else
-        compile_assignment_single(code, data, env, a);
+        compile_assignment_single(code, data, env, a, external_functions);
       }
     }
 
 
-  void compile_array_call(VM::vmcode& code, compile_data& data, environment& env, const ArrayCall& a)
+  void compile_array_call(VM::vmcode& code, compile_data& data, environment& env, const ArrayCall& a, const std::vector<external_function>& external_functions)
     {
     auto it = data.vars.find(a.name);
     if (it == data.vars.end())
@@ -2538,7 +2563,7 @@ namespace
       throw_compile_error(a.line_nr, "only single dimension arrays are allowed.");
     if (it->second.vt == real || it->second.vt == integer)
       throw_compile_error(a.line_nr, "I expect an array or a pointer.");
-    compile_expression(code, data, env, a.exprs.front());
+    compile_expression(code, data, env, a.exprs.front(), external_functions);
     if (rt == RT_REAL)
       {
       convert_real_to_integer(code, data.stack_index);
@@ -2748,7 +2773,7 @@ namespace
     }
 
 
-  void compile_lvalue_operator(VM::vmcode& code, compile_data& data, environment& env, const LValueOperator& lvo)
+  void compile_lvalue_operator(VM::vmcode& code, compile_data& data, environment& env, const LValueOperator& lvo, const std::vector<external_function>& external_functions)
     {
     if (std::holds_alternative<Variable>(lvo.lvalue->lvalue))
       {
@@ -2841,7 +2866,7 @@ namespace
       auto it = data.vars.find(a.name);
       if (it == data.vars.end())
         throw_compile_error(a.line_nr, "Cannot find variable " + a.name);
-      compile_expression(code, data, env, a.exprs.front());
+      compile_expression(code, data, env, a.exprs.front(), external_functions);
       if (rt == RT_REAL)
         {
         convert_real_to_integer(code, data.stack_index);
@@ -3046,28 +3071,223 @@ namespace
       throw_compile_error("compile_lvalue_operator: not implemented");
     }
 
-  void compile_funccall(VM::vmcode& code, compile_data& data, environment& env, const FuncCall& f)
+  void compile_external_funccall(VM::vmcode& code, compile_data& data, environment& env, const FuncCall& f, const std::vector<external_function>& external_functions)
     {
+    auto it = std::find_if(external_functions.begin(), external_functions.end(), [&](const auto& fun) { return f.name == fun.name; });
+    if (it == external_functions.end())
+      throw_compile_error(f.line_nr, "Invalid function");
+    if (it->args.size() != f.exprs.size())
+      throw_compile_error(f.line_nr, "Invalid number of arguments");
+    if (it->args.size() > 4)
+      throw_compile_error(f.line_nr, "Only max 4 arguments are possible for external functions");
+
+    static std::vector<VM::vmcode::operand> external_regs = get_external_calling_registers();
+    static std::vector<VM::vmcode::operand> external_float_regs = get_external_floating_point_registers();
+
     auto stack_save = data.stack_index;
+
     for (size_t i = 0; i < f.exprs.size(); ++i)
       {
-      compile_expression(code, data, env, f.exprs[i]);
-      if (rt == RT_INTEGER)
+      compile_expression(code, data, env, f.exprs[i], external_functions);
+      if (it->args[i] == external_function_parameter_real)
         {
-        convert_integer_to_real(code, data.stack_index);
-        rt = RT_REAL;
+        if (rt == RT_INTEGER)
+          {
+          convert_integer_to_real(code, data.stack_index);
+          rt = RT_REAL;
+          }
         }
       ++data.stack_index;
       update_data(data);
       }
+
+    int64_t return_type_save_stack_index = -1;
+
+    switch (it->return_type)
+      {
+      case external_function_return_real:
+      {
+      return_type_save_stack_index = data.stack_index;
+      VM::vmcode::operand op;
+      int64_t offset;
+      index_to_stack_operand(op, offset, data.stack_index);
+      if (offset)
+        code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset, VM::vmcode::XMM0);
+      else
+        code.add(VM::vmcode::MOV, op, VM::vmcode::XMM0);
+      ++data.stack_index;
+      update_data(data);
+      break;
+      }
+      case external_function_return_integer:
+      {
+      return_type_save_stack_index = data.stack_index;
+      VM::vmcode::operand op;
+      int64_t offset;
+      index_to_stack_operand(op, offset, data.stack_index);
+      if (offset)
+        code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset, VM::vmcode::RAX);
+      else
+        code.add(VM::vmcode::MOV, op, VM::vmcode::RAX);
+      ++data.stack_index;
+      update_data(data);
+      break;
+      }
+      default:
+        break;
+      }
+
+    std::vector<int64_t> argument_stack_indices;
+    for (size_t i = 0; i < f.exprs.size(); ++i)
+      {
+      switch (it->args[i])
+        {
+        case external_function_parameter_real:
+        {
+        argument_stack_indices.push_back(data.stack_index);
+        VM::vmcode::operand op;
+        int64_t offset;
+        index_to_stack_operand(op, offset, data.stack_index);
+        if (offset)
+          code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset, external_float_regs[i]);
+        else
+          code.add(VM::vmcode::MOV, op, external_float_regs[i]);
+
+        index_to_real_operand(op, offset, stack_save+i);
+        if (offset)
+          code.add(VM::vmcode::MOV, external_float_regs[i], VM::vmcode::MEM_RSP, offset);
+        else
+          code.add(VM::vmcode::MOV, external_float_regs[i], op);
+
+        ++data.stack_index;
+        update_data(data);
+        break;
+        }
+        default:
+        {
+        argument_stack_indices.push_back(data.stack_index);
+        VM::vmcode::operand op;
+        int64_t offset;
+        index_to_stack_operand(op, offset, data.stack_index);
+        if (offset)
+          code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset, external_regs[i]);
+        else
+          code.add(VM::vmcode::MOV, op, external_regs[i]);
+
+        index_to_integer_operand(op, offset, stack_save + i);
+        if (offset)
+          code.add(VM::vmcode::MOV, external_regs[i], VM::vmcode::MEM_RSP, offset);
+        else
+          code.add(VM::vmcode::MOV, external_regs[i], op);
+
+        ++data.stack_index;
+        update_data(data);
+        break;
+        }
+        }
+      }
+
+    code.add(VM::vmcode::CALLEXTERNAL, VM::vmcode::NUMBER, (uint64_t)it->func_ptr);
+
+    switch (it->return_type)
+      {
+      case external_function_return_real:
+      {
+      VM::vmcode::operand op;
+      int64_t offset;
+      index_to_real_operand(op, offset, stack_save);
+      if (offset)
+        code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset, VM::vmcode::XMM0);
+      else
+        code.add(VM::vmcode::MOV, op, VM::vmcode::XMM0);
+
+      index_to_stack_operand(op, offset, return_type_save_stack_index);
+      if (offset)
+        code.add(VM::vmcode::MOV, VM::vmcode::XMM0, VM::vmcode::MEM_RSP, offset);
+      else
+        code.add(VM::vmcode::MOV, VM::vmcode::XMM0, op);    
+      rt = RT_REAL;
+      break;
+      }
+      case external_function_return_integer:
+      {
+      VM::vmcode::operand op;
+      int64_t offset;
+      index_to_integer_operand(op, offset, stack_save);
+      if (offset)
+        code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset, VM::vmcode::RAX);
+      else
+        code.add(VM::vmcode::MOV, op, VM::vmcode::RAX);
+
+      index_to_stack_operand(op, offset, return_type_save_stack_index);
+      if (offset)
+        code.add(VM::vmcode::MOV, VM::vmcode::RAX, VM::vmcode::MEM_RSP, offset);
+      else
+        code.add(VM::vmcode::MOV, VM::vmcode::RAX, op);
+      rt = RT_INTEGER;
+      break;
+      }
+      default:
+        break;
+      }
+
+    for (size_t i = 0; i < f.exprs.size(); ++i)
+      {
+      switch (it->args[i])
+        {
+        case external_function_parameter_real:
+        {
+        VM::vmcode::operand op;
+        int64_t offset;
+        index_to_stack_operand(op, offset, argument_stack_indices[i]);
+        if (offset)
+          code.add(VM::vmcode::MOV, external_float_regs[i], VM::vmcode::MEM_RSP, offset);
+        else
+          code.add(VM::vmcode::MOV, op, external_float_regs[i], op);
+        break;
+        }
+        default:
+        {
+        VM::vmcode::operand op;
+        int64_t offset;
+        index_to_stack_operand(op, offset, argument_stack_indices[i]);
+        if (offset)
+          code.add(VM::vmcode::MOV, external_regs[i], VM::vmcode::MEM_RSP, offset);
+        else
+          code.add(VM::vmcode::MOV, external_regs[i], op);
+        break;
+        }
+        }
+      }
+
     data.stack_index = stack_save;
-    auto it = c_funcs.find(f.name);
-    if (it == c_funcs.end())
-      throw_compile_error(f.line_nr, "Invalid function");
-    it->second(code, data);
     }
 
-  void compile_factor(VM::vmcode& code, compile_data& data, environment& env, const Factor& f)
+  void compile_funccall(VM::vmcode& code, compile_data& data, environment& env, const FuncCall& f, const std::vector<external_function>& external_functions)
+    {
+    auto it = c_funcs.find(f.name);
+    if (it == c_funcs.end())
+      compile_external_funccall(code, data, env, f, external_functions);
+    else
+      {
+      auto stack_save = data.stack_index;
+      for (size_t i = 0; i < f.exprs.size(); ++i)
+        {
+        compile_expression(code, data, env, f.exprs[i], external_functions);
+        if (rt == RT_INTEGER)
+          {
+          convert_integer_to_real(code, data.stack_index);
+          rt = RT_REAL;
+          }
+        ++data.stack_index;
+        update_data(data);
+        }
+      data.stack_index = stack_save;
+      it->second(code, data);
+      }
+    }
+
+  void compile_factor(VM::vmcode& code, compile_data& data, environment& env, const Factor& f, const std::vector<external_function>& external_functions)
     {
     if (std::holds_alternative<value_t>(f.factor))
       {
@@ -3075,7 +3295,7 @@ namespace
       }
     else if (std::holds_alternative<Expression>(f.factor))
       {
-      compile_expression(code, data, env, std::get<Expression>(f.factor));
+      compile_expression(code, data, env, std::get<Expression>(f.factor), external_functions);
       }
     else if (std::holds_alternative<Variable>(f.factor))
       {
@@ -3083,7 +3303,7 @@ namespace
       }
     else if (std::holds_alternative<ArrayCall>(f.factor))
       {
-      compile_array_call(code, data, env, std::get<ArrayCall>(f.factor));
+      compile_array_call(code, data, env, std::get<ArrayCall>(f.factor), external_functions);
       }
     else if (std::holds_alternative<Dereference>(f.factor))
       {
@@ -3091,11 +3311,11 @@ namespace
       }
     else if (std::holds_alternative<LValueOperator>(f.factor))
       {
-      compile_lvalue_operator(code, data, env, std::get<LValueOperator>(f.factor));
+      compile_lvalue_operator(code, data, env, std::get<LValueOperator>(f.factor), external_functions);
       }
     else if (std::holds_alternative<FuncCall>(f.factor))
       {
-      compile_funccall(code, data, env, std::get<FuncCall>(f.factor));
+      compile_funccall(code, data, env, std::get<FuncCall>(f.factor), external_functions);
       }
     else
       throw std::runtime_error("compile_factor: not implemented");
@@ -3108,15 +3328,15 @@ namespace
       }
     }
 
-  void compile_term(VM::vmcode& code, compile_data& data, environment& env, const Term& t)
+  void compile_term(VM::vmcode& code, compile_data& data, environment& env, const Term& t, const std::vector<external_function>& external_functions)
     {
-    compile_factor(code, data, env, t.operands[0]);
+    compile_factor(code, data, env, t.operands[0], external_functions);
     auto target_type = rt;
     for (size_t i = 0; i < t.fops.size(); ++i)
       {
       ++data.stack_index;
       update_data(data);
-      compile_factor(code, data, env, t.operands[i + 1]);
+      compile_factor(code, data, env, t.operands[i + 1], external_functions);
       if (rt != target_type)
         {
         if (rt == RT_INTEGER)
@@ -3138,15 +3358,15 @@ namespace
       }
     }
 
-  void compile_relop(VM::vmcode& code, compile_data& data, environment& env, const Relop& r)
+  void compile_relop(VM::vmcode& code, compile_data& data, environment& env, const Relop& r, const std::vector<external_function>& external_functions)
     {
-    compile_term(code, data, env, r.operands[0]);
+    compile_term(code, data, env, r.operands[0], external_functions);
     auto target_type = rt;
     for (size_t i = 0; i < r.fops.size(); ++i)
       {
       ++data.stack_index;
       update_data(data);
-      compile_term(code, data, env, r.operands[i + 1]);
+      compile_term(code, data, env, r.operands[i + 1], external_functions);
       if (rt != target_type)
         {
         if (rt == RT_INTEGER)
@@ -3168,15 +3388,15 @@ namespace
       }
     }
 
-  void compile_expression(VM::vmcode& code, compile_data& data, environment& env, const Expression& expr)
+  void compile_expression(VM::vmcode& code, compile_data& data, environment& env, const Expression& expr, const std::vector<external_function>& external_functions)
     {
-    compile_relop(code, data, env, expr.operands[0]);
+    compile_relop(code, data, env, expr.operands[0], external_functions);
     auto target_type = rt;
     for (size_t i = 0; i < expr.fops.size(); ++i)
       {
       ++data.stack_index;
       update_data(data);
-      compile_relop(code, data, env, expr.operands[i + 1]);
+      compile_relop(code, data, env, expr.operands[i + 1], external_functions);
       if (rt != target_type)
         {
         if (rt == RT_INTEGER)
@@ -3198,7 +3418,7 @@ namespace
       }
     }
 
-  void compile_for_condition(VM::vmcode& code, compile_data& data, environment& env, const Statement& stm, uint64_t end_label, int line_nr)
+  void compile_for_condition(VM::vmcode& code, compile_data& data, environment& env, const Statement& stm, uint64_t end_label, int line_nr, const std::vector<external_function>& external_functions)
     {
     if (is_simple_relative_operation(stm))
       {
@@ -3207,11 +3427,11 @@ namespace
       const Expression& expr = std::get<Expression>(stm);
       assert(expr.fops.size() == 1);
       assert(expr.operands.size() == 2);
-      compile_relop(code, data, env, expr.operands[0]);
+      compile_relop(code, data, env, expr.operands[0], external_functions);
       auto target_type = rt;
       ++data.stack_index;
       update_data(data);
-      compile_relop(code, data, env, expr.operands[1]);
+      compile_relop(code, data, env, expr.operands[1], external_functions);
       if (rt != target_type)
         {
         if (rt == RT_INTEGER)
@@ -3257,7 +3477,7 @@ namespace
       }
     else
       {
-      compile_statement(code, data, env, stm);
+      compile_statement(code, data, env, stm, external_functions);
       if (rt != RT_INTEGER)
         throw_compile_error(line_nr, "for loop condition is not a boolean expression");
       if (data.stack_index != 0)
@@ -3267,16 +3487,16 @@ namespace
       }
     }
 
-  void compile_for(VM::vmcode& code, compile_data& data, environment& env, const For& f)
+  void compile_for(VM::vmcode& code, compile_data& data, environment& env, const For& f, const std::vector<external_function>& external_functions)
     {
-    compile_statement(code, data, env, f.init_cond_inc[0]);
+    compile_statement(code, data, env, f.init_cond_inc[0], external_functions);
     auto start = data.label++;
     auto end = data.label++;
     code.add(VM::vmcode::LABEL, label_to_string(start));
-    compile_for_condition(code, data, env, f.init_cond_inc[1], end, f.line_nr);
+    compile_for_condition(code, data, env, f.init_cond_inc[1], end, f.line_nr, external_functions);
     for (const auto& stm : f.statements)
-      compile_statement(code, data, env, stm);
-    compile_statement(code, data, env, f.init_cond_inc[2]);
+      compile_statement(code, data, env, stm, external_functions);
+    compile_statement(code, data, env, f.init_cond_inc[2], external_functions);
     auto last_instruction = code.get_instructions_list().back().back();
     while (last_instruction.oper == VM::vmcode::MOV && last_instruction.operand1_mem == 0 &&
       (last_instruction.operand1 == FIRST_TEMP_INTEGER_REG || last_instruction.operand1 == SECOND_TEMP_INTEGER_REG ||
@@ -3291,9 +3511,9 @@ namespace
     code.add(VM::vmcode::LABEL, label_to_string(end));
     }
 
-  void compile_if(VM::vmcode& code, compile_data& data, environment& env, const If& i)
+  void compile_if(VM::vmcode& code, compile_data& data, environment& env, const If& i, const std::vector<external_function>& external_functions)
     {
-    compile_statement(code, data, env, i.condition[0]);
+    compile_statement(code, data, env, i.condition[0], external_functions);
     if (rt != RT_INTEGER)
       throw_compile_error(i.line_nr, "if condition is not a boolean expression");
     if (data.stack_index != 0)
@@ -3304,57 +3524,57 @@ namespace
       {
       code.add(VM::vmcode::JE, label_to_string(end_label));
       for (const auto& stm : i.body)
-        compile_statement(code, data, env, stm);
+        compile_statement(code, data, env, stm, external_functions);
       }
     else
       {
       auto else_label = data.label++;
       code.add(VM::vmcode::JE, label_to_string(else_label));
       for (const auto& stm : i.body)
-        compile_statement(code, data, env, stm);
+        compile_statement(code, data, env, stm, external_functions);
       code.add(VM::vmcode::JMP, label_to_string(end_label));
       code.add(VM::vmcode::LABEL, label_to_string(else_label));
       for (const auto& stm : i.alternative)
-        compile_statement(code, data, env, stm);
+        compile_statement(code, data, env, stm, external_functions);
       }
     code.add(VM::vmcode::LABEL, label_to_string(end_label));
     }
 
-  void compile_seperated_statements(VM::vmcode& code, compile_data& data, environment& env, const CommaSeparatedStatements& stms)
+  void compile_seperated_statements(VM::vmcode& code, compile_data& data, environment& env, const CommaSeparatedStatements& stms, const std::vector<external_function>& external_functions)
     {
     for (const auto& stm : stms.statements)
-      compile_statement(code, data, env, stm);
+      compile_statement(code, data, env, stm, external_functions);
     }
 
-  void compile_statement(VM::vmcode& code, compile_data& data, environment& env, const Statement& stm)
+  void compile_statement(VM::vmcode& code, compile_data& data, environment& env, const Statement& stm, const std::vector<external_function>& external_functions)
     {
     if (std::holds_alternative<Expression>(stm))
       {
-      compile_expression(code, data, env, std::get<Expression>(stm));
+      compile_expression(code, data, env, std::get<Expression>(stm), external_functions);
       }
     else if (std::holds_alternative<Float>(stm))
       {
-      compile_make_float(code, data, env, std::get<Float>(stm));
+      compile_make_float(code, data, env, std::get<Float>(stm), external_functions);
       }
     else if (std::holds_alternative<Int>(stm))
       {
-      compile_make_int(code, data, env, std::get<Int>(stm));
+      compile_make_int(code, data, env, std::get<Int>(stm), external_functions);
       }
     else if (std::holds_alternative<Assignment>(stm))
       {
-      compile_assignment(code, data, env, std::get<Assignment>(stm));
+      compile_assignment(code, data, env, std::get<Assignment>(stm), external_functions);
       }
     else if (std::holds_alternative<For>(stm))
       {
-      compile_for(code, data, env, std::get<For>(stm));
+      compile_for(code, data, env, std::get<For>(stm), external_functions);
       }
     else if (std::holds_alternative<If>(stm))
       {
-      compile_if(code, data, env, std::get<If>(stm));
+      compile_if(code, data, env, std::get<If>(stm), external_functions);
       }
     else if (std::holds_alternative<CommaSeparatedStatements>(stm))
       {
-      compile_seperated_statements(code, data, env, std::get<CommaSeparatedStatements>(stm));
+      compile_seperated_statements(code, data, env, std::get<CommaSeparatedStatements>(stm), external_functions);
       }
     else if (std::holds_alternative<Nop>(stm))
       {
@@ -3555,7 +3775,7 @@ namespace
 
   } // anonymous namespace
 
-void compile(VM::vmcode& code, environment& env, const Program& prog)
+void compile(VM::vmcode& code, environment& env, const Program& prog, const std::vector<external_function>& external_functions)
   {
   compile_data data;
 
@@ -3567,7 +3787,7 @@ void compile(VM::vmcode& code, environment& env, const Program& prog)
   compile_parameters(code, data, env, prog.parameters);
 
   for (const auto& stm : prog.statements)
-    compile_statement(code, data, env, stm);
+    compile_statement(code, data, env, stm, external_functions);
   if (rt == RT_INTEGER)
     {
     code.add(VM::vmcode::CVTSI2SD, VM::vmcode::XMM0, FIRST_TEMP_INTEGER_REG);
@@ -3581,6 +3801,12 @@ void compile(VM::vmcode& code, environment& env, const Program& prog)
   code.add(VM::vmcode::RET);
 
   offset_stack(code, data);
+  }
+
+void compile(VM::vmcode& code, environment& env, const Program& prog)
+  {
+  std::vector<external_function> external_functions;
+  compile(code, env, prog, external_functions);
   }
 
 environment::environment() : global_var_offset(0)

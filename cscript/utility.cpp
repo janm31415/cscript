@@ -42,11 +42,45 @@ bool is_empty(const Expression& expr)
   return expr.operands.empty();
   }
 
+std::set<std::string> get_internal_functions()
+  {
+  std::set<std::string> s = {
+  {"+"},
+  { "-" },
+  { "*" },
+  { "/" },
+  { "%" },
+  { "==" },
+  { "!=" },
+  { "<" },
+  { "<=" },
+  { ">" },
+  { ">=" },
+  { "sin" },
+  { "cos" },
+  { "sqrt" },
+  { "exp" },
+  { "log" },
+  { "log2" },
+  { "fabs" },
+  { "tan" },
+  { "atan" },
+  { "atan2" },
+  { "pow" }};
+  return s;
+  }
+
+bool is_internal_function(const FuncCall& f)
+  {
+  static std::set<std::string> internals = get_internal_functions();
+  return internals.find(f.name) != internals.end();
+  }
+
 bool is_constant(const Factor& f)
   {
   return (std::holds_alternative<value_t>(f.factor)
     || (std::holds_alternative<Expression>(f.factor) && is_constant(std::get<Expression>(f.factor)))
-    || (std::holds_alternative<FuncCall>(f.factor) && is_constant(std::get<FuncCall>(f.factor).exprs))
+    || (std::holds_alternative<FuncCall>(f.factor) && is_internal_function(std::get<FuncCall>(f.factor)) && is_constant(std::get<FuncCall>(f.factor).exprs))
     || (std::holds_alternative<ExpressionList>(f.factor) && is_constant(std::get<ExpressionList>(f.factor).exprs))
     );
   }

@@ -33,6 +33,30 @@ struct environment
   int64_t global_var_offset;
   };
 
+enum external_function_parameter_type
+  {
+  external_function_parameter_real,
+  external_function_parameter_integer,
+  external_function_parameter_pointer_to_real,
+  external_function_parameter_pointer_to_integer
+  };
+
+enum external_function_return_type
+  {
+  external_function_return_real,
+  external_function_return_integer,
+  external_function_return_void
+  };
+
+struct external_function
+  {
+  std::string name;
+  void* func_ptr;
+  std::vector<external_function_parameter_type> args;
+  external_function_return_type return_type;
+  };
+
+COMPILER_CSCRIPT_API void compile(VM::vmcode& code, environment& env, const Program& prog, const std::vector<external_function>& external_functions);
 COMPILER_CSCRIPT_API void compile(VM::vmcode& code, environment& env, const Program& prog);
 
 COMPILER_END

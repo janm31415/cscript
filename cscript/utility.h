@@ -5,6 +5,8 @@
 #include "cscript_api.h"
 #include "parse.h"
 
+#include <set>
+
 COMPILER_BEGIN
 
 COMPILER_CSCRIPT_API bool is_empty(const Expression& expr);
@@ -22,6 +24,9 @@ bool is_constant(const Term& t);
 bool is_constant(const Relop& r);
 bool is_constant(const Expression& expr);
 bool is_constant(const std::vector<Expression>& exprs);
+bool is_internal_function(const FuncCall& f);
+
+std::set<std::string> get_internal_functions();
 
 std::vector<value_t> get_constant_value(const Factor& f);
 std::vector<value_t> get_constant_value(const Term& t);

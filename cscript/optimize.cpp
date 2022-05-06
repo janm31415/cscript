@@ -189,6 +189,18 @@ namespace
       {"pow", c_pow}
     };
 
+  bool test_functions_list_is_complete()
+    {
+    std::set<std::string> fies = get_internal_functions();
+    for (const auto& fname : fies)
+      {
+      auto it = c_funcs.find(fname);
+      if (it == c_funcs.end())
+        return false;
+      }
+    return true;
+    }
+
   struct simplify_constant_expressions : public base_visitor<simplify_constant_expressions>
     {
     simplify_constant_expressions() {}
@@ -976,6 +988,7 @@ namespace
 
 void optimize(Program& prog)
   {
+  assert(test_functions_list_is_complete());
   type_variables tv;
   visitor<Program, type_variables>::visit(prog, &tv);  
   simplify_constant_expressions sce;
