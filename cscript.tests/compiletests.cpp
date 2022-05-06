@@ -27,13 +27,15 @@ struct compile_fixture
   environment env;
   VM::registers reg;
 
+  std::vector<external_function> empty_externals;
+
   compile_fixture()
     {
     }
   ~compile_fixture()
     {
     }
-  VM::vmcode get_vmcode(const std::string& script, bool _optimize, bool _peephole, bool use_all_variable_registers, const std::vector<external_function>* p_externals = nullptr)
+  VM::vmcode get_vmcode(const std::string& script, bool _optimize, bool _peephole, bool use_all_variable_registers, const std::vector<external_function>& externals)
     {
     auto tokens = tokenize(script);
     auto prog = make_program(tokens);
@@ -54,10 +56,7 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
     if (_optimize)
       optimize(prog);
     VM::vmcode code;
-    if (p_externals)
-      compile(code, env, prog, *p_externals);
-    else
-      compile(code, env, prog);
+    compile(code, env, prog, externals);
     if (_peephole)
       peephole_optimization(code);
     if (false)
@@ -71,7 +70,7 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
   double run(const std::string& script, bool _optimize = true, bool _peephole = true, bool use_all_variable_registers = false)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
+    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers, empty_externals);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     try {
@@ -130,7 +129,7 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
       vm_externals.push_back(fie);
       }
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers, &externals);
+    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers, externals);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     try {
@@ -149,7 +148,7 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
   double runi(const std::string& script, int64_t i1, bool _optimize = true, bool _peephole = true, bool use_all_variable_registers = false)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
+    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers, empty_externals);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     reg.rcx = i1;
@@ -168,7 +167,7 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
   double runii(const std::string& script, int64_t i1, int64_t i2, bool _optimize = true, bool _peephole = true, bool use_all_variable_registers = false)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
+    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers, empty_externals);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     reg.rcx = i1;
@@ -188,7 +187,7 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
   double runiii(const std::string& script, int64_t i1, int64_t i2, int64_t i3, bool _optimize = true, bool _peephole = true, bool use_all_variable_registers = false)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
+    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers, empty_externals);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     reg.rcx = i1;
@@ -209,7 +208,7 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
   double runiiii(const std::string& script, int64_t i1, int64_t i2, int64_t i3, int64_t i4, bool _optimize = true, bool _peephole = true, bool use_all_variable_registers = false)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
+    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers, empty_externals);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     reg.rcx = i1;
@@ -231,7 +230,7 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
   double runiiiii(const std::string& script, int64_t i1, int64_t i2, int64_t i3, int64_t i4, int64_t i5, bool _optimize = true, bool _peephole = true, bool use_all_variable_registers = false)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
+    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers, empty_externals);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     reg.rcx = i1;
@@ -256,7 +255,7 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
   double runf(const std::string& script, double i1, bool _optimize = true, bool _peephole = true, bool use_all_variable_registers = false)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
+    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers, empty_externals);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     reg.xmm0 = i1;
@@ -275,7 +274,7 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
   double runff(const std::string& script, double i1, double i2, bool _optimize = true, bool _peephole = true, bool use_all_variable_registers = false)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
+    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers, empty_externals);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     reg.xmm0 = i1;
@@ -295,7 +294,7 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
   double runfff(const std::string& script, double i1, double i2, double i3, bool _optimize = true, bool _peephole = true, bool use_all_variable_registers = false)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
+    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers, empty_externals);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     reg.xmm0 = i1;
@@ -316,7 +315,7 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
   double runffff(const std::string& script, double i1, double i2, double i3, double i4, bool _optimize = true, bool _peephole = true, bool use_all_variable_registers = false)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
+    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers, empty_externals);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     reg.xmm0 = i1;
@@ -338,7 +337,7 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
   double runfffff(const std::string& script, double i1, double i2, double i3, double i4, double i5, bool _optimize = true, bool _peephole = true, bool use_all_variable_registers = false)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
+    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers, empty_externals);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     reg.xmm0 = i1;
@@ -363,7 +362,7 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
   double runififif(const std::string& script, int64_t i1, double f2, int64_t i3, double f4, int64_t i5, double f6, bool _optimize = true, bool _peephole = true, bool use_all_variable_registers = false)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
+    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers, empty_externals);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     reg.rcx = i1;
@@ -389,7 +388,7 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
   double runpi(const std::string& script, int64_t* i1, bool _optimize = true, bool _peephole = true, bool use_all_variable_registers = false)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
+    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers, empty_externals);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     reg.rcx = (uint64_t)i1;
@@ -408,7 +407,7 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
   double runpii(const std::string& script, int64_t* i1, int64_t i2, bool _optimize = true, bool _peephole = true, bool use_all_variable_registers = false)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
+    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers, empty_externals);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     reg.rcx = (uint64_t)i1;
@@ -428,7 +427,7 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
   double runpipii(const std::string& script, int64_t* i1, int64_t* i2, int64_t i3, bool _optimize = true, bool _peephole = true, bool use_all_variable_registers = false)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
+    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers, empty_externals);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     reg.rcx = (uint64_t)i1;
@@ -449,7 +448,7 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
   double runpfpii(const std::string& script, double* i1, int64_t* i2, int64_t i3, bool _optimize = true, bool _peephole = true, bool use_all_variable_registers = false)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
+    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers, empty_externals);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     reg.rcx = (uint64_t)i1;
@@ -470,7 +469,7 @@ float ___A, ___B, ___C, ___D, ___E, ___F, ___G, ___H, ___I, ___J, ___K;
   double runpf(const std::string& script, double* f1, bool _optimize = true, bool _peephole = true, bool use_all_variable_registers = false)
     {
     double res = std::numeric_limits<double>::quiet_NaN();
-    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers);
+    auto code = get_vmcode(script, _optimize, _peephole, use_all_variable_registers, empty_externals);
     uint64_t size;
     uint8_t* f = (uint8_t*)VM::vm_bytecode(size, code);
     reg.rcx = (uint64_t)f1;
@@ -1430,7 +1429,7 @@ void run_all_compile_tests()
     modulo_test().test(optimize, peephole, use_all_variable_registers);
     if_test().test(optimize, peephole, use_all_variable_registers);
     dead_code_test().test(optimize, peephole, use_all_variable_registers);
-#if 1
+#if 0
     harmonic().test(optimize, peephole, use_all_variable_registers);
     fibonacci().test(optimize, peephole, use_all_variable_registers);
     hamming().test(optimize, peephole, use_all_variable_registers);

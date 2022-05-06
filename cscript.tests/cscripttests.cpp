@@ -254,6 +254,43 @@ void test_external_variable_create_2()
   fun->run(args, env);
   TEST_EQ(3.14, a);
   }
+
+namespace
+  {
+  double add(double a, double b)
+    {
+    return a+b;
+    }
+  }
+
+void test_external_functions()
+  {
+  std::vector<cscript_external_function> externals;
+  externals.push_back(make_external_function("add", &add, cscript_return_type::cpp_double, cscript_argument_type::cpp_double, cscript_argument_type::cpp_double));
+  cscript_environment env;
+  std::string error_message;
+  std::string script = R"((float a, float b)
+add(a*0.5, b*0.5);
+)";
+  auto fun = cscript_function::create(script, env, error_message, externals);
+  TEST_ASSERT(fun.get() != nullptr);
+  TEST_ASSERT(error_message.empty());
+  std::vector<cscript_argument> args;  
+  args.push_back(make_cscript_argument((double)2.4));
+  args.push_back(make_cscript_argument((double)3.6));
+  double result = fun->run(args, env);
+  TEST_EQ(2.4*0.5+3.6*0.5, result);
+  std::string script2 = R"((float a, float b)
+add(a*0.5, b*0.5);
+a+b;
+)";
+  auto fun2 = cscript_function::create(script2, env, error_message, externals);
+  TEST_ASSERT(fun2.get() != nullptr);
+  TEST_ASSERT(error_message.empty());
+  result = fun2->run(args, env);
+  TEST_EQ(2.4 + 3.6, result);
+  }
+
 COMPILER_END
 
 
@@ -270,4 +307,5 @@ void run_all_cscript_tests()
   test_external_variable_change();
   test_external_variable_create();
   test_external_variable_create_2();
+  test_external_functions();
   }
