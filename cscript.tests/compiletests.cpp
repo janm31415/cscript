@@ -1429,7 +1429,7 @@ void run_all_compile_tests()
     modulo_test().test(optimize, peephole, use_all_variable_registers);
     if_test().test(optimize, peephole, use_all_variable_registers);
     dead_code_test().test(optimize, peephole, use_all_variable_registers);
-#if 0
+#if 1
     harmonic().test(optimize, peephole, use_all_variable_registers);
     fibonacci().test(optimize, peephole, use_all_variable_registers);
     hamming().test(optimize, peephole, use_all_variable_registers);
