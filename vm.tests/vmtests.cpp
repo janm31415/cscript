@@ -142,6 +142,30 @@ namespace
     free_bytecode(f, size);
     }
 
+  void test_vm_lea()
+    {
+    vmcode code;
+    code.add(vmcode::LEA, vmcode::RAX, vmcode::MEM_RSP, -16);
+    code.add(vmcode::RET);
+
+    uint64_t size;
+    uint8_t* f = (uint8_t*)vm_bytecode(size, code);
+
+    registers reg;
+
+    try {
+      run_bytecode(f, size, reg);
+      }
+    catch (std::logic_error e)
+      {
+      std::cout << e.what() << "\n";
+      }
+
+    TEST_EQ(reg.rax, reg.rsp-16-8);
+   
+    free_bytecode(f, size);
+    }
+
   void test_vm_ret()
     {
     vmcode code;
@@ -797,4 +821,5 @@ void run_all_vm_tests()
   test_vm_imul();
   test_vm_imul2();
   test_vm_harmonic();
+  test_vm_lea();
   }

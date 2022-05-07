@@ -61,6 +61,7 @@ class vmcode
       JNE,    
       LABEL,
       LABEL_ALIGNED,
+      LEA,
       MOD,
       MODSD,
       MOV,         

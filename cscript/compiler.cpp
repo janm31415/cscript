@@ -1653,10 +1653,7 @@ namespace
       VM::vmcode::operand op;
       int64_t offset;
       index_to_integer_operand(op, offset, data.stack_index);
-      //code.add(VM::vmcode::MOV, SECOND_TEMP_INTEGER_REG, VM::vmcode::NUMBER, var_id & 0xFFFFFFFFFFFFFFF8);
-      //code.add(VM::vmcode::SHL, SECOND_TEMP_INTEGER_REG, VM::vmcode::NUMBER, 3);
-      code.add(VM::vmcode::MOV, FIRST_TEMP_INTEGER_REG, VM::vmcode::RSP);
-      code.add(VM::vmcode::ADD, FIRST_TEMP_INTEGER_REG, VM::vmcode::NUMBER, (-var_id & 0xFFFFFFFFFFFFFFF8));
+      code.add(VM::vmcode::LEA, FIRST_TEMP_INTEGER_REG, VM::vmcode::MEM_RSP, -var_id);
 
       if (offset)
         code.add(VM::vmcode::MOV, VM::vmcode::MEM_RSP, offset, FIRST_TEMP_INTEGER_REG);
@@ -3608,11 +3605,14 @@ namespace
 
   void adapt_offset_stack(VM::vmcode::operand& op, uint64_t& mem, compile_data& data)
     {
-    if ((op == VM::vmcode::MEM_RSP || op == STACK_MEM_BACKUP_REGISTER) && ((mem & variable_tag) == variable_tag))
+    if ((mem & variable_tag) == variable_tag)
       {
-      mem = mem & 0xFFFFFFFFFFFFFFF8;
-      if (data.max_stack_index)
-        mem -= (data.max_stack_index - 1) * 8;
+      if ((op == VM::vmcode::MEM_RSP || op == STACK_MEM_BACKUP_REGISTER))
+        {
+        mem = mem & 0xFFFFFFFFFFFFFFF8;
+        if (data.max_stack_index)
+          mem -= (data.max_stack_index - 1) * 8;
+        }
       }
     }
 

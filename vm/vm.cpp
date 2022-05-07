@@ -79,6 +79,7 @@ namespace
       case vmcode::JGE:return 1;
       case vmcode::JNE:return 1;
       case vmcode::JMP:return 1;
+      case vmcode::LEA: return 2;
       case vmcode::MOD: return 2;
       case vmcode::MODSD: return 2;
       case vmcode::MOV: return 2;
@@ -2203,6 +2204,16 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
         bytecode_ptr += local_offset;
         sz = 0;
         }
+      break;
+      }
+      case vmcode::LEA:
+      {
+      uint64_t tmp;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs, &tmp);
+      assert(oprnd1);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs, &tmp);
+      assert(oprnd2);
+      *oprnd1 = (uint64_t)oprnd2;
       break;
       }
       case vmcode::MOD:

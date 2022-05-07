@@ -291,6 +291,128 @@ a+b;
   TEST_EQ(2.4 + 3.6, result);
   }
 
+void test_array_address_1()
+  {
+  cscript_environment env;
+  std::string error_message;
+  std::string script = R"((int* addr)
+int my_array[5] = {1, 2, 3, 4, 5};
+*addr = my_array;
+)";
+  auto fun = cscript_function::create(script, env, error_message);
+  TEST_ASSERT(fun.get() != nullptr);
+  TEST_ASSERT(error_message.empty());
+  std::vector<cscript_argument> args;
+  int64_t addr;
+  args.push_back(make_cscript_argument((uint64_t)&addr));
+  fun->run(args, env);
+  TEST_EQ(env.reg.rsp - 6*8, addr);
+  }
+
+void test_array_address_2()
+  {
+  cscript_environment env;
+  std::string error_message;
+  std::string script = R"((int* tau, float* start, float* target, int* flag, int pitch, int velocity, float frequency)
+
+float DryTapAmpT60_points[32] = {
+  21.001,0.491,
+  26.587,0.498,
+  34.249,0.470,
+  40.794,0.441,
+  47.977,0.392,
+  55.000,0.370,
+  60.000,0.370,
+  66.000,0.370,
+  71.934,0.370,
+  78.000,0.370,
+  83.936,0.390,
+  88.557,0.387,
+  92.858,0.400,
+  97.319,0.469,
+  102.400,0.500,
+  107.198,0.494 };
+
+*tau = DryTapAmpT60_points;
+)";
+  auto fun = cscript_function::create(script, env, error_message);
+  TEST_ASSERT(fun.get() != nullptr);
+  TEST_ASSERT(error_message.empty());
+  std::vector<cscript_argument> args;
+  int64_t addr;
+  double start, target;
+  int64_t flag;
+  args.push_back(make_cscript_argument(&addr));
+  args.push_back(make_cscript_argument(&start));
+  args.push_back(make_cscript_argument(&target));
+  args.push_back(make_cscript_argument(&flag));
+  args.push_back(make_cscript_argument((uint64_t)14));
+  args.push_back(make_cscript_argument((uint64_t)15));
+  args.push_back(make_cscript_argument((double)440.0));
+  fun->run(args, env);
+  double* double_list = (double*)addr;
+  TEST_EQ(21.001, *double_list);
+  }
+
+namespace
+  {
+  double cscript_lut(double* lut, int64_t lut_size, double x)
+    {
+    TEST_EQ(21.001, *lut);
+    TEST_EQ(32, lut_size);
+    TEST_EQ(65.0, x);
+    return 5.0;
+    }
+  }
+
+void test_array_address_3()
+  {
+  std::vector<cscript_external_function> externals;
+  COMPILER::cscript_external_function fie = COMPILER::make_external_function("lut", &cscript_lut, COMPILER::cscript_return_type::cpp_double, COMPILER::cscript_argument_type::cpp_pointer_to_double, COMPILER::cscript_argument_type::cpp_int64, COMPILER::cscript_argument_type::cpp_double);
+  externals.push_back(fie);
+
+  cscript_environment env;
+  std::string error_message;
+  std::string script = R"((float* tau, float* start, float* target, int* flag, int pitch, int velocity, float frequency)
+
+float DryTapAmpT60_points[32] = {
+  21.001,0.491,
+  26.587,0.498,
+  34.249,0.470,
+  40.794,0.441,
+  47.977,0.392,
+  55.000,0.370,
+  60.000,0.370,
+  66.000,0.370,
+  71.934,0.370,
+  78.000,0.370,
+  83.936,0.390,
+  88.557,0.387,
+  92.858,0.400,
+  97.319,0.469,
+  102.400,0.500,
+  107.198,0.494 };
+
+*tau = lut(DryTapAmpT60_points, 16*2, pitch);
+)";
+  auto fun = cscript_function::create(script, env, error_message, externals);
+  TEST_ASSERT(fun.get() != nullptr);
+  TEST_ASSERT(error_message.empty());
+  std::vector<cscript_argument> args;
+  double tau;
+  double start, target;
+  int64_t flag;
+  args.push_back(make_cscript_argument(&tau));
+  args.push_back(make_cscript_argument(&start));
+  args.push_back(make_cscript_argument(&target));
+  args.push_back(make_cscript_argument(&flag));
+  args.push_back(make_cscript_argument((uint64_t)65));
+  args.push_back(make_cscript_argument((uint64_t)127));
+  args.push_back(make_cscript_argument((double)440.0));
+  fun->run(args, env);
+  TEST_EQ(5.0, tau);
+  }
+
 COMPILER_END
 
 
@@ -308,4 +430,7 @@ void run_all_cscript_tests()
   test_external_variable_create();
   test_external_variable_create_2();
   test_external_functions();
+  test_array_address_1();
+  test_array_address_2();
+  test_array_address_3();
   }
