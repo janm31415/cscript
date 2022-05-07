@@ -1038,6 +1038,20 @@ struct external_function_test : public compile_fixture
     }
   };
 
+struct array_address_test : public compile_fixture
+  {
+  void test(bool optimize, bool peephole, bool /*use_all_variable_registers = false*/)
+    {
+    std::string script = R"((int* addr)
+int my_array[5] = {1, 2, 3, 4, 5};
+*addr = my_array;
+)";
+    int64_t addr;
+    runpi(script, &addr, optimize, peephole, false);
+    TEST_EQ((uint64_t)addr, this->reg.rsp-6*8);
+    }
+  };
+
 struct harmonic : public compile_fixture
   {
   void test(bool optimize = false, bool peephole = true, bool use_all_variable_registers = false)
@@ -1334,7 +1348,7 @@ a+b+c+d+e+f+g+h+i+j+k+l+m+n+o+p+q+r;
 ()
 float a=1,b=2,c=3,d=4,e=5,f=6,g=7,h=8,i=9,j=10,k=11,l=12,m=13,n=14,o=15,p=16,q=17,r=18;
 int result[3];
-result[3] = 0;
+result[2] = 0;
 float s = pow(1+2*pow(7+5*9, 2+3*8+result[pow(1,0)]), 5);
 a+b+c+d+e+f+g+h+i+j+k+l+m+n+o+p+q+r;
 )";
@@ -1441,6 +1455,7 @@ void run_all_compile_tests()
     test_global_variables().test(optimize, peephole, use_all_variable_registers);
     array_assignment_test().test(optimize, peephole, use_all_variable_registers);
     external_function_test().test(optimize, peephole, use_all_variable_registers);
+    array_address_test().test(optimize, peephole, use_all_variable_registers);
     }
   test_strength_reduction().test();
   }
