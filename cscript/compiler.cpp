@@ -1733,7 +1733,16 @@ namespace
     {
     auto it = env.globals.find(v.name);
     if (it == env.globals.end())
-      throw_compile_error(v.line_nr, "Cannot find global variable " + v.name);
+      {
+      // the global variable was not yet declared, but since it's a global, we will then declare it here as being a real value.
+      global_variable_type new_global;
+      new_global.address = env.global_var_offset;
+      new_global.vt = global_value_real;
+      env.globals.insert(std::make_pair(v.name, new_global));      
+      env.global_var_offset += 8;
+      it = env.globals.find(v.name);
+      //throw_compile_error(v.line_nr, "Cannot find global variable " + v.name);
+      }
     int64_t address = it->second.address;
     rt = (it->second.vt == global_value_real) ? RT_REAL : RT_INTEGER;
     if (rt == RT_INTEGER)
