@@ -1408,6 +1408,17 @@ struct test_global_variables : public compile_fixture
     }
   };
 
+struct computation_order_test : public compile_fixture
+  {
+  void test(bool optimize, bool peephole, bool use_all_variable_registers)
+    {
+    std::string script = R"((int i)
+i/127.0*4.0;
+)";
+    TEST_EQ(4.0, runi(script, 127, optimize, peephole, use_all_variable_registers));
+    }
+  };
+
 COMPILER_END
 
 void run_all_compile_tests()
@@ -1460,6 +1471,7 @@ void run_all_compile_tests()
     array_assignment_test().test(optimize, peephole, use_all_variable_registers);
     external_function_test().test(optimize, peephole, use_all_variable_registers);
     array_address_test().test(optimize, peephole, use_all_variable_registers);
+    computation_order_test().test(optimize, peephole, use_all_variable_registers);
     }
   test_strength_reduction().test();
   }

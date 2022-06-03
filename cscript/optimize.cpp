@@ -224,7 +224,7 @@ namespace
       int j = 0;
       while (j < op.fops.size())
         {
-        if (is_constant(op.operands[j]) && is_constant(op.operands[j + 1]))
+        if (j == 0 && is_constant(op.operands[0]) && is_constant(op.operands[1]))
           {
           auto v1 = get_constant_value(op.operands[j]);
           auto v2 = get_constant_value(op.operands[j + 1]);
