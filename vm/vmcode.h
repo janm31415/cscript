@@ -39,6 +39,8 @@ class vmcode
       CATAN,
       CATAN2,
       CPOW,
+      CMIN,
+      CMAX,
       SWAP,
       DEC,
       DIV,

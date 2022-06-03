@@ -163,6 +163,16 @@ namespace
     return std::pow(to_d(v[0]), to_d(v[1]));
     }
 
+  value_t c_min(values v)
+    {
+    return std::min(to_d(v[0]), to_d(v[1]));
+    }
+
+  value_t c_max(values v)
+    {
+    return std::max(to_d(v[0]), to_d(v[1]));
+    }
+
   c_funcs_t c_funcs =
     {
       {"+", c_add},
@@ -186,7 +196,9 @@ namespace
       {"tan", c_tan},
       {"atan", c_atan},
       {"atan2", c_atan2},
-      {"pow", c_pow}
+      {"pow", c_pow},
+      {"min", c_min},
+      {"max", c_max}
     };
 
   bool test_functions_list_is_complete()

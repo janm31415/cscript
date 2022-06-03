@@ -939,6 +939,10 @@ struct funccall_tests : public compile_fixture
     TEST_EQ(std::atan2(0.5, 0.7), run("() atan2(0.5f,0.7);", optimize, peephole, use_all_variable_registers));
 
     TEST_EQ(std::pow(0.5, 0.7), run("() pow(0.5f,0.7);", optimize, peephole, use_all_variable_registers));
+
+    TEST_EQ(std::min(0.5, 0.7), run("() min(0.5f,0.7);", optimize, peephole, use_all_variable_registers));
+
+    TEST_EQ(std::max(0.5, 0.7), run("() max(0.5f,0.7);", optimize, peephole, use_all_variable_registers));
     }
   };
 

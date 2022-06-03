@@ -1285,6 +1285,56 @@ namespace
     rt = RT_REAL;
     }
 
+  void compile_min(VM::vmcode& code, compile_data& data)
+    {
+    VM::vmcode::operand op1;
+    int64_t offset1;
+    index_to_real_operand(op1, offset1, data.stack_index);
+    VM::vmcode::operand op2;
+    int64_t offset2;
+    index_to_real_operand(op2, offset2, data.stack_index + 1);
+    if (offset1)
+      {
+      if (offset2)
+        code.add(VM::vmcode::CMIN, VM::vmcode::MEM_RSP, offset1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::CMIN, VM::vmcode::MEM_RSP, offset1, op2);
+      }
+    else
+      {
+      if (offset2)
+        code.add(VM::vmcode::CMIN, op1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::CMIN, op1, op2);
+      }
+    rt = RT_REAL;
+    }
+
+  void compile_max(VM::vmcode& code, compile_data& data)
+    {
+    VM::vmcode::operand op1;
+    int64_t offset1;
+    index_to_real_operand(op1, offset1, data.stack_index);
+    VM::vmcode::operand op2;
+    int64_t offset2;
+    index_to_real_operand(op2, offset2, data.stack_index + 1);
+    if (offset1)
+      {
+      if (offset2)
+        code.add(VM::vmcode::CMAX, VM::vmcode::MEM_RSP, offset1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::CMAX, VM::vmcode::MEM_RSP, offset1, op2);
+      }
+    else
+      {
+      if (offset2)
+        code.add(VM::vmcode::CMAX, op1, VM::vmcode::MEM_RSP, offset2);
+      else
+        code.add(VM::vmcode::CMAX, op1, op2);
+      }
+    rt = RT_REAL;
+    }
+
   typedef std::function<void(VM::vmcode&, compile_data&)> c_func;
   typedef std::map<std::string, c_func> c_funcs_t;
 
@@ -1322,7 +1372,9 @@ namespace
       {"tan", compile_tan},
       {"atan", compile_atan},
       {"atan2", compile_atan2},
-      {"pow", compile_pow}
+      {"pow", compile_pow},
+      {"min", compile_min},
+      {"max", compile_max},
     };
 
   void compile_make_int_array(VM::vmcode& code, compile_data& data, environment& /*env*/, const Int& make_i)
@@ -1407,7 +1459,16 @@ namespace
       }
     else
       {
-      throw_compile_error(make_i.line_nr, "Global variable " + make_i.name + " already exists");
+      // possibly the global was already used before, see compile_variable.
+      it->second.vt = global_value_integer;
+      if (init)
+        {
+        if (int_offset)
+          code.add(VM::vmcode::MOV, GLOBAL_VARIABLE_MEM_REG, it->second.address, VM::vmcode::MEM_RSP, int_offset);
+        else
+          code.add(VM::vmcode::MOV, GLOBAL_VARIABLE_MEM_REG, it->second.address, int_op);
+        }
+      //throw_compile_error(make_i.line_nr, "Global variable " + make_i.name + " already exists");
       }
     }
 
@@ -1563,6 +1624,15 @@ namespace
       }
     else
       {
+      // possibly the global was already used before, see compile_variable.
+      it->second.vt = global_value_real;
+      if (init)
+        {
+        if (int_offset)
+          code.add(VM::vmcode::MOV, GLOBAL_VARIABLE_MEM_REG, it->second.address, VM::vmcode::MEM_RSP, int_offset);
+        else
+          code.add(VM::vmcode::MOV, GLOBAL_VARIABLE_MEM_REG, it->second.address, int_op);
+        }
       throw_compile_error(make_f.line_nr, "Global variable " + make_f.name + " already exists");
       }
     }

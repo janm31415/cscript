@@ -57,6 +57,8 @@ namespace
       case vmcode::CATAN:return 2;
       case vmcode::CATAN2:return 2;
       case vmcode::CPOW:return 2;
+      case vmcode::CMIN:return 2;
+      case vmcode::CMAX:return 2;
       case vmcode::SWAP:return 2;
       case vmcode::DEC: return 1;
       case vmcode::DIV: return 1;
@@ -1202,6 +1204,22 @@ namespace
       }
     };
 
+  struct CMinOper
+    {
+    static void apply(double& left, double right)
+      {
+      left = std::min<double>(left, right);
+      }
+    };
+
+  struct CMaxOper
+    {
+    static void apply(double& left, double right)
+      {
+      left = std::max<double>(left, right);
+      }
+    };
+
   struct SqrtpdOper
     {
     static void apply(double& left, double right)
@@ -1999,6 +2017,16 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       case vmcode::CPOW:
       {
       execute_double_operation<CPowOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
+      case vmcode::CMIN:
+      {
+      execute_double_operation<CMinOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
+      case vmcode::CMAX:
+      {
+      execute_double_operation<CMaxOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
       }
       case vmcode::SWAP:
