@@ -2,7 +2,7 @@
 // Includes
 /////////////////////////////////////////////////////////////////////////////////
 
-#include "VMTests.h"
+#include "vmtests.h"
 #include <stdint.h>
 #include <iostream>
 #include "vm/vmcode.h"
