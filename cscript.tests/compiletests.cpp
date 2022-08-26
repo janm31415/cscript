@@ -1024,14 +1024,14 @@ struct external_function_test : public compile_fixture
     {
     external_function fie;
     fie.name = "external";
-    fie.func_ptr = &simple_external_function;
+    fie.func_ptr = (void*)&simple_external_function;
     fie.return_type = external_function_return_real;
     std::vector<external_function> externals;
     externals.push_back(fie);
     TEST_EQ(5.8, run_with_externals("() external();", optimize, peephole, use_all_variable_registers, externals));
 
     fie.name = "add";
-    fie.func_ptr = &simple_add_external_function;
+    fie.func_ptr = (void*)&simple_add_external_function;
     fie.return_type = external_function_return_real;    
     fie.args.push_back(external_function_parameter_real);
     fie.args.push_back(external_function_parameter_real);

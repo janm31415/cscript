@@ -266,7 +266,7 @@ namespace
 void test_external_functions()
   {
   std::vector<cscript_external_function> externals;
-  externals.push_back(make_external_function("add", &add, cscript_return_type::cpp_double, cscript_argument_type::cpp_double, cscript_argument_type::cpp_double));
+  externals.push_back(make_external_function("add", (void*)&add, cscript_return_type::cpp_double, cscript_argument_type::cpp_double, cscript_argument_type::cpp_double));
   cscript_environment env;
   std::string error_message;
   std::string script = R"((float a, float b)
@@ -368,7 +368,7 @@ namespace
 void test_array_address_3()
   {
   std::vector<cscript_external_function> externals;
-  COMPILER::cscript_external_function fie = COMPILER::make_external_function("lut", &cscript_lut, COMPILER::cscript_return_type::cpp_double, COMPILER::cscript_argument_type::cpp_pointer_to_double, COMPILER::cscript_argument_type::cpp_int64, COMPILER::cscript_argument_type::cpp_double);
+  COMPILER::cscript_external_function fie = COMPILER::make_external_function("lut", (void*)&cscript_lut, COMPILER::cscript_return_type::cpp_double, COMPILER::cscript_argument_type::cpp_pointer_to_double, COMPILER::cscript_argument_type::cpp_int64, COMPILER::cscript_argument_type::cpp_double);
   externals.push_back(fie);
 
   cscript_environment env;
