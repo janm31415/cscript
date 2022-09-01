@@ -371,12 +371,12 @@ namespace
           it = vec.erase(it2);
           break;
         case VM::vmcode::MUL:
-          it->oper = VM::vmcode::MOVMUL;
-          it->operand3 = it2->operand2;
-          it->operand3_mem = it2->operand2_mem;
-          it = vec.erase(it2);
+          //it->oper = VM::vmcode::MOVMUL;
+          //it->operand3 = it2->operand2;
+          //it->operand3_mem = it2->operand2_mem;
+          //it = vec.erase(it2);
           break;
-        case VM::vmcode::DIV:
+        case VM::vmcode::DIV2:
           it->oper = VM::vmcode::MOVDIV;
           it->operand3 = it2->operand2;
           it->operand3_mem = it2->operand2_mem;
