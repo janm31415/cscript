@@ -215,10 +215,8 @@ void cscript_map_keys_free(cscript_context* ctxt, cscript_map* map)
   cscript_memsize size = node_size(map);
   for (cscript_memsize i = 0; i < size; ++i)
     {
-    //if (cscript_object_get_type(&map->node[i].key) == cscript_object_type_string)
-    //  cscript_string_destroy(ctxt, &(map->node[i].key.value.s));
-    //if (cscript_object_get_type(&map->node[i].key) == cscript_object_type_symbol)
-    //  cscript_string_destroy(ctxt, &(map->node[i].key.value.s));
+    if (cscript_object_get_type(&map->node[i].key) == cscript_object_type_string)
+      cscript_string_destroy(ctxt, &(map->node[i].key.value.s));
     }
   }
 
@@ -227,10 +225,8 @@ void cscript_map_values_free(cscript_context* ctxt, cscript_map* map)
   cscript_memsize size = node_size(map);
   for (cscript_memsize i = 0; i < size; ++i)
     {
-    //if (cscript_object_get_type(&map->node[i].value) == cscript_object_type_string)
-    //  cscript_string_destroy(ctxt, &(map->node[i].value.value.s));
-    //if (cscript_object_get_type(&map->node[i].value) == cscript_object_type_symbol)
-    //  cscript_string_destroy(ctxt, &(map->node[i].value.value.s));
+    if (cscript_object_get_type(&map->node[i].value) == cscript_object_type_string)
+      cscript_string_destroy(ctxt, &(map->node[i].value.value.s));    
     }
   }
 
@@ -294,6 +290,8 @@ static cscript_map_node* cscript_main_position(const cscript_map* m, const cscri
       return cscript_hash_fixnum(m, key->value.fx);
     case cscript_object_type_flonum:
       return cscript_hash_flonum(m, key->value.fl);  
+    case cscript_object_type_string:
+      return cscript_hash_string(m, key->value.s.string_ptr);
     default:
       return cscript_hash_pointer(m, key->value.v.vector_ptr);
     }
@@ -355,9 +353,8 @@ cscript_object* cscript_map_get(cscript_context* ctxt, cscript_map* map, const c
   {
   switch (cscript_object_get_type(key))
     {
-    //case cscript_object_type_string:
-    //case cscript_object_type_symbol:
-    //  return cscript_map_get_string(map, key->value.s.string_ptr);
+    case cscript_object_type_string:
+      return cscript_map_get_string(map, key->value.s.string_ptr);
     case cscript_object_type_fixnum:
     {
     cscript_memsize index = (cscript_memsize)key->value.fx;

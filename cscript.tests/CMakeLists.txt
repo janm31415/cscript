@@ -1,9 +1,17 @@
 set(HDRS
+map_tests.h
+pool_tests.h
+stream_tests.h
+string_tests.h
 test_assert.h
 vector_tests.h
 )
 	
 set(SRCS
+map_tests.c
+pool_tests.c
+stream_tests.c
+string_tests.c
 test.c
 test_assert.c
 vector_tests.c

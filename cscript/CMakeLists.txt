@@ -6,6 +6,7 @@ limits.h
 map.h
 memory.h
 object.h
+pool.h
 stream.h
 string.h
 syscalls.h
@@ -18,6 +19,7 @@ error.c
 map.c
 memory.c
 object.c
+pool.c
 stream.c
 string.c
 syscalls.c

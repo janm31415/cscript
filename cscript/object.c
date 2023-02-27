@@ -84,7 +84,12 @@ cscript_object make_cscript_object_string(cscript_context* ctxt, const char* s)
 void cscript_object_destroy(cscript_context* ctxt, cscript_object* obj)
   {
   switch (cscript_object_get_type(obj))
-    {    
+    {   
+    case cscript_object_type_string:
+    {
+    cscript_string_destroy(ctxt, &(obj->value.s));
+    break;
+    }
     default:
       break;
     }
