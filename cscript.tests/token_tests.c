@@ -60,10 +60,23 @@ static void tokenize_fixnum_real()
   cscript_close(ctxt);
   }
 
+static void tokenize_comment()
+  {
+  cscript_context* ctxt = cscript_open(256);
+  cscript_vector tokens = cscript_script2tokens(ctxt, "(+ 1 /*2.0)\n adsf assd adf a*/ 3");
+  TEST_EQ_INT(4, tokens.vector_size);
+  TEST_EQ_INT(CSCRIPT_T_LEFT_ROUND_BRACKET, cscript_vector_at(&tokens, 0, token)->type);
+  TEST_EQ_INT(CSCRIPT_T_PLUS, cscript_vector_at(&tokens, 1, token)->type);
+  TEST_EQ_INT(CSCRIPT_T_FIXNUM, cscript_vector_at(&tokens, 2, token)->type);
+  TEST_EQ_INT(CSCRIPT_T_FIXNUM, cscript_vector_at(&tokens, 3, token)->type);
+  destroy_tokens_vector(ctxt, &tokens);
+  cscript_close(ctxt);
+  }
 
 void run_all_token_tests()
   {
   test_number_recognition();
   tokenize_list();
   tokenize_fixnum_real();
+  tokenize_comment();
   }

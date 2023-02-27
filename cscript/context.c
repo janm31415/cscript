@@ -13,12 +13,33 @@ static cscript_context* context_new(cscript_context* ctxt)
 
 static void context_free(cscript_context* ctxt)
   {  
+  cscript_syntax_errors_clear(ctxt);
+  cscript_compile_errors_clear(ctxt);
+  cscript_runtime_errors_clear(ctxt);
+  cscript_vector_destroy(ctxt, &ctxt->syntax_error_reports);
+  cscript_vector_destroy(ctxt, &ctxt->compile_error_reports);
+  cscript_vector_destroy(ctxt, &ctxt->runtime_error_reports);
+  cscript_string*  sit = cscript_vector_begin(&ctxt->filenames_list, cscript_string);
+  cscript_string*  sit_end = cscript_vector_end(&ctxt->filenames_list, cscript_string);
+  for (; sit != sit_end; ++sit)
+    {
+    cscript_string_destroy(ctxt, sit);
+    }
+  cscript_vector_destroy(ctxt, &ctxt->filenames_list);
   cscript_free(ctxt, ctxt, sizeof(cscript_context));
   }
 
 static void context_init(cscript_context* ctxt, cscript_memsize heap_size)
   {
   cscript_assert(ctxt->global != NULL);  
+  ctxt->error_jmp = NULL;
+  ctxt->number_of_syntax_errors = 0;
+  ctxt->number_of_compile_errors = 0;
+  ctxt->number_of_syntax_errors = 0;
+  cscript_vector_init(ctxt, &ctxt->syntax_error_reports, cscript_error_report);
+  cscript_vector_init(ctxt, &ctxt->compile_error_reports, cscript_error_report);
+  cscript_vector_init(ctxt, &ctxt->runtime_error_reports, cscript_error_report);
+  cscript_vector_init(ctxt, &ctxt->filenames_list, cscript_string);
   }
 
 cscript_context* cscript_open(cscript_memsize heap_size)

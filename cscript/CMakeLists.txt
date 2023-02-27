@@ -6,6 +6,7 @@ limits.h
 map.h
 memory.h
 object.h
+parser.h
 pool.h
 stream.h
 string.h
@@ -20,6 +21,7 @@ error.c
 map.c
 memory.c
 object.c
+parser.c
 pool.c
 stream.c
 string.c

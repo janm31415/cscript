@@ -1,3 +1,4 @@
+#include "pool_tests.h"
 #include "test_assert.h"
 
 #include "cscript/context.h"

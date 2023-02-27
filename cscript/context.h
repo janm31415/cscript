@@ -39,6 +39,7 @@ struct cscript_context
   cscript_vector compile_error_reports;
   cscript_vector runtime_error_reports;
   struct cscript_longjmp* error_jmp;  // current error recover point
+  cscript_vector filenames_list;
   };
 
 #endif //CSCRIPT_CONTEXT_H
