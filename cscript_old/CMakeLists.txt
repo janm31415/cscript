@@ -37,16 +37,16 @@ add_definitions(-D_UNICODE)
 add_definitions(-DUNICODE)
 add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 
-add_library(cscript SHARED ${HDRS} ${SRCS})
+add_library(cscript_old SHARED ${HDRS} ${SRCS})
 source_group("Header Files" FILES ${hdrs})
 source_group("Source Files" FILES ${srcs})
 
-target_include_directories(cscript
+target_include_directories(cscript_old
     PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/..
     )	
 	
-target_link_libraries(cscript
+target_link_libraries(cscript_old
     PRIVATE	
 	  vm
     )	

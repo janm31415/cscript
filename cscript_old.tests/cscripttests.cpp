@@ -1,6 +1,6 @@
 #include "cscripttests.h"
 
-#include "cscript/cscript.h"
+#include "cscript_old/cscript.h"
 
 #include "test_assert.h"
 

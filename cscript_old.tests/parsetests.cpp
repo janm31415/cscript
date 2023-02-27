@@ -4,8 +4,8 @@
 
 #include "parsetests.h"
 
-#include "cscript/tokenize.h"
-#include "cscript/parse.h"
+#include "cscript_old/tokenize.h"
+#include "cscript_old/parse.h"
 
 #include <iomanip>
 #include <iostream>

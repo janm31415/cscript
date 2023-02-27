@@ -2,14 +2,14 @@
 // Includes
 /////////////////////////////////////////////////////////////////////////////////
 
-#include "cscript/optimize.h"
-#include "cscript/parse.h"
-#include "cscript/tokenize.h"
-#include "cscript/utility.h"
-#include "cscript/visitor.h"
-#include "cscript/pp_visitor.h"
-#include "cscript/compiler.h"
-#include "cscript/peephole.h"
+#include "cscript_old/optimize.h"
+#include "cscript_old/parse.h"
+#include "cscript_old/tokenize.h"
+#include "cscript_old/utility.h"
+#include "cscript_old/visitor.h"
+#include "cscript_old/pp_visitor.h"
+#include "cscript_old/compiler.h"
+#include "cscript_old/peephole.h"
 
 #include "vm/vm.h"
 

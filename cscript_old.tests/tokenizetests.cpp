@@ -8,7 +8,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "cscript/tokenize.h"
+#include "cscript_old/tokenize.h"
 
 #include "test_assert.h"
 

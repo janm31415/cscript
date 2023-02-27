@@ -29,17 +29,17 @@ add_definitions(-D_UNICODE)
 add_definitions(-DUNICODE)
 add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 
-add_executable(cscript.tests ${HDRS} ${SRCS})
+add_executable(cscript_old.tests ${HDRS} ${SRCS})
 source_group("Header Files" FILES ${hdrs})
 source_group("Source Files" FILES ${srcs})
 
-target_include_directories(cscript.tests
+target_include_directories(cscript_old.tests
     PRIVATE
 	  ${CMAKE_CURRENT_SOURCE_DIR}/..
     )
 	
-target_link_libraries(cscript.tests
+target_link_libraries(cscript_old.tests
     PRIVATE
     vm
-    cscript
+    cscript_old
     )	

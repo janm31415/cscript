@@ -4,11 +4,11 @@
 
 #include "vm/vm.h"
 
-#include "cscript/compiler.h"
-#include "cscript/optimize.h"
-#include "cscript/parse.h"
-#include "cscript/tokenize.h"
-#include "cscript/peephole.h"
+#include "cscript_old/compiler.h"
+#include "cscript_old/optimize.h"
+#include "cscript_old/parse.h"
+#include "cscript_old/tokenize.h"
+#include "cscript_old/peephole.h"
 
 #include <chrono>
 #include <iomanip>
