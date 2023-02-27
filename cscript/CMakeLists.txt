@@ -10,6 +10,7 @@ pool.h
 stream.h
 string.h
 syscalls.h
+token.h
 vector.h
 )
 	
@@ -23,6 +24,7 @@ pool.c
 stream.c
 string.c
 syscalls.c
+token.c
 )
 
 if (WIN32)

@@ -4,6 +4,7 @@ pool_tests.h
 stream_tests.h
 string_tests.h
 test_assert.h
+token_tests.h
 vector_tests.h
 )
 	
@@ -14,6 +15,7 @@ stream_tests.c
 string_tests.c
 test.c
 test_assert.c
+token_tests.c
 vector_tests.c
 )
 

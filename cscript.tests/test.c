@@ -3,6 +3,7 @@
 #include "pool_tests.h"
 #include "stream_tests.h"
 #include "string_tests.h"
+#include "token_tests.h"
 #include "vector_tests.h"
 
 #include <time.h>
@@ -18,6 +19,7 @@ int main(int argc, const char* argv[])
   run_all_pool_tests();
   run_all_stream_tests();
   run_all_string_tests();
+  run_all_token_tests();
   run_all_vector_tests();  
   end_t = clock();
   double total_t = (double)(end_t - start_t) / CLOCKS_PER_SEC;
