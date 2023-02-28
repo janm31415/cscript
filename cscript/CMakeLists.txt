@@ -2,35 +2,43 @@ set(HDRS
 context.h
 cscript.h
 dump.h
+environment.h
 error.h
+func.h
 limits.h
 map.h
 memory.h
 object.h
 parser.h
 pool.h
+primitives.h
 stream.h
 string.h
 syscalls.h
 token.h
 vector.h
 visitor.h
+vm.h
 )
 	
 set(SRCS
 context.c
 dump.c
+environment.c
 error.c
+func.c
 map.c
 memory.c
 object.c
 parser.c
 pool.c
+primitives.c
 stream.c
 string.c
 syscalls.c
 token.c
 visitor.c
+vm.c
 )
 
 if (WIN32)

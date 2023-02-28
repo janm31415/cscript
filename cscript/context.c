@@ -1,6 +1,7 @@
 #include "context.h"
 #include "memory.h"
 #include "error.h"
+#include "environment.h"
 
 static cscript_context* context_new(cscript_context* ctxt)
   {
@@ -26,6 +27,9 @@ static void context_free(cscript_context* ctxt)
     cscript_string_destroy(ctxt, sit);
     }
   cscript_vector_destroy(ctxt, &ctxt->filenames_list);
+  cscript_environment_destroy(ctxt);
+  cscript_vector_destroy(ctxt, &ctxt->stack_raw);
+  cscript_vector_destroy(ctxt, &ctxt->globals);
   cscript_free(ctxt, ctxt, sizeof(cscript_context));
   }
 
@@ -40,6 +44,10 @@ static void context_init(cscript_context* ctxt, cscript_memsize heap_size)
   cscript_vector_init(ctxt, &ctxt->compile_error_reports, cscript_error_report);
   cscript_vector_init(ctxt, &ctxt->runtime_error_reports, cscript_error_report);
   cscript_vector_init(ctxt, &ctxt->filenames_list, cscript_string);
+  cscript_vector_init_with_size(ctxt, &ctxt->stack_raw, heap_size, cscript_fixnum);
+  ctxt->stack = ctxt->stack_raw;
+  cscript_vector_init(ctxt, &ctxt->globals, cscript_fixnum);
+  cscript_environment_init(ctxt);
   }
 
 cscript_context* cscript_open(cscript_memsize heap_size)

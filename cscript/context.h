@@ -32,6 +32,9 @@ typedef struct cscript_global_context
 struct cscript_context 
   {
   cscript_global_context* global; 
+  cscript_vector stack_raw;
+  cscript_vector stack;
+  cscript_vector globals;
   int number_of_syntax_errors;
   int number_of_compile_errors;
   int number_of_runtime_errors;
@@ -40,6 +43,7 @@ struct cscript_context
   cscript_vector runtime_error_reports;
   struct cscript_longjmp* error_jmp;  // current error recover point
   cscript_vector filenames_list;
+  cscript_vector environment; // linked chain of environment maps
   };
 
 #endif //CSCRIPT_CONTEXT_H
