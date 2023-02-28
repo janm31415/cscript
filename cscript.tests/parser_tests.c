@@ -18,7 +18,7 @@ static void parse_fixnum_1()
   TEST_EQ_INT(1, expr->statement.nop.line_nr);
   TEST_EQ_INT(1, expr->statement.nop.column_nr);
   destroy_tokens_vector(ctxt, &tokens);
-  //cscript_program_destroy(ctxt, &prog);
+  cscript_program_destroy(ctxt, &prog);
   cscript_close(ctxt);
   }
 

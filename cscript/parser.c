@@ -1,6 +1,7 @@
 #include "parser.h"
 #include "error.h"
 #include "context.h"
+#include "visitor.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -163,10 +164,10 @@ cscript_statement cscript_make_statement(cscript_context* ctxt, token** token_it
     {
     case CSCRIPT_T_SEMICOLON:
     {
-      cscript_statement nop = make_nop();
-      nop.statement.nop.line_nr = (*token_it)->line_nr;
-      nop.statement.nop.column_nr = (*token_it)->column_nr;
-      return nop;
+    cscript_statement nop = make_nop();
+    nop.statement.nop.line_nr = (*token_it)->line_nr;
+    nop.statement.nop.column_nr = (*token_it)->column_nr;
+    return nop;
     }
     default:
       cscript_throw(ctxt, CSCRIPT_ERROR_NOT_IMPLEMENTED);
@@ -199,12 +200,40 @@ cscript_program make_program(cscript_context* ctxt, cscript_vector* tokens)
   return prog;
   }
 
+
+typedef struct cscript_program_destroy_visitor
+  {
+  cscript_visitor* visitor;
+  } cscript_program_destroy_visitor;
+
+static void visit_nop(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_nop* e)
+  {
+  UNUSED(v);
+  cscript_string_destroy(ctxt, &e->filename);
+  }
+
 void cscript_program_destroy(cscript_context* ctxt, cscript_program* p)
   {
-  cscript_assert(0);
+  cscript_program_destroy_visitor destroyer;
+  destroyer.visitor = cscript_visitor_new(ctxt, &destroyer);
+
+  destroyer.visitor->visit_nop = visit_nop;
+
+  cscript_visit_program(ctxt, destroyer.visitor, p);
+
+  cscript_vector_destroy(ctxt, &p->statements);
+
+  destroyer.visitor->destroy(ctxt, destroyer.visitor);
   }
 
 void cscript_statement_destroy(cscript_context* ctxt, cscript_statement* e)
   {
-  cscript_assert(0);
+  cscript_program_destroy_visitor destroyer;
+  destroyer.visitor = cscript_visitor_new(ctxt, &destroyer);
+
+  destroyer.visitor->visit_nop = visit_nop;
+
+  cscript_visit_statement(ctxt, destroyer.visitor, e);
+
+  destroyer.visitor->destroy(ctxt, destroyer.visitor);
   }
