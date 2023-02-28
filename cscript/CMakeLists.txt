@@ -1,6 +1,7 @@
 set(HDRS
 context.h
 cscript.h
+dump.h
 error.h
 limits.h
 map.h
@@ -18,6 +19,7 @@ visitor.h
 	
 set(SRCS
 context.c
+dump.c
 error.c
 map.c
 memory.c
