@@ -113,10 +113,10 @@ static cscript_string instruction_to_string(cscript_context* ctxt, cscript_instr
     cscript_string_append_cstr(ctxt, &s, buffer);
     break;
     }
-    case CSCRIPT_OPCODE_CALL:
+    case CSCRIPT_OPCODE_CALLPRIM:
     {
     const int a = CSCRIPT_GETARG_A(instruc);
-    cscript_string_append_cstr(ctxt, &s, "CALL R(");
+    cscript_string_append_cstr(ctxt, &s, "CALLPRIM R(");
     cscript_int_to_char(buffer, a);
     cscript_string_append_cstr(ctxt, &s, buffer);
     cscript_string_append_cstr(ctxt, &s, ")");
@@ -220,9 +220,11 @@ cscript_fixnum* cscript_run(cscript_context* ctxt, cscript_function* fun)
       *target = cast(cscript_fixnum, b);
       continue;
       }    
-      case CSCRIPT_OPCODE_CALL:
+      case CSCRIPT_OPCODE_CALLPRIM:
       {
-     
+      const int a = CSCRIPT_GETARG_A(instruc);
+      const int b = CSCRIPT_GETARG_B(instruc);
+      cscript_call_primitive(ctxt, b, a);
       break;
       }
       case CSCRIPT_OPCODE_EQTYPE:

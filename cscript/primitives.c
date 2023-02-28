@@ -16,16 +16,19 @@
 
 ////////////////////////////////////////////////////
 
-void cscript_primitive_add(cscript_context* ctxt, int a, int b, int c)
+void cscript_primitive_add(cscript_context* ctxt, int a)
   {
+  cscript_fixnum* ra = cscript_vector_at(&ctxt->stack, a, cscript_fixnum);
+  cscript_fixnum* rb = ra+1;
+  *ra += *rb;
   }
 
-void cscript_call_primitive(cscript_context* ctxt, cscript_fixnum function_id, int a, int b, int c)
+void cscript_call_primitive(cscript_context* ctxt, cscript_fixnum function_id, int a)
   {
   switch (function_id)
     {
     case CSCRIPT_ADD:
-      cscript_primitive_add(ctxt, a, b, c);
+      cscript_primitive_add(ctxt, a);
       break;  
     default:
       cscript_throw(ctxt, CSCRIPT_ERROR_NOT_IMPLEMENTED);

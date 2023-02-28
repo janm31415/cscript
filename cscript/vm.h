@@ -73,11 +73,11 @@
 typedef enum 
   {
   CSCRIPT_OPCODE_MOVE,       /*  A B      R(A) := R(B)         */
-  CSCRIPT_OPCODE_LOADK,      /*  A Bx	   R(A) := Kst(Bx)      */
+  CSCRIPT_OPCODE_LOADK,      /*  A Bx	    R(A) := Kst(Bx)      */
   CSCRIPT_OPCODE_SETFIXNUM,  /*  A sBx    R(A) := sBx        */
   CSCRIPT_OPCODE_SETPRIM,    /*  A B      R(A) := B */
   CSCRIPT_OPCODE_MOVETOP,    /*  A B      R(0)..R(B) := R(A)..R(A+B)*/
-  CSCRIPT_OPCODE_CALL,       /*  A B C	   R(A) := R(A)(R(A+1+C), ... ,R(A+B+C)) */
+  CSCRIPT_OPCODE_CALLPRIM,   /*  A B	    R(A) := (B)(R(A),R(A+1),...) */
   CSCRIPT_OPCODE_EQTYPE,     /*  A B      if (type of R(A) == B) then pc++, else perform the following JMP instruction on the next line*/  
   CSCRIPT_OPCODE_JMP,        /*  sBx      PC += sBx					*/
   CSCRIPT_OPCODE_RETURN,     /*  A B	     return R(A), ... ,R(A+B-1) */

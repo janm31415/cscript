@@ -3,6 +3,7 @@
 #include "error.h"
 #include "vm.h"
 #include "object.h"
+#include "primitives.h"
 
 static void make_code_abx(cscript_context* ctxt, cscript_function* fun, cscript_opcode opc, int a, int bx)
   {
@@ -146,6 +147,14 @@ static void compile_relop(cscript_context* ctxt, compiler_state* state, cscript_
     {
     ++state->freereg;
     compile_term(ctxt, state, it);
+    switch (*op_it)
+      {
+      case cscript_op_plus:
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_ADD);
+        break;
+      default:
+        cscript_throw(ctxt, CSCRIPT_ERROR_NOT_IMPLEMENTED);
+      }
     ++it;
     ++op_it;
     }

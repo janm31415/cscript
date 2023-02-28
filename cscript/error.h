@@ -37,7 +37,7 @@ void cscript_compile_errors_clear(cscript_context* ctxt);
 void cscript_runtime_errors_clear(cscript_context* ctxt);
 int cscript_context_is_error_free(cscript_context* ctxt);
 
-//void cscript_print_any_error(cscript_context* ctxt);
-//void cscript_get_error_string(cscript_context* ctxt, cscript_string* s);
+void cscript_print_any_error(cscript_context* ctxt);
+void cscript_get_error_string(cscript_context* ctxt, cscript_string* s);
 
 #endif //CSCRIPT_ERROR_H
