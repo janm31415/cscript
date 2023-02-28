@@ -159,11 +159,12 @@ static cscript_string instruction_to_string(cscript_context* ctxt, cscript_instr
   }
 
 
-cscript_object* cscript_run(cscript_context* ctxt, cscript_function* fun)
+cscript_fixnum* cscript_run(cscript_context* ctxt, cscript_function* fun)
   {
   cscript_assert(fun != NULL);
   const cscript_instruction* pc = cscript_vector_begin(&(fun)->code, cscript_instruction);  
-  while (1)
+  const cscript_instruction* pc_end = cscript_vector_end(&(fun)->code, cscript_instruction);
+  while (pc < pc_end)
     {
     cscript_assert(pc < cscript_vector_end(&(fun)->code, cscript_instruction));
     const cscript_instruction instruc = *pc++;
@@ -258,12 +259,12 @@ cscript_object* cscript_run(cscript_context* ctxt, cscript_function* fun)
         {
         for (int j = 0; j < b; ++j)
           {
-          cscript_object* retj = cscript_vector_at(&ctxt->stack, j, cscript_object);
-          const cscript_object* srcj = cscript_vector_at(&ctxt->stack, a + j, cscript_object);
-          cscript_set_object(retj, srcj);
+          cscript_fixnum* retj = cscript_vector_at(&ctxt->stack, j, cscript_fixnum);
+          const cscript_fixnum* srcj = cscript_vector_at(&ctxt->stack, a + j, cscript_fixnum);
+          *retj = *srcj;
           }
         }      
-      return cscript_vector_at(&ctxt->stack, 0, cscript_object);
+      return cscript_vector_at(&ctxt->stack, 0, cscript_fixnum);
       }
       default:
         cscript_throw(ctxt, CSCRIPT_ERROR_NOT_IMPLEMENTED);
@@ -309,7 +310,7 @@ void cscript_show_stack(cscript_context* ctxt, cscript_string* s, int stack_star
     }  
   }
 
-cscript_object* cscript_run_program(cscript_context* ctxt, const cscript_vector* functions)
+cscript_fixnum* cscript_run_program(cscript_context* ctxt, const cscript_vector* functions)
   {
   cscript_function** it = cscript_vector_begin(functions, cscript_function*);
   cscript_function** it_end = cscript_vector_end(functions, cscript_function*);
@@ -317,5 +318,5 @@ cscript_object* cscript_run_program(cscript_context* ctxt, const cscript_vector*
     {
     cscript_run(ctxt, *it);
     }
-  return cscript_vector_at(&ctxt->stack, 0, cscript_object);
+  return cscript_vector_at(&ctxt->stack, 0, cscript_fixnum);
   }

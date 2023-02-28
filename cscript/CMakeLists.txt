@@ -1,4 +1,5 @@
 set(HDRS
+compiler.h
 context.h
 cscript.h
 dump.h
@@ -22,6 +23,7 @@ vm.h
 )
 	
 set(SRCS
+compiler.c
 context.c
 dump.c
 environment.c
