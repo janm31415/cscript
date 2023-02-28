@@ -83,6 +83,7 @@ typedef enum
   CSCRIPT_OPCODE_RETURN,     /*  A B	     return R(A), ... ,R(A+B-1) */
   CSCRIPT_OPCODE_LOADGLOBAL, /*  A Bx     R(A) := Global(Bx) */
   CSCRIPT_OPCODE_STOREGLOBAL,/*  A Bx     Global(Bx) := R(A) */
+  CSCRIPT_OPCODE_CAST        /*  A B      R(A) := (B)R(A)    */
   } cscript_opcode;
 
 #define CSCRIPT_NUM_OPCODES (cast(int, CSCRIPT_OPCODE_RETURN+1))

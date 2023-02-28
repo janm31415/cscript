@@ -227,6 +227,22 @@ cscript_fixnum* cscript_run(cscript_context* ctxt, cscript_function* fun)
       cscript_call_primitive(ctxt, b, a);
       break;
       }
+      case CSCRIPT_OPCODE_CAST:
+      {
+      const int a = CSCRIPT_GETARG_A(instruc);
+      const int b = CSCRIPT_GETARG_B(instruc);
+      if (b == 1)
+        {
+        cscript_flonum ra = cast(cscript_flonum, *cscript_vector_at(&ctxt->stack, a, cscript_fixnum));
+        memcpy(cscript_vector_at(&ctxt->stack, a, cscript_fixnum), &ra, sizeof(cscript_fixnum));
+        }
+      else
+        {
+        cscript_fixnum ra = cast(cscript_fixnum, *cscript_vector_at(&ctxt->stack, a, cscript_flonum));
+        memcpy(cscript_vector_at(&ctxt->stack, a, cscript_fixnum), &ra, sizeof(cscript_fixnum));
+        }
+      break;
+      }
       case CSCRIPT_OPCODE_EQTYPE:
       {
       /*

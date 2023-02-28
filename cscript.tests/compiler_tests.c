@@ -81,6 +81,22 @@ static void test_compile_flonum()
 static void test_compile_term()
   {
   test_compile_fixnum_aux(12, "5 + 7;");
+  test_compile_flonum_aux(12.15, "5.15 + 7;");
+  test_compile_flonum_aux(12.29, "5.15 + 7.14;");
+  test_compile_flonum_aux(12.14, "5 + 7.14;");
+  }
+
+static void test_compile_expr()
+  {
+  test_compile_fixnum_aux(26, "5 + 7 * 3;");
+  test_compile_flonum_aux(27.5, "5 + 7.5 * 3;");
+  test_compile_flonum_aux(-2.0, "(5%2 - 7)/3.0;");
+  test_compile_fixnum_aux(1, "2 < 3;");
+  test_compile_fixnum_aux(0, "4 < 3;");
+  test_compile_fixnum_aux(1, "2 < 3.2;");
+  test_compile_fixnum_aux(0, "4.1 < 3;");
+  test_compile_fixnum_aux(1, "2.0 < 3.2;");
+  test_compile_fixnum_aux(0, "4.1 < 3.5;");
   }
 
 void run_all_compiler_tests()
@@ -88,4 +104,5 @@ void run_all_compiler_tests()
   test_compile_fixnum();
   test_compile_flonum();
   test_compile_term();
+  test_compile_expr();
   }

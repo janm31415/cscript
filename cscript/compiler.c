@@ -55,22 +55,26 @@ static int get_k(cscript_context* ctxt, cscript_function* fun, cscript_object* k
     cscript_object* new_id = cscript_map_insert(ctxt, fun->constants_map, k);
     new_id->type = cscript_object_type_fixnum;
     new_id->value.fx = fun->constants.vector_size;
-    cscript_vector_push_back(ctxt, &fun->constants, *k, cscript_object);
+    cscript_vector_push_back(ctxt, &fun->constants, k->value.fx, cscript_fixnum);
     return cast(int, new_id->value.fx);
     }
   }
 
+#define cscript_reg_typeinfo_fixnum 0
+#define cscript_reg_typeinfo_flonum 1
 
 typedef struct compiler_state
   {
   int freereg;
+  int reg_typeinfo;
   cscript_function* fun;
   } compiler_state;
 
-compiler_state init_compiler_state(int freereg, cscript_function* fun)
+compiler_state init_compiler_state(int freereg, int typeinfo, cscript_function* fun)
   {
   compiler_state state;
   state.freereg = freereg;
+  state.reg_typeinfo = typeinfo;
   state.fun = fun;
   return state;
   }
@@ -83,6 +87,7 @@ static void compile_number(cscript_context* ctxt, compiler_state* state, cscript
     {
     case cscript_number_type_fixnum:
     {
+    state->reg_typeinfo = cscript_reg_typeinfo_fixnum;
     cscript_fixnum fx = n->number.fx;
     if (fx <= CSCRIPT_MAXARG_sBx && fx >= -CSCRIPT_MAXARG_sBx)
       {
@@ -94,6 +99,7 @@ static void compile_number(cscript_context* ctxt, compiler_state* state, cscript
     }
     case cscript_number_type_flonum:
     {
+    state->reg_typeinfo = cscript_reg_typeinfo_flonum;
     cscript_flonum fl = n->number.fl;
     obj = make_cscript_object_flonum(fl);
     break;
@@ -103,12 +109,17 @@ static void compile_number(cscript_context* ctxt, compiler_state* state, cscript
   make_code_abx(ctxt, state->fun, CSCRIPT_OPCODE_LOADK, state->freereg, k_pos);
   }
 
+static void compile_expression(cscript_context* ctxt, compiler_state* state, cscript_parsed_expression* e);
+
 static void compile_factor(cscript_context* ctxt, compiler_state* state, cscript_parsed_factor* f)
   {
   switch (f->type)
     {
     case cscript_factor_type_number:
       compile_number(ctxt, state, &f->factor.number);
+      break;
+    case cscript_factor_type_expression:
+      compile_expression(ctxt, state, &f->factor.expr);
       break;
     default:
       cscript_throw(ctxt, CSCRIPT_ERROR_NOT_IMPLEMENTED);
@@ -123,15 +134,66 @@ static void compile_term(cscript_context* ctxt, compiler_state* state, cscript_p
   int* op_it = cscript_vector_begin(&e->fops, int);
   int* op_it_end = cscript_vector_end(&e->fops, int);
   compile_factor(ctxt, state, it);
+  int reg_a_typeinfo = state->reg_typeinfo;
   ++it;
   while (it != it_end)
     {
     ++state->freereg;
     compile_factor(ctxt, state, it);
+    int reg_b_typeinfo = state->reg_typeinfo;
+    if (reg_a_typeinfo != reg_b_typeinfo)
+      {
+      if (reg_a_typeinfo != cscript_reg_typeinfo_flonum)
+        {
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, freereg, cscript_number_type_flonum);
+        reg_a_typeinfo = cscript_reg_typeinfo_flonum;
+        }
+      if (reg_b_typeinfo != cscript_reg_typeinfo_flonum)
+        {
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, cscript_number_type_flonum);
+        reg_b_typeinfo = cscript_reg_typeinfo_flonum;
+        }
+      }
+    switch (*op_it)
+      {
+      case cscript_op_mul:
+        if (reg_a_typeinfo == cscript_reg_typeinfo_fixnum)
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_MUL_FIXNUM);
+          }
+        else
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_MUL_FLONUM);
+          }
+        break;
+      case cscript_op_div:
+        if (reg_a_typeinfo == cscript_reg_typeinfo_fixnum)
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_DIV_FIXNUM);
+          }
+        else
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_DIV_FLONUM);
+          }
+        break;
+      case cscript_op_percent:
+        if (reg_a_typeinfo == cscript_reg_typeinfo_fixnum)
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_MOD_FIXNUM);
+          }
+        else
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_MOD_FLONUM);
+          }
+        break;
+      default:
+        cscript_throw(ctxt, CSCRIPT_ERROR_NOT_IMPLEMENTED);
+      }
     ++it;
     ++op_it;
     }
   state->freereg = freereg;
+  state->reg_typeinfo = reg_a_typeinfo;
   }
 
 static void compile_relop(cscript_context* ctxt, compiler_state* state, cscript_parsed_relop* e)
@@ -142,15 +204,48 @@ static void compile_relop(cscript_context* ctxt, compiler_state* state, cscript_
   int* op_it = cscript_vector_begin(&e->fops, int);
   int* op_it_end = cscript_vector_end(&e->fops, int);
   compile_term(ctxt, state, it);
+  int reg_a_typeinfo = state->reg_typeinfo;
   ++it;
   while (it != it_end)
     {
     ++state->freereg;
     compile_term(ctxt, state, it);
+    int reg_b_typeinfo = state->reg_typeinfo;
+    if (reg_a_typeinfo != reg_b_typeinfo)
+      {
+      if (reg_a_typeinfo != cscript_reg_typeinfo_flonum)
+        {
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, freereg, cscript_number_type_flonum);
+        reg_a_typeinfo = cscript_reg_typeinfo_flonum;
+        }
+      if (reg_b_typeinfo != cscript_reg_typeinfo_flonum)
+        {
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, cscript_number_type_flonum);
+        reg_b_typeinfo = cscript_reg_typeinfo_flonum;
+        }
+      }
+
     switch (*op_it)
       {
       case cscript_op_plus:
-        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_ADD);
+        if (reg_a_typeinfo == cscript_reg_typeinfo_fixnum)
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_ADD_FIXNUM);
+          }
+        else
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_ADD_FLONUM);
+          }
+        break;
+      case cscript_op_minus:
+        if (reg_a_typeinfo == cscript_reg_typeinfo_fixnum)
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_SUB_FIXNUM);
+          }
+        else
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_SUB_FLONUM);
+          }
         break;
       default:
         cscript_throw(ctxt, CSCRIPT_ERROR_NOT_IMPLEMENTED);
@@ -159,6 +254,7 @@ static void compile_relop(cscript_context* ctxt, compiler_state* state, cscript_
     ++op_it;
     }
   state->freereg = freereg;
+  state->reg_typeinfo = reg_a_typeinfo;
   }
 
 static void compile_expression(cscript_context* ctxt, compiler_state* state, cscript_parsed_expression* e)
@@ -169,15 +265,102 @@ static void compile_expression(cscript_context* ctxt, compiler_state* state, csc
   int* op_it = cscript_vector_begin(&e->fops, int);
   int* op_it_end = cscript_vector_end(&e->fops, int);
   compile_relop(ctxt, state, it);
+  int reg_a_typeinfo = state->reg_typeinfo;
   ++it;
   while (it != it_end)
     {
     ++state->freereg;
     compile_relop(ctxt, state, it);
+    int reg_b_typeinfo = state->reg_typeinfo;
+    if (reg_a_typeinfo != reg_b_typeinfo)
+      {
+      if (reg_a_typeinfo != cscript_reg_typeinfo_flonum)
+        {
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, freereg, cscript_number_type_flonum);
+        reg_a_typeinfo = cscript_reg_typeinfo_flonum;
+        }
+      if (reg_b_typeinfo != cscript_reg_typeinfo_flonum)
+        {
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, cscript_number_type_flonum);
+        reg_b_typeinfo = cscript_reg_typeinfo_flonum;
+        }
+      }
+    switch (*op_it)
+      {
+      case cscript_op_less:
+        if (reg_a_typeinfo == cscript_reg_typeinfo_fixnum)
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_LESS_FIXNUM);
+          }
+        else
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_LESS_FLONUM);
+          }
+        reg_a_typeinfo = cscript_reg_typeinfo_fixnum;
+        break;
+      case cscript_op_leq:
+        if (reg_a_typeinfo == cscript_reg_typeinfo_fixnum)
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_LEQ_FIXNUM);
+          }
+        else
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_LEQ_FLONUM);
+          }
+        reg_a_typeinfo = cscript_reg_typeinfo_fixnum;
+        break;
+      case cscript_op_greater:
+        if (reg_a_typeinfo == cscript_reg_typeinfo_fixnum)
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_GREATER_FIXNUM);
+          }
+        else
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_GREATER_FLONUM);
+          }
+        reg_a_typeinfo = cscript_reg_typeinfo_fixnum;
+        break;
+      case cscript_op_geq:
+        if (reg_a_typeinfo == cscript_reg_typeinfo_fixnum)
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_GEQ_FIXNUM);
+          }
+        else
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_GEQ_FLONUM);
+          }
+        reg_a_typeinfo = cscript_reg_typeinfo_fixnum;
+        break;
+      case cscript_op_equal:
+        if (reg_a_typeinfo == cscript_reg_typeinfo_fixnum)
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_EQUAL_FIXNUM);
+          }
+        else
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_EQUAL_FLONUM);
+          }
+        reg_a_typeinfo = cscript_reg_typeinfo_fixnum;
+        break;
+      case cscript_op_not_equal:
+        if (reg_a_typeinfo == cscript_reg_typeinfo_fixnum)
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_NOT_EQUAL_FIXNUM);
+          }
+        else
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, freereg, CSCRIPT_NOT_EQUAL_FLONUM);
+          }
+        reg_a_typeinfo = cscript_reg_typeinfo_fixnum;
+        break;
+      default:
+        cscript_throw(ctxt, CSCRIPT_ERROR_NOT_IMPLEMENTED);
+      }
     ++it;
     ++op_it;
     }
   state->freereg = freereg;
+  state->reg_typeinfo = reg_a_typeinfo;
   }
 
 static void compile_statement(cscript_context* ctxt, compiler_state* state, cscript_statement* stmt)
@@ -198,7 +381,7 @@ cscript_function* cscript_compile_statement(cscript_context* ctxt, cscript_state
   {
   cscript_compile_errors_clear(ctxt);
   cscript_function* fun = cscript_function_new(ctxt);
-  compiler_state state = init_compiler_state(0, fun);
+  compiler_state state = init_compiler_state(0, cscript_reg_typeinfo_fixnum, fun);
   compile_statement(ctxt, &state, stmt);
   return fun;
   }
