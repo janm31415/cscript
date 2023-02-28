@@ -35,7 +35,7 @@ static void context_init(cscript_context* ctxt, cscript_memsize heap_size)
   ctxt->error_jmp = NULL;
   ctxt->number_of_syntax_errors = 0;
   ctxt->number_of_compile_errors = 0;
-  ctxt->number_of_syntax_errors = 0;
+  ctxt->number_of_runtime_errors = 0;
   cscript_vector_init(ctxt, &ctxt->syntax_error_reports, cscript_error_report);
   cscript_vector_init(ctxt, &ctxt->compile_error_reports, cscript_error_report);
   cscript_vector_init(ctxt, &ctxt->runtime_error_reports, cscript_error_report);

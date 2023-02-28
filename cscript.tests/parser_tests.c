@@ -10,15 +10,13 @@
 static void parse_fixnum_1()
   {
   cscript_context* ctxt = cscript_open(256);
-  cscript_vector tokens = cscript_script2tokens(ctxt, "5");
-  //cscript_program prog = make_program(ctxt, &tokens);
-  //TEST_EQ_INT(1, prog.expressions.vector_size);
-  //cscript_expression* expr = cscript_vector_at(&prog.expressions, 0, cscript_expression);
-  //TEST_EQ_INT(cscript_type_literal, expr->type);
-  //TEST_EQ_INT(cscript_type_fixnum, expr->expr.lit.type);
-  //TEST_EQ_INT(5, expr->expr.lit.lit.fx.value);
-  //TEST_EQ_INT(1, expr->expr.lit.lit.fx.line_nr);
-  //TEST_EQ_INT(1, expr->expr.lit.lit.fx.column_nr);
+  cscript_vector tokens = cscript_script2tokens(ctxt, ";");
+  cscript_program prog = make_program(ctxt, &tokens);
+  TEST_EQ_INT(1, prog.statements.vector_size);
+  cscript_statement* expr = cscript_vector_at(&prog.statements, 0, cscript_statement);
+  TEST_EQ_INT(cscript_statement_type_nop, expr->type);
+  TEST_EQ_INT(1, expr->statement.nop.line_nr);
+  TEST_EQ_INT(1, expr->statement.nop.column_nr);
   destroy_tokens_vector(ctxt, &tokens);
   //cscript_program_destroy(ctxt, &prog);
   cscript_close(ctxt);

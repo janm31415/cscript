@@ -13,6 +13,7 @@ string.h
 syscalls.h
 token.h
 vector.h
+visitor.h
 )
 	
 set(SRCS
@@ -27,6 +28,7 @@ stream.c
 string.c
 syscalls.c
 token.c
+visitor.c
 )
 
 if (WIN32)

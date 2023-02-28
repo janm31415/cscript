@@ -26,7 +26,7 @@ typedef struct cscript_parsed_number
 
 typedef struct cscript_parsed_term
   {
-  cscript_vector operands;
+  cscript_vector operands; // vector of type cscript_parsed_factor
   cscript_vector fops;
   int line_nr, column_nr;
   cscript_string filename;
@@ -34,7 +34,7 @@ typedef struct cscript_parsed_term
 
 typedef struct cscript_parsed_relop
   {
-  cscript_vector operands;
+  cscript_vector operands; // vector of type cscript_parsed_term
   cscript_vector fops;
   int line_nr, column_nr;
   cscript_string filename;
@@ -42,7 +42,7 @@ typedef struct cscript_parsed_relop
 
 typedef struct cscript_parsed_expression
   {
-  cscript_vector operands;
+  cscript_vector operands; // vector of type cscript_parsed_relop
   cscript_vector fops;
   int line_nr, column_nr;
   cscript_string filename;
@@ -59,7 +59,7 @@ typedef struct cscript_parsed_fixnum
   {
   cscript_string name;
   cscript_parsed_expression expr;
-  cscript_vector dims;
+  cscript_vector dims; //  vector of type cscript_parsed_expression
   int line_nr, column_nr;
   cscript_string filename;
   } cscript_parsed_fixnum;
@@ -68,7 +68,7 @@ typedef struct cscript_parsed_flonum
   {
   cscript_string name;
   cscript_parsed_expression expr;
-  cscript_vector dims;
+  cscript_vector dims; //  vector of type cscript_parsed_expression
   int line_nr, column_nr;
   cscript_string filename;
   } cscript_parsed_flonum;
@@ -101,6 +101,8 @@ typedef struct cscript_parsed_nop
 #define cscript_statement_type_fixnum 1
 #define cscript_statement_type_flonum 2
 #define cscript_statement_type_nop 3
+#define cscript_statement_type_if 4
+#define cscript_statement_type_for 5
 
 typedef union
   {
@@ -108,22 +110,22 @@ typedef union
   cscript_parsed_fixnum fixnum;
   cscript_parsed_flonum flonum;
   cscript_parsed_nop nop;
-  } cscript_statement;
-
-typedef struct cscript_parsed_statement
-  {
-  cscript_statement statement;
-  int type;
   } cscript_parsed_statement;
+
+typedef struct cscript_statement
+  {
+  cscript_parsed_statement statement;
+  int type;
+  } cscript_statement;
 
 typedef struct cscript_program
   {
   cscript_vector statements;
   } cscript_program;
 
-cscript_parsed_statement cscript_make_statement(cscript_context* ctxt, token** token_it, token** token_it_end);
+cscript_statement cscript_make_statement(cscript_context* ctxt, token** token_it, token** token_it_end);
 CSCRIPT_API cscript_program make_program(cscript_context* ctxt, cscript_vector* tokens);
 CSCRIPT_API void cscript_program_destroy(cscript_context* ctxt, cscript_program* p);
-CSCRIPT_API void cscript_statement_destroy(cscript_context* ctxt, cscript_parsed_statement* e);
+CSCRIPT_API void cscript_statement_destroy(cscript_context* ctxt, cscript_statement* e);
 
 #endif //CSCRIPT_PARSER_H
