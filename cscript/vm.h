@@ -75,7 +75,6 @@ typedef enum
   CSCRIPT_OPCODE_MOVE,       /*  A B      R(A) := R(B)         */
   CSCRIPT_OPCODE_LOADK,      /*  A Bx	    R(A) := Kst(Bx)      */
   CSCRIPT_OPCODE_SETFIXNUM,  /*  A sBx    R(A) := sBx        */
-  CSCRIPT_OPCODE_SETPRIM,    /*  A B      R(A) := B */
   CSCRIPT_OPCODE_MOVETOP,    /*  A B      R(0)..R(B) := R(A)..R(A+B)*/
   CSCRIPT_OPCODE_CALLPRIM,   /*  A B	    R(A) := (B)(R(A),R(A+1),...) */
   CSCRIPT_OPCODE_EQTYPE,     /*  A B      if (type of R(A) == B) then pc++, else perform the following JMP instruction on the next line*/  
@@ -83,7 +82,7 @@ typedef enum
   CSCRIPT_OPCODE_RETURN,     /*  A B	     return R(A), ... ,R(A+B-1) */
   CSCRIPT_OPCODE_LOADGLOBAL, /*  A Bx     R(A) := Global(Bx) */
   CSCRIPT_OPCODE_STOREGLOBAL,/*  A Bx     Global(Bx) := R(A) */
-  CSCRIPT_OPCODE_CAST        /*  A B      R(A) := (B)R(A)    */
+  CSCRIPT_OPCODE_CAST,       /*  A B      R(A) := (B)R(A)    */
   } cscript_opcode;
 
 #define CSCRIPT_NUM_OPCODES (cast(int, CSCRIPT_OPCODE_RETURN+1))

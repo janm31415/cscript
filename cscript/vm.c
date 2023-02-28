@@ -89,18 +89,6 @@ static cscript_string instruction_to_string(cscript_context* ctxt, cscript_instr
     cscript_string_append_cstr(ctxt, &s, ")");
     break;
     }
-    case CSCRIPT_OPCODE_SETPRIM:
-    {
-    const int a = CSCRIPT_GETARG_A(instruc);
-    const int b = CSCRIPT_GETARG_B(instruc);
-    cscript_string_append_cstr(ctxt, &s, "SETPRIM R(");
-    cscript_int_to_char(buffer, a);
-    cscript_string_append_cstr(ctxt, &s, buffer);
-    cscript_string_append_cstr(ctxt, &s, ") := ");
-    cscript_int_to_char(buffer, b);
-    cscript_string_append_cstr(ctxt, &s, buffer);
-    break;
-    }
     case CSCRIPT_OPCODE_SETFIXNUM:
     {
     const int a = CSCRIPT_GETARG_A(instruc);
@@ -225,7 +213,7 @@ cscript_fixnum* cscript_run(cscript_context* ctxt, cscript_function* fun)
       const int a = CSCRIPT_GETARG_A(instruc);
       const int b = CSCRIPT_GETARG_B(instruc);
       cscript_call_primitive(ctxt, b, a);
-      break;
+      continue;
       }
       case CSCRIPT_OPCODE_CAST:
       {
@@ -241,7 +229,7 @@ cscript_fixnum* cscript_run(cscript_context* ctxt, cscript_function* fun)
         cscript_fixnum ra = cast(cscript_fixnum, *cscript_vector_at(&ctxt->stack, a, cscript_flonum));
         memcpy(cscript_vector_at(&ctxt->stack, a, cscript_fixnum), &ra, sizeof(cscript_fixnum));
         }
-      break;
+      continue;
       }
       case CSCRIPT_OPCODE_EQTYPE:
       {

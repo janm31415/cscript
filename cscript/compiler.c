@@ -124,6 +124,20 @@ static void compile_factor(cscript_context* ctxt, compiler_state* state, cscript
     default:
       cscript_throw(ctxt, CSCRIPT_ERROR_NOT_IMPLEMENTED);
     }
+  if (f->sign == '-')
+    {
+    if (state->reg_typeinfo == cscript_reg_typeinfo_fixnum)
+      {
+      make_code_asbx(ctxt, state->fun, CSCRIPT_OPCODE_SETFIXNUM, state->freereg+1, -1);
+      make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, CSCRIPT_MUL_FIXNUM);
+      }
+    else
+      {
+      make_code_asbx(ctxt, state->fun, CSCRIPT_OPCODE_SETFIXNUM, state->freereg + 1, -1);
+      make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg + 1, cscript_number_type_flonum);
+      make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, CSCRIPT_MUL_FLONUM);
+      }
+    }
   }
 
 static void compile_term(cscript_context* ctxt, compiler_state* state, cscript_parsed_term* e)
@@ -138,7 +152,7 @@ static void compile_term(cscript_context* ctxt, compiler_state* state, cscript_p
   ++it;
   while (it != it_end)
     {
-    ++state->freereg;
+    state->freereg = freereg + 1;
     compile_factor(ctxt, state, it);
     int reg_b_typeinfo = state->reg_typeinfo;
     if (reg_a_typeinfo != reg_b_typeinfo)
@@ -208,7 +222,7 @@ static void compile_relop(cscript_context* ctxt, compiler_state* state, cscript_
   ++it;
   while (it != it_end)
     {
-    ++state->freereg;
+    state->freereg = freereg+1;
     compile_term(ctxt, state, it);
     int reg_b_typeinfo = state->reg_typeinfo;
     if (reg_a_typeinfo != reg_b_typeinfo)
@@ -269,7 +283,7 @@ static void compile_expression(cscript_context* ctxt, compiler_state* state, csc
   ++it;
   while (it != it_end)
     {
-    ++state->freereg;
+    state->freereg = freereg + 1;
     compile_relop(ctxt, state, it);
     int reg_b_typeinfo = state->reg_typeinfo;
     if (reg_a_typeinfo != reg_b_typeinfo)

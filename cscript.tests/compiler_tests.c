@@ -97,6 +97,41 @@ static void test_compile_expr()
   test_compile_fixnum_aux(0, "4.1 < 3;");
   test_compile_fixnum_aux(1, "2.0 < 3.2;");
   test_compile_fixnum_aux(0, "4.1 < 3.5;");
+  test_compile_fixnum_aux(1, "1 == 1.0;");
+  test_compile_fixnum_aux(0, "1 != 1.0;");
+  test_compile_fixnum_aux(1, "1 >= 1.0;");
+  test_compile_fixnum_aux(1, "1 <= 1.0;");
+  test_compile_fixnum_aux(1, "1 >= 0.0;");
+  test_compile_fixnum_aux(0, "1 <= 0.0;");
+  test_compile_fixnum_aux(1, "1 > 0;");
+
+  test_compile_flonum_aux(-9.0,"3.0 * (2 / 0.5 - 7);");
+  test_compile_flonum_aux(9.0, "-3.0 * (2 / 0.5 - 7);");
+  test_compile_fixnum_aux(135, "110+25;");
+  test_compile_fixnum_aux(-135, "-(110+25);");
+
+  test_compile_flonum_aux(5.5, "3.0+2.5;");
+  test_compile_flonum_aux(-9.0, "3.0*(2/0.5-7);");
+  test_compile_flonum_aux(9.0, "-3.0*(2/0.5-7);");
+  test_compile_flonum_aux(55.0, "1.0 + 2.0 + 3.0 + 4.0 + 5.0 + 6.0 + 7.0 + 8.0 + 9.0 + 10.0;");
+  test_compile_flonum_aux(55.0, "1.0 + (2.0 + (3.0 + (4.0 + (5.0 + (6.0 + (7.0 + (8.0 + (9.0 + 10.0))))))));");
+  test_compile_fixnum_aux(55, "1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10;");
+  test_compile_fixnum_aux(55, "1 + (2 + (3 + (4 + (5 + (6 + (7 + (8 + (9 + 10))))))));");
+  test_compile_flonum_aux(-53.0, "1.0 - 2.0 - 3.0 - 4.0 - 5.0 - 6.0 - 7.0 - 8.0 - 9.0 - 10.0;");
+  test_compile_flonum_aux(-5.0, "1.0 - (2.0 - (3.0 - (4.0 - (5.0 - (6.0 - (7.0 - (8.0 - (9.0 - 10.0))))))));");
+  test_compile_fixnum_aux(-53, "1 - 2 - 3 - 4 - 5 - 6 - 7 - 8 - 9 - 10;");
+  test_compile_fixnum_aux(-5, "1 - (2 - (3 - (4 - (5 - (6 - (7 - (8 - (9 - 10))))))));");
+  test_compile_flonum_aux(3628800.0, "1.0 * 2.0 * 3.0 * 4.0 * 5.0 * 6.0 * 7.0 * 8.0 * 9.0 * 10.0;");
+  test_compile_flonum_aux(3628800.0, "1.0 * (2.0 * (3.0 * (4.0 * (5.0 * (6.0 * (7.0 * (8.0 * (9.0 * 10.0))))))));");
+  test_compile_fixnum_aux(3628800, "1 * 2 * 3 * 4 * 5 * 6 * 7 * 8 * 9 * 10;");
+  test_compile_fixnum_aux(3628800, "1 * (2 * (3 * (4 * (5 * (6 * (7 * (8 * (9 * 10))))))));");
+  test_compile_flonum_aux(0.125, "1.0 / 2.0 / 4.0;");
+  test_compile_fixnum_aux(1, "5 / 3;");
+  test_compile_fixnum_aux(2, "6 / 3;");
+  test_compile_fixnum_aux(2, "8 / 2 / 2;");
+  test_compile_fixnum_aux(32, "1024 / 2 / 2 / 2 / 2 / 2;");
+  test_compile_fixnum_aux(32, " ((((1024 / 2) / 2) / 2) / 2) / 2;");
+  test_compile_fixnum_aux(8, "1024 / (512 / (256 / (128 / (64 / 32))));");
   }
 
 void run_all_compiler_tests()
