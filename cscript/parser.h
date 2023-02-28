@@ -10,6 +10,18 @@
 #define cscript_number_type_fixnum 0
 #define cscript_number_type_flonum 1
 
+#define cscript_op_mul 0
+#define cscript_op_div 1
+#define cscript_op_percent 2
+#define cscript_op_plus 3
+#define cscript_op_minus 4
+#define cscript_op_less 5
+#define cscript_op_leq 6
+#define cscript_op_greater 7
+#define cscript_op_geq 8
+#define cscript_op_equal 9
+#define cscript_op_not_equal 10
+
 typedef union
   {
   cscript_fixnum fx;

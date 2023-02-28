@@ -171,16 +171,16 @@ static void visit_entry(cscript_context* ctxt, cscript_visitor* vis, cscript_vis
       switch (cast(cscript_statement*, e.entry)->type)
         {
         case cscript_statement_type_expression:
-          cscript_vector_push_back(ctxt, &(vis->v), make_entry(e.entry, CSCRIPT_VISITOR_EXPRESSION_PRE), cscript_visitor_entry);
+          cscript_vector_push_back(ctxt, &(vis->v), make_entry(&cast(cscript_statement*, e.entry)->statement.expr, CSCRIPT_VISITOR_EXPRESSION_PRE), cscript_visitor_entry);
           break;
         case cscript_statement_type_fixnum:
-          cscript_vector_push_back(ctxt, &(vis->v), make_entry(e.entry, CSCRIPT_VISITOR_FIXNUM_PRE), cscript_visitor_entry);
+          cscript_vector_push_back(ctxt, &(vis->v), make_entry(&cast(cscript_statement*, e.entry)->statement.fixnum, CSCRIPT_VISITOR_FIXNUM_PRE), cscript_visitor_entry);
           break;
         case cscript_statement_type_flonum:
-          cscript_vector_push_back(ctxt, &(vis->v), make_entry(e.entry, CSCRIPT_VISITOR_FLONUM_PRE), cscript_visitor_entry);
+          cscript_vector_push_back(ctxt, &(vis->v), make_entry(&cast(cscript_statement*, e.entry)->statement.flonum, CSCRIPT_VISITOR_FLONUM_PRE), cscript_visitor_entry);
           break;
         case cscript_statement_type_nop:
-          cscript_vector_push_back(ctxt, &(vis->v), make_entry(e.entry, CSCRIPT_VISITOR_NOP), cscript_visitor_entry);
+          cscript_vector_push_back(ctxt, &(vis->v), make_entry(&cast(cscript_statement*, e.entry)->statement.nop, CSCRIPT_VISITOR_NOP), cscript_visitor_entry);
           break;
         default:
           cscript_assert(0); // not implemented yet
@@ -329,13 +329,13 @@ static void visit_entry(cscript_context* ctxt, cscript_visitor* vis, cscript_vis
       switch (cast(cscript_parsed_factor*, e.entry)->type)
         {
         case cscript_factor_type_number:
-          cscript_vector_push_back(ctxt, &(vis->v), make_entry(e.entry, CSCRIPT_VISITOR_NUMBER), cscript_visitor_entry);
+          cscript_vector_push_back(ctxt, &(vis->v), make_entry(&cast(cscript_parsed_factor*, e.entry)->factor.number, CSCRIPT_VISITOR_NUMBER), cscript_visitor_entry);
           break;
         case cscript_factor_type_expression:
-          cscript_vector_push_back(ctxt, &(vis->v), make_entry(e.entry, CSCRIPT_VISITOR_EXPRESSION_PRE), cscript_visitor_entry);
+          cscript_vector_push_back(ctxt, &(vis->v), make_entry(&cast(cscript_parsed_factor*, e.entry)->factor.expr, CSCRIPT_VISITOR_EXPRESSION_PRE), cscript_visitor_entry);
           break;
         case cscript_factor_type_variable:
-          cscript_vector_push_back(ctxt, &(vis->v), make_entry(e.entry, CSCRIPT_VISITOR_VAR), cscript_visitor_entry);
+          cscript_vector_push_back(ctxt, &(vis->v), make_entry(&cast(cscript_parsed_factor*, e.entry)->factor.var, CSCRIPT_VISITOR_VAR), cscript_visitor_entry);
           break;
         default:
           cscript_assert(0); // not implemented
@@ -379,7 +379,7 @@ void cscript_visit_program(cscript_context* ctxt, cscript_visitor* vis, cscript_
   cscript_statement* stmt_rit_end = stmt_it - 1;
   for (; stmt_rit != stmt_rit_end; --stmt_rit)
     {
-    cscript_visitor_entry e = make_entry(stmt_rit, CSCRIPT_VISITOR_EXPRESSION_PRE);
+    cscript_visitor_entry e = make_entry(stmt_rit, CSCRIPT_VISITOR_STATEMENT_PRE);
     cscript_vector_push_back(ctxt, &(vis->v), e, cscript_visitor_entry);
     }
   visit(ctxt, vis);

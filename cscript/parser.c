@@ -147,6 +147,254 @@ static cscript_statement make_nop()
   return stmt;
   }
 
+cscript_parsed_expression cscript_make_expression(cscript_context* ctxt, token** token_it, token** token_it_end);
+
+cscript_parsed_factor cscript_make_factor(cscript_context* ctxt, token** token_it, token** token_it_end)
+  {
+  cscript_parsed_factor expr;  
+  expr.sign = '+';
+  int line_nr = (*token_it)->line_nr;
+  int column_nr = (*token_it)->column_nr;
+  if (current_token_equals(token_it, token_it_end, "+"))
+    {
+    expr.sign = '+';
+    token_next(ctxt, token_it, token_it_end);
+    }
+  else if (current_token_equals(token_it, token_it_end, "-"))
+    {
+    expr.sign = '-';
+    token_next(ctxt, token_it, token_it_end);
+    }
+  if (*token_it == *token_it_end)
+    {
+    cscript_string* fn = NULL;
+    if (ctxt->filenames_list.vector_size > 0)
+      fn = cscript_vector_back(&ctxt->filenames_list, cscript_string);
+    cscript_syntax_error_cstr(ctxt, CSCRIPT_ERROR_NO_TOKENS, last_token.line_nr, last_token.column_nr, fn, "");
+    expr.type = cscript_factor_type_number;
+    expr.factor.number.number.fl = 0;
+    expr.factor.number.type = cscript_number_type_fixnum;
+    return expr;
+    }
+  switch (current_token_type(token_it, token_it_end))
+    {
+    case CSCRIPT_T_LEFT_ROUND_BRACKET:
+      token_next(ctxt, token_it, token_it_end);
+      expr.factor.expr = cscript_make_expression(ctxt, token_it, token_it_end);
+      expr.type = cscript_factor_type_expression;
+      token_require(ctxt, token_it, token_it_end, ")");
+      break;
+    case CSCRIPT_T_FLONUM:
+      expr.factor.number.column_nr = column_nr;
+      expr.factor.number.line_nr = line_nr;
+      expr.factor.number.type = cscript_number_type_flonum;
+      expr.factor.number.number.fl = cscript_to_flonum((*token_it)->value.string_ptr);
+      expr.factor.number.filename = make_null_string();
+      expr.type = cscript_factor_type_number;
+      token_next(ctxt, token_it, token_it_end);
+      break;
+    case CSCRIPT_T_FIXNUM:
+      expr.factor.number.column_nr = column_nr;
+      expr.factor.number.line_nr = line_nr;
+      expr.factor.number.type = cscript_number_type_fixnum;
+      expr.factor.number.number.fx = cscript_to_fixnum((*token_it)->value.string_ptr);
+      expr.factor.number.filename = make_null_string();
+      expr.type = cscript_factor_type_number;
+      token_next(ctxt, token_it, token_it_end);
+      break;
+    default:
+      cscript_assert(0); //not implemented
+    }
+  return expr;
+  }
+
+cscript_parsed_term cscript_make_term(cscript_context* ctxt, token** token_it, token** token_it_end)
+  {
+  cscript_parsed_term expr;
+  expr.filename = make_null_string();
+  expr.line_nr = (*token_it)->line_nr;
+  expr.column_nr = (*token_it)->column_nr;
+  cscript_vector_init(ctxt, &expr.operands, cscript_parsed_factor);
+  cscript_vector_init(ctxt, &expr.fops, int);
+  cscript_parsed_factor f1 = cscript_make_factor(ctxt, token_it, token_it_end);
+  cscript_vector_push_back(ctxt, &expr.operands, f1, cscript_parsed_factor);
+  while (1)
+    {
+    if (token_it == token_it_end)
+      break;
+    if ((*token_it)->value.string_length != 1)
+      break;
+    char op = (*token_it)->value.string_ptr[0];
+    switch (op)
+      {
+      case '*':
+      {
+      cscript_vector_push_back(ctxt, &expr.fops, cscript_op_mul, int);
+      token_next(ctxt, token_it, token_it_end);
+      cscript_parsed_factor f2 = cscript_make_factor(ctxt, token_it, token_it_end);
+      cscript_vector_push_back(ctxt, &expr.operands, f2, cscript_parsed_factor);
+      continue;
+      }
+      case '/':
+      {
+      cscript_vector_push_back(ctxt, &expr.fops, cscript_op_div, int);
+      token_next(ctxt, token_it, token_it_end);
+      cscript_parsed_factor f2 = cscript_make_factor(ctxt, token_it, token_it_end);
+      cscript_vector_push_back(ctxt, &expr.operands, f2, cscript_parsed_factor);
+      continue;
+      }
+      case '%':
+      {
+      cscript_vector_push_back(ctxt, &expr.fops, cscript_op_percent, int);
+      token_next(ctxt, token_it, token_it_end);
+      cscript_parsed_factor f2 = cscript_make_factor(ctxt, token_it, token_it_end);
+      cscript_vector_push_back(ctxt, &expr.operands, f2, cscript_parsed_factor);
+      continue;
+      }
+      default:
+        break;
+      }
+    break;
+    }
+  return expr;
+  }
+
+cscript_parsed_relop cscript_make_relop(cscript_context* ctxt, token** token_it, token** token_it_end)
+  {
+  cscript_parsed_relop expr;
+  expr.filename = make_null_string();
+  expr.line_nr = (*token_it)->line_nr;
+  expr.column_nr = (*token_it)->column_nr;
+  cscript_vector_init(ctxt, &expr.operands, cscript_parsed_term);
+  cscript_vector_init(ctxt, &expr.fops, int);
+  cscript_parsed_term t1 = cscript_make_term(ctxt, token_it, token_it_end);
+  cscript_vector_push_back(ctxt, &expr.operands, t1, cscript_parsed_term);
+  while (1)
+    {
+    if (token_it == token_it_end)
+      break;
+    if ((*token_it)->value.string_length != 1)
+      break;
+    char op = (*token_it)->value.string_ptr[0];
+    switch (op)
+      {
+      case '+':
+      {
+      cscript_vector_push_back(ctxt, &expr.fops, cscript_op_plus, int);
+      token_next(ctxt, token_it, token_it_end);
+      cscript_parsed_term t2 = cscript_make_term(ctxt, token_it, token_it_end);
+      cscript_vector_push_back(ctxt, &expr.operands, t2, cscript_parsed_term);
+      continue;
+      }
+      case '-':
+      {
+      cscript_vector_push_back(ctxt, &expr.fops, cscript_op_minus, int);
+      token_next(ctxt, token_it, token_it_end);
+      cscript_parsed_term t2 = cscript_make_term(ctxt, token_it, token_it_end);
+      cscript_vector_push_back(ctxt, &expr.operands, t2, cscript_parsed_term);
+      continue;
+      }
+      default:
+        break;
+      }
+    break;
+    }
+  return expr;
+  }
+
+cscript_parsed_expression cscript_make_expression(cscript_context* ctxt, token** token_it, token** token_it_end)
+  {
+  cscript_parsed_expression expr;
+  expr.filename = make_null_string();
+  expr.line_nr = (*token_it)->line_nr;
+  expr.column_nr = (*token_it)->column_nr;
+  cscript_vector_init(ctxt, &expr.operands, cscript_parsed_relop);
+  cscript_vector_init(ctxt, &expr.fops, int);
+  cscript_parsed_relop r1 = cscript_make_relop(ctxt, token_it, token_it_end);
+  cscript_vector_push_back(ctxt, &expr.operands, r1, cscript_parsed_relop);
+  while (1)
+    {
+    if (token_it == token_it_end)
+      break;
+    const uint32_t len = (*token_it)->value.string_length;
+    if (len > 2)
+      break;
+    char op1 = (*token_it)->value.string_ptr[0];
+    char op2 = (*token_it)->value.string_ptr[1];
+    switch (op1)
+      {
+      case '<':
+      {
+      if (len == 1)
+        {
+        cscript_vector_push_back(ctxt, &expr.fops, cscript_op_less, int);
+        token_next(ctxt, token_it, token_it_end);
+        cscript_parsed_relop r2 = cscript_make_relop(ctxt, token_it, token_it_end);
+        cscript_vector_push_back(ctxt, &expr.operands, r2, cscript_parsed_relop);
+        continue;
+        }
+      else if (len == 2 && op2 == '=')
+        {
+        cscript_vector_push_back(ctxt, &expr.fops, cscript_op_leq, int);
+        token_next(ctxt, token_it, token_it_end);
+        cscript_parsed_relop r2 = cscript_make_relop(ctxt, token_it, token_it_end);
+        cscript_vector_push_back(ctxt, &expr.operands, r2, cscript_parsed_relop);
+        continue;
+        }
+      break;
+      }
+      case '>':
+      {
+      if (len == 1)
+        {
+        cscript_vector_push_back(ctxt, &expr.fops, cscript_op_greater, int);
+        token_next(ctxt, token_it, token_it_end);
+        cscript_parsed_relop r2 = cscript_make_relop(ctxt, token_it, token_it_end);
+        cscript_vector_push_back(ctxt, &expr.operands, r2, cscript_parsed_relop);
+        continue;
+        }
+      else if (len == 2 && op2 == '=')
+        {
+        cscript_vector_push_back(ctxt, &expr.fops, cscript_op_geq, int);
+        token_next(ctxt, token_it, token_it_end);
+        cscript_parsed_relop r2 = cscript_make_relop(ctxt, token_it, token_it_end);
+        cscript_vector_push_back(ctxt, &expr.operands, r2, cscript_parsed_relop);
+        continue;
+        }
+      break;
+      }
+      case '=':
+      {
+      if (len == 2 && op2 == '=')
+        {
+        cscript_vector_push_back(ctxt, &expr.fops, cscript_op_equal, int);
+        token_next(ctxt, token_it, token_it_end);
+        cscript_parsed_relop r2 = cscript_make_relop(ctxt, token_it, token_it_end);
+        cscript_vector_push_back(ctxt, &expr.operands, r2, cscript_parsed_relop);
+        continue;
+        }
+      break;
+      }
+      case '!':
+      {
+      if (len == 2 && op2 == '=')
+        {
+        cscript_vector_push_back(ctxt, &expr.fops, cscript_op_not_equal, int);
+        token_next(ctxt, token_it, token_it_end);
+        cscript_parsed_relop r2 = cscript_make_relop(ctxt, token_it, token_it_end);
+        cscript_vector_push_back(ctxt, &expr.operands, r2, cscript_parsed_relop);
+        continue;
+        }
+      break;
+      }
+      default:
+        break;
+      }
+    break;
+    }
+  return expr;
+  }
+
 cscript_statement cscript_make_statement(cscript_context* ctxt, token** token_it, token** token_it_end)
   {
   if (ctxt->number_of_syntax_errors > CSCRIPT_MAX_SYNTAX_ERRORS)
@@ -170,7 +418,12 @@ cscript_statement cscript_make_statement(cscript_context* ctxt, token** token_it
     return nop;
     }
     default:
-      cscript_throw(ctxt, CSCRIPT_ERROR_NOT_IMPLEMENTED);
+    {
+    cscript_statement expr;
+    expr.type = cscript_statement_type_expression;
+    expr.statement.expr = cscript_make_expression(ctxt, token_it, token_it_end);
+    return expr;
+    }
 
     }
 
@@ -211,6 +464,32 @@ static void visit_nop(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_
   UNUSED(v);
   cscript_string_destroy(ctxt, &e->filename);
   }
+static void visit_number(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_number* e)
+  {
+  UNUSED(v);
+  cscript_string_destroy(ctxt, &e->filename);
+  }
+static void postvisit_expression(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_expression* e)
+  {
+  UNUSED(v);
+  cscript_string_destroy(ctxt, &e->filename);
+  cscript_vector_destroy(ctxt, &e->operands);
+  cscript_vector_destroy(ctxt, &e->fops);
+  }
+static void postvisit_relop(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_relop* e)
+  {
+  UNUSED(v);
+  cscript_string_destroy(ctxt, &e->filename);
+  cscript_vector_destroy(ctxt, &e->operands);
+  cscript_vector_destroy(ctxt, &e->fops);
+  }
+static void postvisit_term(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_term* e)
+  {
+  UNUSED(v);
+  cscript_string_destroy(ctxt, &e->filename);
+  cscript_vector_destroy(ctxt, &e->operands);
+  cscript_vector_destroy(ctxt, &e->fops);
+  }
 
 void cscript_program_destroy(cscript_context* ctxt, cscript_program* p)
   {
@@ -218,6 +497,10 @@ void cscript_program_destroy(cscript_context* ctxt, cscript_program* p)
   destroyer.visitor = cscript_visitor_new(ctxt, &destroyer);
 
   destroyer.visitor->visit_nop = visit_nop;
+  destroyer.visitor->visit_number = visit_number;
+  destroyer.visitor->postvisit_term = postvisit_term;
+  destroyer.visitor->postvisit_relop = postvisit_relop;
+  destroyer.visitor->postvisit_expression = postvisit_expression;
 
   cscript_visit_program(ctxt, destroyer.visitor, p);
 

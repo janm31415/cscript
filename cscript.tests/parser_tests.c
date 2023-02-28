@@ -7,7 +7,7 @@
 #include "cscript/parser.h"
 #include "cscript/error.h"
 
-static void parse_fixnum_1()
+static void parse_semicolon()
   {
   cscript_context* ctxt = cscript_open(256);
   cscript_vector tokens = cscript_script2tokens(ctxt, ";");
@@ -22,7 +22,23 @@ static void parse_fixnum_1()
   cscript_close(ctxt);
   }
 
+static void parse_number_1()
+  {
+  cscript_context* ctxt = cscript_open(256);
+  cscript_vector tokens = cscript_script2tokens(ctxt, "5;");
+  cscript_program prog = make_program(ctxt, &tokens);
+  TEST_EQ_INT(1, prog.statements.vector_size);
+  cscript_statement* expr = cscript_vector_at(&prog.statements, 0, cscript_statement);
+  TEST_EQ_INT(cscript_statement_type_expression, expr->type);
+  TEST_EQ_INT(1, expr->statement.expr.line_nr);
+  TEST_EQ_INT(1, expr->statement.expr.column_nr);
+  destroy_tokens_vector(ctxt, &tokens);
+  cscript_program_destroy(ctxt, &prog);
+  cscript_close(ctxt);
+  }
+
 void run_all_parser_tests()
   {
-  parse_fixnum_1();
+  parse_semicolon(); 
+  parse_number_1();
   }
