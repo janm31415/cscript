@@ -225,6 +225,16 @@ static void test_compile_named_fixnum()
   test_compile_fixnum_aux(3, "int i = 3; i;");
   test_compile_fixnum_aux(5, "int i = 5.17; i;");
   test_compile_fixnum_aux(6, "int i = 3; int k = 6; int l = 9; k;");
+  test_compile_fixnum_aux(1512, "int i = 3*7*8*9; i;");
+  test_compile_fixnum_aux(1512, "int i = 3.0*7.0*8.0*9.0; i;");
+  }
+
+static void test_compile_named_flonum()
+  {
+  test_compile_flonum_aux(3.14, "float f = 3.14; f;");
+  test_compile_flonum_aux(5.0, "float f = 5; f;");
+  test_compile_flonum_aux(1512.0, "float f = 3.0*7.0*8.0*9.0; f;");
+  test_compile_flonum_aux(1512.0, "float f = 3*7*8*9; f;");
   }
 
 void run_all_compiler_tests()
@@ -234,4 +244,5 @@ void run_all_compiler_tests()
   test_compile_term();
   test_compile_expr();
   test_compile_named_fixnum();
+  test_compile_named_flonum();
   }

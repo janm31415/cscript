@@ -391,6 +391,75 @@ cscript_statement make_int(cscript_context* ctxt, token** token_it, token** toke
   return outstmt;
   }
 
+
+cscript_statement make_float(cscript_context* ctxt, token** token_it, token** token_it_end)
+  {
+  cscript_comma_separated_statements stmts;
+  cscript_vector_init(ctxt, &stmts.statements, cscript_statement);
+  int done = 0;
+  int first_time = 1;
+  while (done == 0)
+    {
+    cscript_parsed_flonum f;
+    f.line_nr = (*token_it)->line_nr;
+    f.column_nr = (*token_it)->column_nr;
+    f.filename = make_null_string();
+    f.expr.filename = make_null_string();
+    f.expr.fops.vector_ptr = 0;
+    f.expr.fops.vector_capacity = 0;
+    f.expr.fops.vector_size = 0;
+    f.expr.operands.vector_ptr = 0;
+    f.expr.operands.vector_capacity = 0;
+    f.expr.operands.vector_size = 0;
+    cscript_vector_init(ctxt, &f.dims, cscript_parsed_expression);
+    if (first_time)
+      token_require(ctxt, token_it, token_it_end, "float");
+
+    if (check_token_available(ctxt, token_it, token_it_end))
+      cscript_string_copy(ctxt, &f.name, &(*token_it)->value);
+
+    token_next(ctxt, token_it, token_it_end);
+
+    if (current_token_type(token_it, token_it_end) == CSCRIPT_T_LEFT_SQUARE_BRACKET)
+      {
+      token_next(ctxt, token_it, token_it_end);
+      cscript_parsed_expression expr = cscript_make_expression(ctxt, token_it, token_it_end);
+      cscript_vector_push_back(ctxt, &f.dims, expr, cscript_parsed_expression);
+      token_require(ctxt, token_it, token_it_end, "]");
+      }
+    if (current_token_type(token_it, token_it_end) == CSCRIPT_T_LEFT_SQUARE_BRACKET)
+      {
+      cscript_string* fn = NULL;
+      if (ctxt->filenames_list.vector_size > 0)
+        fn = cscript_vector_back(&ctxt->filenames_list, cscript_string);
+      cscript_syntax_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, (*token_it)->line_nr, (*token_it)->column_nr, fn, "only single dimension arrays are allowed");
+      break;
+      }
+    if (current_token_type(token_it, token_it_end) == CSCRIPT_T_ASSIGNMENT)
+      {
+      token_next(ctxt, token_it, token_it_end);
+      f.expr = cscript_make_expression(ctxt, token_it, token_it_end);
+      }
+    cscript_statement stmt;
+    stmt.type = cscript_statement_type_flonum;
+    stmt.statement.flonum = f;
+    cscript_vector_push_back(ctxt, &stmts.statements, stmt, cscript_statement);
+    if (current_token_type(token_it, token_it_end) == CSCRIPT_T_COMMA)
+      {
+      token_require(ctxt, token_it, token_it_end, ",");
+      }
+    else
+      {
+      done = 1;
+      }
+    first_time = 0;
+    }
+  cscript_statement outstmt;
+  outstmt.type = cscript_statement_type_comma_separated;
+  outstmt.statement.stmts = stmts;
+  return outstmt;
+  }
+
 cscript_parsed_expression cscript_make_expression(cscript_context* ctxt, token** token_it, token** token_it_end)
   {
   cscript_parsed_expression expr;
@@ -518,6 +587,11 @@ cscript_statement cscript_make_statement(cscript_context* ctxt, token** token_it
     if (strcmp((*token_it)->value.string_ptr, "int") == 0)
       {
       cscript_statement stmt = make_int(ctxt, token_it, token_it_end);
+      return stmt;
+      }
+    if (strcmp((*token_it)->value.string_ptr, "float") == 0)
+      {
+      cscript_statement stmt = make_float(ctxt, token_it, token_it_end);
       return stmt;
       }
     }

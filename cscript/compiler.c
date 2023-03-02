@@ -482,6 +482,70 @@ static void compile_fixnum(cscript_context* ctxt, compiler_state* state, cscript
     }
   }
 
+
+static void compile_flonum_array(cscript_context* ctxt, compiler_state* state, cscript_parsed_flonum* fx)
+  {
+  }
+
+static void compile_flonum_global_single(cscript_context* ctxt, compiler_state* state, cscript_parsed_flonum* fx)
+  {
+  }
+
+static void compile_flonum_single(cscript_context* ctxt, compiler_state* state, cscript_parsed_flonum* fl)
+  {
+  int init = fl->expr.operands.vector_size > 0;
+  if (init)
+    {
+    compile_expression(ctxt, state, &fl->expr);
+    if (state->reg_typeinfo == cscript_reg_typeinfo_fixnum)
+      {
+      make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, cscript_number_type_flonum);
+      state->reg_typeinfo = cscript_number_type_flonum;
+      }
+    }
+  cscript_environment_entry entry;
+  if (cscript_environment_find(&entry, ctxt, &fl->name))
+    {
+    cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, fl->line_nr, fl->column_nr, &fl->filename, "Variable already exists");
+    }
+  else
+    {
+    entry.type = CSCRIPT_ENV_TYPE_STACK;
+    entry.position = state->freereg;
+    entry.variable_type = cscript_reg_typeinfo_flonum;
+    cscript_string s;
+    cscript_string_copy(ctxt, &s, &fl->name);
+    cscript_environment_add(ctxt, &s, entry);
+    ++state->freereg;
+    }
+  }
+
+static void compile_flonum(cscript_context* ctxt, compiler_state* state, cscript_parsed_flonum* fx)
+  {
+  if (fx->dims.vector_size > 0)
+    {
+    if (fx->name.string_ptr[0] == '$')
+      {
+      cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, fx->line_nr, fx->column_nr, &fx->filename, "Global variables can't be arrays");
+      }
+    else
+      {
+      compile_flonum_array(ctxt, state, fx);
+      }
+    }
+  else
+    {
+    if (fx->name.string_ptr[0] == '$')
+      {
+      compile_flonum_global_single(ctxt, state, fx);
+      }
+    else
+      {
+      compile_flonum_single(ctxt, state, fx);
+      }
+    }
+  }
+
 static void compile_statement(cscript_context* ctxt, compiler_state* state, cscript_statement* stmt)
   {
   switch (stmt->type)
@@ -491,6 +555,9 @@ static void compile_statement(cscript_context* ctxt, compiler_state* state, cscr
       break;
     case cscript_statement_type_fixnum:
       compile_fixnum(ctxt, state, &stmt->statement.fixnum);
+      break;
+    case cscript_statement_type_flonum:
+      compile_flonum(ctxt, state, &stmt->statement.flonum);
       break;
     case cscript_statement_type_comma_separated:
       compile_comma_seperated_statements(ctxt, state, &stmt->statement.stmts);
