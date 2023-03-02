@@ -110,6 +110,7 @@ static void compile_number(cscript_context* ctxt, compiler_state* state, cscript
   }
 
 static void compile_expression(cscript_context* ctxt, compiler_state* state, cscript_parsed_expression* e);
+static void compile_statement(cscript_context* ctxt, compiler_state* state, cscript_statement* stmt);
 
 static void compile_factor(cscript_context* ctxt, compiler_state* state, cscript_parsed_factor* f)
   {
@@ -128,7 +129,7 @@ static void compile_factor(cscript_context* ctxt, compiler_state* state, cscript
     {
     if (state->reg_typeinfo == cscript_reg_typeinfo_fixnum)
       {
-      make_code_asbx(ctxt, state->fun, CSCRIPT_OPCODE_SETFIXNUM, state->freereg+1, -1);
+      make_code_asbx(ctxt, state->fun, CSCRIPT_OPCODE_SETFIXNUM, state->freereg + 1, -1);
       make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, CSCRIPT_MUL_FIXNUM);
       }
     else
@@ -222,7 +223,7 @@ static void compile_relop(cscript_context* ctxt, compiler_state* state, cscript_
   ++it;
   while (it != it_end)
     {
-    state->freereg = freereg+1;
+    state->freereg = freereg + 1;
     compile_term(ctxt, state, it);
     int reg_b_typeinfo = state->reg_typeinfo;
     if (reg_a_typeinfo != reg_b_typeinfo)
@@ -377,12 +378,33 @@ static void compile_expression(cscript_context* ctxt, compiler_state* state, csc
   state->reg_typeinfo = reg_a_typeinfo;
   }
 
+static void compile_comma_seperated_statements(cscript_context* ctxt, compiler_state* state, cscript_vector* stmts)
+  {
+  cscript_statement* it = cscript_vector_begin(stmts, cscript_statement);
+  cscript_statement* it_end = cscript_vector_end(stmts, cscript_statement);
+  for (; it != it_end; ++it)
+    {
+    compile_statement(ctxt, state, it);
+    }
+  }
+
+
+static void compile_fixnum(cscript_context* ctxt, compiler_state* state, cscript_parsed_fixnum* fx)
+  {
+  }
+
 static void compile_statement(cscript_context* ctxt, compiler_state* state, cscript_statement* stmt)
   {
   switch (stmt->type)
     {
     case cscript_statement_type_expression:
       compile_expression(ctxt, state, &stmt->statement.expr);
+      break;
+    case cscript_statement_type_fixnum:
+      compile_fixnum(ctxt, state, &stmt->statement.fixnum);
+      break;
+    case cscript_statement_type_comma_separated:
+      compile_comma_seperated_statements(ctxt, state, &stmt->statement.stmts);
       break;
     case cscript_statement_type_nop:
       break;

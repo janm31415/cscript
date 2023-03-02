@@ -109,12 +109,18 @@ typedef struct cscript_parsed_nop
   cscript_string filename;
   } cscript_parsed_nop;
 
+typedef struct cscript_comma_separated_statements
+  {
+  cscript_vector statements;
+  } cscript_comma_separated_statements;
+
 #define cscript_statement_type_expression 0
 #define cscript_statement_type_fixnum 1
 #define cscript_statement_type_flonum 2
 #define cscript_statement_type_nop 3
 #define cscript_statement_type_if 4
 #define cscript_statement_type_for 5
+#define cscript_statement_type_comma_separated 6
 
 typedef union
   {
@@ -122,6 +128,7 @@ typedef union
   cscript_parsed_fixnum fixnum;
   cscript_parsed_flonum flonum;
   cscript_parsed_nop nop;
+  cscript_comma_separated_statements stmts;
   } cscript_parsed_statement;
 
 typedef struct cscript_statement

@@ -105,7 +105,7 @@ static void test_compile_expr()
   test_compile_fixnum_aux(0, "1 <= 0.0;");
   test_compile_fixnum_aux(1, "1 > 0;");
 
-  test_compile_flonum_aux(-9.0,"3.0 * (2 / 0.5 - 7);");
+  test_compile_flonum_aux(-9.0, "3.0 * (2 / 0.5 - 7);");
   test_compile_flonum_aux(9.0, "-3.0 * (2 / 0.5 - 7);");
   test_compile_fixnum_aux(135, "110+25;");
   test_compile_fixnum_aux(-135, "-(110+25);");
@@ -220,10 +220,16 @@ static void test_compile_expr()
   test_compile_flonum_aux(0, "(1.0*(1.0*(1.0*(1.0*(1.0*(1.0*(3.0 != 3.0)))))));");
   }
 
+static void test_compile_named_fixnum()
+  {
+  test_compile_fixnum_aux(3, "int i = 3;");
+  }
+
 void run_all_compiler_tests()
   {
   test_compile_fixnum();
   test_compile_flonum();
   test_compile_term();
   test_compile_expr();
+  test_compile_named_fixnum();
   }

@@ -14,6 +14,19 @@ static void postvisit_statement(cscript_context* ctxt, cscript_visitor* v, cscri
   UNUSED(v);
   UNUSED(s);
   }
+static int previsit_statements(cscript_context* ctxt, cscript_visitor* v, cscript_comma_separated_statements* s)
+  {
+  UNUSED(ctxt);
+  UNUSED(v);
+  UNUSED(s);
+  return 1;
+  }
+static void postvisit_statements(cscript_context* ctxt, cscript_visitor* v, cscript_comma_separated_statements* s)
+  {
+  UNUSED(ctxt);
+  UNUSED(v);
+  UNUSED(s);
+  }
 static int previsit_expression(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_expression* s)
   {
   UNUSED(ctxt);
@@ -134,6 +147,8 @@ cscript_visitor* cscript_visitor_new(cscript_context* ctxt, void* impl)
   v->impl = impl;
   v->previsit_statement = previsit_statement;
   v->postvisit_statement = postvisit_statement;
+  v->previsit_statements = previsit_statements;
+  v->postvisit_statements = postvisit_statements;
   v->previsit_expression = previsit_expression;
   v->postvisit_expression = postvisit_expression;
   v->visit_number = visit_number;
@@ -173,6 +188,9 @@ static void visit_entry(cscript_context* ctxt, cscript_visitor* vis, cscript_vis
         case cscript_statement_type_expression:
           cscript_vector_push_back(ctxt, &(vis->v), make_entry(&cast(cscript_statement*, e.entry)->statement.expr, CSCRIPT_VISITOR_EXPRESSION_PRE), cscript_visitor_entry);
           break;
+        case cscript_statement_type_comma_separated:
+          cscript_vector_push_back(ctxt, &(vis->v), make_entry(&cast(cscript_statement*, e.entry)->statement.stmts, CSCRIPT_VISITOR_STATEMENTS_PRE), cscript_visitor_entry);
+        break;
         case cscript_statement_type_fixnum:
           cscript_vector_push_back(ctxt, &(vis->v), make_entry(&cast(cscript_statement*, e.entry)->statement.fixnum, CSCRIPT_VISITOR_FIXNUM_PRE), cscript_visitor_entry);
           break;
@@ -214,6 +232,27 @@ static void visit_entry(cscript_context* ctxt, cscript_visitor* vis, cscript_vis
     case CSCRIPT_VISITOR_EXPRESSION_POST:
     {
     vis->postvisit_expression(ctxt, vis, cast(cscript_parsed_expression*, e.entry));
+    break;
+    }
+    case CSCRIPT_VISITOR_STATEMENTS_PRE:
+    {
+    if (vis->previsit_statements(ctxt, vis, cast(cscript_comma_separated_statements*, e.entry)))
+      {
+      cscript_vector_push_back(ctxt, &(vis->v), make_entry(e.entry, CSCRIPT_VISITOR_STATEMENTS_POST), cscript_visitor_entry);
+      cscript_statement* stmt_it = cscript_vector_begin(&cast(cscript_statement*, e.entry)->statement.stmts.statements, cscript_statement);
+      cscript_statement* stmt_it_end = cscript_vector_end(&cast(cscript_statement*, e.entry)->statement.stmts.statements, cscript_statement);
+      cscript_statement* stmt_rit = stmt_it_end - 1;
+      cscript_statement* stmt_rit_end = stmt_it - 1;
+      for (; stmt_rit != stmt_rit_end; --stmt_rit) // IMPORTANT: brackets necessary, as cscript_vector_push_back is a C macro
+        {
+        cscript_vector_push_back(ctxt, &(vis->v), make_entry(cast(void*, stmt_rit), CSCRIPT_VISITOR_STATEMENT_PRE), cscript_visitor_entry);
+        }
+      }
+    break;
+    }
+    case CSCRIPT_VISITOR_STATEMENTS_POST:
+    {
+    vis->postvisit_statements(ctxt, vis, cast(cscript_comma_separated_statements*, e.entry));
     break;
     }
     case CSCRIPT_VISITOR_NUMBER:

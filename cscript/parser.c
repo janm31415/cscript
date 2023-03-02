@@ -54,6 +54,19 @@ static int token_next(cscript_context* ctxt, token** token_it, token** token_it_
   return 1;
   }
 
+static int check_token_available(cscript_context* ctxt, token** token_it, token** token_it_end)
+  {
+  if (*token_it == *token_it_end)
+    {
+    cscript_string* fn = NULL;
+    if (ctxt->filenames_list.vector_size > 0)
+      fn = cscript_vector_back(&ctxt->filenames_list, cscript_string);
+    cscript_syntax_error_cstr(ctxt, CSCRIPT_ERROR_NO_TOKENS, last_token.line_nr, last_token.column_nr, fn, "");
+    return 0;
+    }
+  return 1;
+  }
+
 static int token_require(cscript_context* ctxt, token** token_it, token** token_it_end, const char* required)
   {
   if (*token_it == *token_it_end)
@@ -302,6 +315,74 @@ cscript_parsed_relop cscript_make_relop(cscript_context* ctxt, token** token_it,
   return expr;
   }
 
+cscript_statement make_int(cscript_context* ctxt, token** token_it, token** token_it_end)
+  {
+  cscript_comma_separated_statements stmts;
+  cscript_vector_init(ctxt, &stmts.statements, cscript_statement);
+  int done = 0;
+  int first_time = 1;
+  while (done == 0)
+    {
+    cscript_parsed_fixnum i;
+    i.line_nr = (*token_it)->line_nr;
+    i.column_nr = (*token_it)->column_nr;
+    i.filename = make_null_string();
+    i.expr.filename = make_null_string();
+    i.expr.fops.vector_ptr = 0;
+    i.expr.fops.vector_capacity = 0;
+    i.expr.fops.vector_size = 0;
+    i.expr.operands.vector_ptr = 0;
+    i.expr.operands.vector_capacity = 0;
+    i.expr.operands.vector_size = 0;
+    cscript_vector_init(ctxt, &i.dims, cscript_parsed_expression);
+    if (first_time)
+      token_require(ctxt, token_it, token_it_end, "int");
+
+    if (check_token_available(ctxt, token_it, token_it_end))
+      cscript_string_copy(ctxt, &i.name, &(*token_it)->value);
+
+    token_next(ctxt, token_it, token_it_end);
+
+    if (current_token_type(token_it, token_it_end) == CSCRIPT_T_LEFT_SQUARE_BRACKET)
+      {
+      token_next(ctxt, token_it, token_it_end);
+      cscript_parsed_expression expr = cscript_make_expression(ctxt, token_it, token_it_end);
+      cscript_vector_push_back(ctxt, &i.dims, expr, cscript_parsed_expression);
+      token_require(ctxt, token_it, token_it_end, "]");
+      }
+    if (current_token_type(token_it, token_it_end) == CSCRIPT_T_LEFT_SQUARE_BRACKET)
+      {
+      cscript_string* fn = NULL;
+      if (ctxt->filenames_list.vector_size > 0)
+        fn = cscript_vector_back(&ctxt->filenames_list, cscript_string);
+      cscript_syntax_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, (*token_it)->line_nr, (*token_it)->column_nr, fn, "only single dimension arrays are allowed");
+      break;
+      }
+    if (current_token_type(token_it, token_it_end) == CSCRIPT_T_ASSIGNMENT)
+      {
+      token_next(ctxt, token_it, token_it_end);
+      i.expr = cscript_make_expression(ctxt, token_it, token_it_end);
+      }
+    cscript_statement stmt;
+    stmt.type = cscript_statement_type_fixnum;
+    stmt.statement.fixnum = i;
+    cscript_vector_push_back(ctxt, &stmts.statements, stmt, cscript_statement);
+    if (current_token_type(token_it, token_it_end) == CSCRIPT_T_COMMA)
+      {
+      token_require(ctxt, token_it, token_it_end, ",");
+      }
+    else
+      {
+      done = 1;
+      }
+    first_time = 0;
+    }
+  cscript_statement outstmt;
+  outstmt.type = cscript_statement_type_comma_separated;
+  outstmt.statement.stmts = stmts;
+  return outstmt;
+  }
+
 cscript_parsed_expression cscript_make_expression(cscript_context* ctxt, token** token_it, token** token_it_end)
   {
   cscript_parsed_expression expr;
@@ -417,6 +498,21 @@ cscript_statement cscript_make_statement(cscript_context* ctxt, token** token_it
     nop.statement.nop.column_nr = (*token_it)->column_nr;
     return nop;
     }
+    case CSCRIPT_T_RIGHT_ROUND_BRACKET:
+    {
+    cscript_statement nop = make_nop();
+    nop.statement.nop.line_nr = (*token_it)->line_nr;
+    nop.statement.nop.column_nr = (*token_it)->column_nr;
+    return nop;
+    }
+    case CSCRIPT_T_ID:
+    {
+    if (strcmp((*token_it)->value.string_ptr, "int") == 0)
+      {
+      cscript_statement stmt = make_int(ctxt, token_it, token_it_end);
+      return stmt;
+      }
+    }
     default:
     {
     cscript_statement expr;
@@ -490,7 +586,18 @@ static void postvisit_term(cscript_context* ctxt, cscript_visitor* v, cscript_pa
   cscript_vector_destroy(ctxt, &e->operands);
   cscript_vector_destroy(ctxt, &e->fops);
   }
-
+static void postvisit_statements(cscript_context* ctxt, cscript_visitor* v, cscript_comma_separated_statements* e)
+  {
+  UNUSED(v);
+  cscript_vector_destroy(ctxt, &e->statements);
+  }
+static void postvisit_fixnum(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_fixnum* fx)
+  {
+  UNUSED(v);
+  cscript_vector_destroy(ctxt, &fx->dims);
+  cscript_string_destroy(ctxt, &fx->filename);
+  cscript_string_destroy(ctxt, &fx->name);
+  }
 void cscript_program_destroy(cscript_context* ctxt, cscript_program* p)
   {
   cscript_program_destroy_visitor destroyer;
@@ -501,6 +608,8 @@ void cscript_program_destroy(cscript_context* ctxt, cscript_program* p)
   destroyer.visitor->postvisit_term = postvisit_term;
   destroyer.visitor->postvisit_relop = postvisit_relop;
   destroyer.visitor->postvisit_expression = postvisit_expression;
+  destroyer.visitor->postvisit_statements = postvisit_statements;
+  destroyer.visitor->postvisit_fixnum = postvisit_fixnum;
 
   cscript_visit_program(ctxt, destroyer.visitor, p);
 
