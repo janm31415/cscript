@@ -25,6 +25,7 @@ void cscript_environment_destroy(cscript_context* ctxt);
 void cscript_environment_add(cscript_context* ctxt, cscript_string* name, cscript_environment_entry entry);
 void cscript_environment_add_to_base(cscript_context* ctxt, cscript_string* name, cscript_environment_entry entry);
 int cscript_environment_find(cscript_environment_entry* entry, cscript_context* ctxt, cscript_string* name);
+int cscript_environment_find_recursive(cscript_environment_entry* entry, cscript_context* ctxt, cscript_string* name);
 void cscript_environment_update(cscript_context* ctxt, cscript_string* name, cscript_environment_entry entry);
 
 void cscript_environment_push_child(cscript_context* ctxt);

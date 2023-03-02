@@ -276,7 +276,7 @@ cscript_fixnum* cscript_run(cscript_context* ctxt, cscript_function* fun)
         cscript_throw(ctxt, CSCRIPT_ERROR_NOT_IMPLEMENTED);
       }
     }
-  //return cscript_vector_at(&ctxt->stack, 0, cscript_object);
+  return cscript_vector_at(&ctxt->stack, 0, cscript_fixnum);
   }
 
 cscript_string cscript_fun_to_string(cscript_context* ctxt, cscript_function* fun)

@@ -4,6 +4,8 @@
 #include "vm.h"
 #include "object.h"
 #include "primitives.h"
+#include "context.h"
+#include "environment.h"
 
 static void make_code_abx(cscript_context* ctxt, cscript_function* fun, cscript_opcode opc, int a, int bx)
   {
@@ -388,9 +390,66 @@ static void compile_comma_seperated_statements(cscript_context* ctxt, compiler_s
     }
   }
 
+static void compile_fixnum_array(cscript_context* ctxt, compiler_state* state, cscript_parsed_fixnum* fx)
+  {
+  }
+
+static void compile_fixnum_global_single(cscript_context* ctxt, compiler_state* state, cscript_parsed_fixnum* fx)
+  {
+  }
+
+static void compile_fixnum_single(cscript_context* ctxt, compiler_state* state, cscript_parsed_fixnum* fx)
+  {
+  int init = fx->expr.operands.vector_size > 0;
+  if (init)
+    {
+    compile_expression(ctxt, state, &fx->expr);
+    if (state->reg_typeinfo == cscript_reg_typeinfo_flonum)
+      {
+      make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, cscript_number_type_fixnum);
+      state->reg_typeinfo == cscript_number_type_fixnum;
+      }
+    }
+  cscript_environment_entry entry;
+  if (cscript_environment_find(&entry, ctxt, &fx->name))
+    {
+    cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, fx->line_nr, fx->column_nr, &fx->filename, "Variable already exists");
+    }
+  else
+    {
+    entry.type = CSCRIPT_ENV_TYPE_STACK;
+    entry.position = state->freereg;
+    cscript_string s;
+    cscript_string_copy(ctxt, &s, &fx->name);
+    cscript_environment_add(ctxt, &s, entry);
+    ++state->freereg;
+    }
+  }
 
 static void compile_fixnum(cscript_context* ctxt, compiler_state* state, cscript_parsed_fixnum* fx)
   {
+  if (fx->dims.vector_size > 0)
+    {
+    if (fx->name.string_ptr[0] == '$')
+      {
+      cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, fx->line_nr, fx->column_nr, &fx->filename, "Global variables can't be arrays");
+      }
+    else
+      {
+      compile_fixnum_array(ctxt, state, fx);
+      }
+    }
+  else
+    {
+    if (fx->name.string_ptr[0] == '$')
+      {
+      compile_fixnum_global_single(ctxt, state, fx);  
+      }
+    else
+      {
+      compile_fixnum_single(ctxt, state, fx);
+      }
+    }
   }
 
 static void compile_statement(cscript_context* ctxt, compiler_state* state, cscript_statement* stmt)
@@ -422,18 +481,18 @@ cscript_function* cscript_compile_statement(cscript_context* ctxt, cscript_state
   return fun;
   }
 
-cscript_vector cscript_compile_program(cscript_context* ctxt, cscript_program* prog)
+cscript_function* cscript_compile_program(cscript_context* ctxt, cscript_program* prog)
   {
-  cscript_vector compiled;
-  cscript_vector_init(ctxt, &compiled, cscript_function*);
+  cscript_compile_errors_clear(ctxt);
+  cscript_function* fun = cscript_function_new(ctxt);
+  compiler_state state = init_compiler_state(0, cscript_reg_typeinfo_fixnum, fun);
   cscript_statement* it = cscript_vector_begin(&prog->statements, cscript_statement);
   cscript_statement* it_end = cscript_vector_end(&prog->statements, cscript_statement);
   for (; it != it_end; ++it)
     {
-    cscript_function* fun = cscript_compile_statement(ctxt, it);
-    cscript_vector_push_back(ctxt, &compiled, fun, cscript_function*);
+    compile_statement(ctxt, &state, it);
     }
-  return compiled;
+  return fun;
   }
 
 void cscript_compiled_program_destroy(cscript_context* ctxt, cscript_vector* compiled_program)

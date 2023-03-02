@@ -15,8 +15,8 @@ static void test_compile_fixnum_aux_stack(cscript_fixnum expected, const char* s
   cscript_vector tokens = cscript_script2tokens(ctxt, script);
   cscript_program prog = make_program(ctxt, &tokens);
 
-  cscript_vector compiled_program = cscript_compile_program(ctxt, &prog);
-  cscript_fixnum* res = cscript_run_program(ctxt, &compiled_program);
+  cscript_function* compiled_program = cscript_compile_program(ctxt, &prog);
+  cscript_fixnum* res = cscript_run(ctxt, compiled_program);
 
   TEST_EQ_INT(expected, *res);
 
@@ -26,7 +26,7 @@ static void test_compile_fixnum_aux_stack(cscript_fixnum expected, const char* s
   TEST_EQ_INT(0, ctxt->number_of_syntax_errors);
   TEST_EQ_INT(0, ctxt->number_of_runtime_errors);
 
-  cscript_compiled_program_destroy(ctxt, &compiled_program);
+  cscript_function_free(ctxt, compiled_program);
   destroy_tokens_vector(ctxt, &tokens);
   cscript_program_destroy(ctxt, &prog);
   cscript_close(ctxt);
@@ -39,8 +39,8 @@ static void test_compile_flonum_aux_stack(cscript_flonum expected, const char* s
   cscript_vector tokens = cscript_script2tokens(ctxt, script);
   cscript_program prog = make_program(ctxt, &tokens);
 
-  cscript_vector compiled_program = cscript_compile_program(ctxt, &prog);
-  cscript_flonum* res = cast(cscript_flonum*, cscript_run_program(ctxt, &compiled_program));
+  cscript_function* compiled_program = cscript_compile_program(ctxt, &prog);
+  cscript_flonum* res = cast(cscript_flonum*, cscript_run(ctxt, compiled_program));
 
   TEST_EQ_DOUBLE(expected, *res);
 
@@ -48,7 +48,7 @@ static void test_compile_flonum_aux_stack(cscript_flonum expected, const char* s
   TEST_EQ_INT(0, ctxt->number_of_syntax_errors);
   TEST_EQ_INT(0, ctxt->number_of_runtime_errors);
 
-  cscript_compiled_program_destroy(ctxt, &compiled_program);
+  cscript_function_free(ctxt, compiled_program);
   destroy_tokens_vector(ctxt, &tokens);
   cscript_program_destroy(ctxt, &prog);
   cscript_close(ctxt);
@@ -223,6 +223,8 @@ static void test_compile_expr()
 static void test_compile_named_fixnum()
   {
   test_compile_fixnum_aux(3, "int i = 3;");
+  test_compile_fixnum_aux(5, "int i = 5.17;");
+  test_compile_fixnum_aux(3, "int i = 3; int k = 6; int l = 9;");
   }
 
 void run_all_compiler_tests()

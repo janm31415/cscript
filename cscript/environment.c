@@ -55,6 +55,22 @@ int cscript_environment_find(cscript_environment_entry* entry, cscript_context* 
   cscript_object key;
   key.type = cscript_object_type_string;
   key.value.s = *name;
+  cscript_map** map_it = cscript_vector_back(&ctxt->environment, cscript_map*);
+  cscript_object* entry_object = cscript_map_get(ctxt, *map_it, &key);
+  if (entry_object != NULL)
+    {
+    entry->type = entry_object->type - 1;
+    entry->position = entry_object->value.fx;
+    return 1;
+    }
+  return 0;
+  }
+
+int cscript_environment_find_recursive(cscript_environment_entry* entry, cscript_context* ctxt, cscript_string* name)
+  {
+  cscript_object key;
+  key.type = cscript_object_type_string;
+  key.value.s = *name;
   cscript_map** map_it = cscript_vector_begin(&ctxt->environment, cscript_map*);
   cscript_map** map_it_end = cscript_vector_end(&ctxt->environment, cscript_map*);
   cscript_map** map_rit = map_it_end - 1;
