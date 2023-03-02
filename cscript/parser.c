@@ -215,6 +215,14 @@ cscript_parsed_factor cscript_make_factor(cscript_context* ctxt, token** token_i
       expr.type = cscript_factor_type_number;
       token_next(ctxt, token_it, token_it_end);
       break;
+    case CSCRIPT_T_ID:
+      expr.factor.var.column_nr = column_nr;
+      expr.factor.var.line_nr = line_nr;
+      expr.factor.var.filename = make_null_string();
+      expr.type = cscript_factor_type_variable;
+      cscript_string_copy(ctxt, &expr.factor.var.name, &(*token_it)->value);
+      token_next(ctxt, token_it, token_it_end);
+      break;
     default:
       cscript_assert(0); //not implemented
     }
@@ -598,6 +606,12 @@ static void postvisit_fixnum(cscript_context* ctxt, cscript_visitor* v, cscript_
   cscript_string_destroy(ctxt, &fx->filename);
   cscript_string_destroy(ctxt, &fx->name);
   }
+static void visit_variable(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_variable* var)
+  {
+  UNUSED(v);
+  cscript_string_destroy(ctxt, &var->filename);
+  cscript_string_destroy(ctxt, &var->name);
+  }
 void cscript_program_destroy(cscript_context* ctxt, cscript_program* p)
   {
   cscript_program_destroy_visitor destroyer;
@@ -610,6 +624,7 @@ void cscript_program_destroy(cscript_context* ctxt, cscript_program* p)
   destroyer.visitor->postvisit_expression = postvisit_expression;
   destroyer.visitor->postvisit_statements = postvisit_statements;
   destroyer.visitor->postvisit_fixnum = postvisit_fixnum;
+  destroyer.visitor->visit_var = visit_variable;
 
   cscript_visit_program(ctxt, destroyer.visitor, p);
 

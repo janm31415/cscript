@@ -222,9 +222,9 @@ static void test_compile_expr()
 
 static void test_compile_named_fixnum()
   {
-  test_compile_fixnum_aux(3, "int i = 3;");
-  test_compile_fixnum_aux(5, "int i = 5.17;");
-  test_compile_fixnum_aux(3, "int i = 3; int k = 6; int l = 9;");
+  test_compile_fixnum_aux(3, "int i = 3; i;");
+  test_compile_fixnum_aux(5, "int i = 5.17; i;");
+  test_compile_fixnum_aux(6, "int i = 3; int k = 6; int l = 9; k;");
   }
 
 void run_all_compiler_tests()

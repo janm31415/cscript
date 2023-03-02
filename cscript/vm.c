@@ -276,7 +276,7 @@ cscript_fixnum* cscript_run(cscript_context* ctxt, cscript_function* fun)
         cscript_throw(ctxt, CSCRIPT_ERROR_NOT_IMPLEMENTED);
       }
     }
-  return cscript_vector_at(&ctxt->stack, 0, cscript_fixnum);
+  return cscript_vector_at(&ctxt->stack, fun->result_position, cscript_fixnum);
   }
 
 cscript_string cscript_fun_to_string(cscript_context* ctxt, cscript_function* fun)
@@ -314,15 +314,4 @@ void cscript_show_stack(cscript_context* ctxt, cscript_string* s, int stack_star
     cscript_string_destroy(ctxt, &tmp);
     cscript_string_push_back(ctxt, s, '\n');
     }  
-  }
-
-cscript_fixnum* cscript_run_program(cscript_context* ctxt, const cscript_vector* functions)
-  {
-  cscript_function** it = cscript_vector_begin(functions, cscript_function*);
-  cscript_function** it_end = cscript_vector_end(functions, cscript_function*);
-  for (; it != it_end; ++it)
-    {
-    cscript_run(ctxt, *it);
-    }
-  return cscript_vector_at(&ctxt->stack, 0, cscript_fixnum);
   }

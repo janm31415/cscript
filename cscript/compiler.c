@@ -67,7 +67,7 @@ static int get_k(cscript_context* ctxt, cscript_function* fun, cscript_object* k
 
 typedef struct compiler_state
   {
-  int freereg;
+  cscript_memsize freereg;
   int reg_typeinfo;
   cscript_function* fun;
   } compiler_state;
@@ -114,6 +114,32 @@ static void compile_number(cscript_context* ctxt, compiler_state* state, cscript
 static void compile_expression(cscript_context* ctxt, compiler_state* state, cscript_parsed_expression* e);
 static void compile_statement(cscript_context* ctxt, compiler_state* state, cscript_statement* stmt);
 
+static void compile_global_variable(cscript_context* ctxt, compiler_state* state, cscript_parsed_variable* v)
+  {
+  }
+
+static void compile_local_variable(cscript_context* ctxt, compiler_state* state, cscript_parsed_variable* v)
+  {
+  cscript_environment_entry entry;
+  if (!cscript_environment_find_recursive(&entry, ctxt, &v->name))
+    {
+    cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_VARIABLE_UNKNOWN, v->line_nr, v->column_nr, &v->filename, v->name.string_ptr);
+    }
+  else
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, entry.position);
+    state->reg_typeinfo = entry.variable_type;
+    }
+  }
+
+static void compile_variable(cscript_context* ctxt, compiler_state* state, cscript_parsed_variable* v)
+  {
+  if (v->name.string_ptr[0] == '$')
+    compile_global_variable(ctxt, state, v);
+  else
+    compile_local_variable(ctxt, state, v);
+  }
+
 static void compile_factor(cscript_context* ctxt, compiler_state* state, cscript_parsed_factor* f)
   {
   switch (f->type)
@@ -123,6 +149,9 @@ static void compile_factor(cscript_context* ctxt, compiler_state* state, cscript
       break;
     case cscript_factor_type_expression:
       compile_expression(ctxt, state, &f->factor.expr);
+      break;
+    case cscript_factor_type_variable:
+      compile_variable(ctxt, state, &f->factor.var);
       break;
     default:
       cscript_throw(ctxt, CSCRIPT_ERROR_NOT_IMPLEMENTED);
@@ -380,10 +409,10 @@ static void compile_expression(cscript_context* ctxt, compiler_state* state, csc
   state->reg_typeinfo = reg_a_typeinfo;
   }
 
-static void compile_comma_seperated_statements(cscript_context* ctxt, compiler_state* state, cscript_vector* stmts)
+static void compile_comma_seperated_statements(cscript_context* ctxt, compiler_state* state, cscript_comma_separated_statements* stmts)
   {
-  cscript_statement* it = cscript_vector_begin(stmts, cscript_statement);
-  cscript_statement* it_end = cscript_vector_end(stmts, cscript_statement);
+  cscript_statement* it = cscript_vector_begin(&stmts->statements, cscript_statement);
+  cscript_statement* it_end = cscript_vector_end(&stmts->statements, cscript_statement);
   for (; it != it_end; ++it)
     {
     compile_statement(ctxt, state, it);
@@ -407,7 +436,7 @@ static void compile_fixnum_single(cscript_context* ctxt, compiler_state* state, 
     if (state->reg_typeinfo == cscript_reg_typeinfo_flonum)
       {
       make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, cscript_number_type_fixnum);
-      state->reg_typeinfo == cscript_number_type_fixnum;
+      state->reg_typeinfo = cscript_number_type_fixnum;
       }
     }
   cscript_environment_entry entry;
@@ -419,6 +448,7 @@ static void compile_fixnum_single(cscript_context* ctxt, compiler_state* state, 
     {
     entry.type = CSCRIPT_ENV_TYPE_STACK;
     entry.position = state->freereg;
+    entry.variable_type = cscript_reg_typeinfo_fixnum;
     cscript_string s;
     cscript_string_copy(ctxt, &s, &fx->name);
     cscript_environment_add(ctxt, &s, entry);
@@ -492,16 +522,6 @@ cscript_function* cscript_compile_program(cscript_context* ctxt, cscript_program
     {
     compile_statement(ctxt, &state, it);
     }
+  fun->result_position = state.freereg;
   return fun;
-  }
-
-void cscript_compiled_program_destroy(cscript_context* ctxt, cscript_vector* compiled_program)
-  {
-  cscript_function** it = cscript_vector_begin(compiled_program, cscript_function*);
-  cscript_function** it_end = cscript_vector_end(compiled_program, cscript_function*);
-  for (; it != it_end; ++it)
-    {
-    cscript_function_free(ctxt, *it);
-    }
-  cscript_vector_destroy(ctxt, compiled_program);
   }

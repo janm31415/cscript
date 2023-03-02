@@ -111,7 +111,6 @@ typedef enum
 
 
 cscript_fixnum* cscript_run(cscript_context* ctxt, cscript_function* fun);
-cscript_fixnum* cscript_run_program(cscript_context* ctxt, const cscript_vector* functions);
 
 cscript_string cscript_fun_to_string(cscript_context* ctxt, cscript_function* fun);
 

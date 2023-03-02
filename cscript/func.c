@@ -9,6 +9,7 @@ cscript_function* cscript_function_new(cscript_context* ctxt)
   cscript_vector_init(ctxt, &fun->constants, cscript_fixnum);
   cscript_vector_init(ctxt, &fun->code, cscript_instruction);
   fun->number_of_constants = 0;
+  fun->result_position = 0;
   return fun;
   }
 

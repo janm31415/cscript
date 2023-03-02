@@ -11,6 +11,7 @@ typedef struct cscript_function
   cscript_vector constants;
   cscript_vector code;
   int number_of_constants;
+  cscript_memsize result_position;
   } cscript_function;
 
 
