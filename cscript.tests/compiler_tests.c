@@ -504,6 +504,11 @@ static void test_inc_dec()
   TEST_EQ_DOUBLE(7.5, f1);
   }
 
+static void test_for_loop()
+  {
+  //test_compile_flonum_aux(1225.0, "() float f = 0; for (int i = 0; i < 50; ++i) { f += i; } f;");
+  }
+
 void run_all_compiler_tests()
   {
   test_compile_fixnum();
@@ -519,4 +524,5 @@ void run_all_compiler_tests()
   test_parameter_pointer();
   test_parameter_dereference();
   test_inc_dec();
+  test_for_loop();
   }

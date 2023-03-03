@@ -1017,6 +1017,21 @@ static void postvisit_lvalueop(cscript_context* ctxt, cscript_visitor* v, cscrip
   cscript_string_destroy(ctxt, &l->filename);
   cscript_string_destroy(ctxt, &l->name);
   }
+static void postvisit_for(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_for* f)
+  {
+  UNUSED(v);
+  cscript_string_destroy(ctxt, &f->filename);
+  cscript_vector_destroy(ctxt, &f->init_cond_inc);
+  cscript_vector_destroy(ctxt, &f->statements);
+  }
+static void postvisit_if(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_if* i)
+  {
+  UNUSED(v);
+  cscript_string_destroy(ctxt, &i->filename);
+  cscript_vector_destroy(ctxt, &i->condition);
+  cscript_vector_destroy(ctxt, &i->body);
+  cscript_vector_destroy(ctxt, &i->alternative);
+  }
 static void postvisit_variable(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_variable* var)
   {
   UNUSED(v);
@@ -1039,6 +1054,8 @@ void cscript_program_destroy(cscript_context* ctxt, cscript_program* p)
   destroyer.visitor->postvisit_var = postvisit_variable;
   destroyer.visitor->postvisit_assignment = postvisit_assignment;
   destroyer.visitor->postvisit_lvalueop = postvisit_lvalueop;
+  destroyer.visitor->postvisit_for = postvisit_for;
+  destroyer.visitor->postvisit_if = postvisit_if;
   destroyer.visitor->visit_parameter = visit_parameter;
   cscript_visit_program(ctxt, destroyer.visitor, p);
 

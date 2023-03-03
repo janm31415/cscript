@@ -137,6 +137,23 @@ typedef struct cscript_comma_separated_statements
   cscript_vector statements;
   } cscript_comma_separated_statements;
 
+typedef struct cscript_parsed_for
+  {
+  cscript_vector init_cond_inc;
+  cscript_vector statements;
+  int line_nr, column_nr;
+  cscript_string filename;
+  } cscript_parsed_for;
+
+typedef struct cscript_parsed_if
+  {
+  cscript_vector condition;
+  cscript_vector body;
+  cscript_vector alternative;
+  int line_nr, column_nr;
+  cscript_string filename;
+  } cscript_parsed_if;
+
 #define cscript_statement_type_expression 0
 #define cscript_statement_type_fixnum 1
 #define cscript_statement_type_flonum 2
@@ -154,6 +171,8 @@ typedef union
   cscript_parsed_nop nop;
   cscript_comma_separated_statements stmts;
   cscript_parsed_assignment assignment;
+  cscript_parsed_for forloop;
+  cscript_parsed_if iftest;
   } cscript_parsed_statement;
 
 typedef struct cscript_statement
