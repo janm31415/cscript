@@ -29,8 +29,8 @@
 /*
 ** size and position of opcode arguments.
 */
-#define CSCRIPT_SIZE_C 8
-#define CSCRIPT_SIZE_B 10
+#define CSCRIPT_SIZE_C 9
+#define CSCRIPT_SIZE_B 9
 #define CSCRIPT_SIZE_Bx (CSCRIPT_SIZE_C + CSCRIPT_SIZE_B)
 #define CSCRIPT_SIZE_A 10
 
@@ -72,10 +72,11 @@
 
 typedef enum 
   {
-  CSCRIPT_OPCODE_MOVE,       /*  A B      R(A) := R(B)         */
+  CSCRIPT_OPCODE_MOVE,          /*  A B      R(A) := R(B)         */
+  CSCRIPT_OPCODE_MOVE_TO_ARR,   /*  A B C    R(A + R(B)) := R(C)  */
+  CSCRIPT_OPCODE_MOVE_FROM_ARR, /*  A B C    R(A) := R(B+R(C))    */
   CSCRIPT_OPCODE_LOADK,      /*  A Bx	    R(A) := Kst(Bx)      */
   CSCRIPT_OPCODE_SETFIXNUM,  /*  A sBx    R(A) := sBx        */
-  CSCRIPT_OPCODE_MOVETOP,    /*  A B      R(0)..R(B) := R(A)..R(A+B)*/
   CSCRIPT_OPCODE_CALLPRIM,   /*  A B	    R(A) := (B)(R(A),R(A+1),...) */
   CSCRIPT_OPCODE_EQTYPE,     /*  A B      if (type of R(A) == B) then pc++, else perform the following JMP instruction on the next line*/  
   CSCRIPT_OPCODE_JMP,        /*  sBx      PC += sBx					*/

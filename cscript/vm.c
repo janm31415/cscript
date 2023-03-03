@@ -57,25 +57,6 @@ static cscript_string instruction_to_string(cscript_context* ctxt, cscript_instr
     cscript_string_append_cstr(ctxt, &s, ")");
     break;
     }
-    case CSCRIPT_OPCODE_MOVETOP:
-    {
-    const int a = CSCRIPT_GETARG_A(instruc);
-    const int b = CSCRIPT_GETARG_B(instruc);
-    cscript_string_append_cstr(ctxt, &s, "MOVETOP R(0)..R(");
-    cscript_int_to_char(buffer, b);
-    cscript_string_append_cstr(ctxt, &s, buffer);
-    cscript_string_append_cstr(ctxt, &s, ") := R(");
-    cscript_int_to_char(buffer, a);
-    cscript_string_append_cstr(ctxt, &s, buffer);
-    cscript_string_append_cstr(ctxt, &s, ")..R(");
-    cscript_int_to_char(buffer, a + b);
-    cscript_string_append_cstr(ctxt, &s, buffer);
-    cscript_string_append_cstr(ctxt, &s, ")   R(");
-    cscript_int_to_char(buffer, b + 1);
-    cscript_string_append_cstr(ctxt, &s, buffer);
-    cscript_string_append_cstr(ctxt, &s, ")->type = blocking");
-    break;
-    }
     case CSCRIPT_OPCODE_LOADK:
     {
     const int a = CSCRIPT_GETARG_A(instruc);
@@ -167,14 +148,24 @@ cscript_fixnum* cscript_run(cscript_context* ctxt, cscript_function* fun)
       memcpy(((cscript_fixnum*)ctxt->stack.vector_ptr)+a, ((cscript_fixnum*)ctxt->stack.vector_ptr) + b, sizeof(cscript_fixnum));
       continue;
       }
-      case CSCRIPT_OPCODE_MOVETOP:
+      case CSCRIPT_OPCODE_MOVE_TO_ARR:
       {
       const int a = CSCRIPT_GETARG_A(instruc);
       const int b = CSCRIPT_GETARG_B(instruc);
-      for (int j = 0; j <= b; ++j)
-        {
-        memcpy(((cscript_fixnum*)ctxt->stack.vector_ptr) + j, ((cscript_fixnum*)ctxt->stack.vector_ptr) + a + j, sizeof(cscript_fixnum));
-        }
+      const int c = CSCRIPT_GETARG_C(instruc);
+      //R(A + R(B)) := R(C)
+      cscript_fixnum rb = *(((cscript_fixnum*)ctxt->stack.vector_ptr) + b);
+      memcpy(((cscript_fixnum*)ctxt->stack.vector_ptr) + a + rb, ((cscript_fixnum*)ctxt->stack.vector_ptr) + c, sizeof(cscript_fixnum));
+      continue;
+      }
+      case CSCRIPT_OPCODE_MOVE_FROM_ARR:
+      {
+      const int a = CSCRIPT_GETARG_A(instruc);
+      const int b = CSCRIPT_GETARG_B(instruc);
+      const int c = CSCRIPT_GETARG_C(instruc);
+      //R(A) := R(B+R(C))
+      cscript_fixnum rc = *(((cscript_fixnum*)ctxt->stack.vector_ptr) + c);
+      memcpy(((cscript_fixnum*)ctxt->stack.vector_ptr) + a, ((cscript_fixnum*)ctxt->stack.vector_ptr) + b + rc, sizeof(cscript_fixnum));
       continue;
       }
       case CSCRIPT_OPCODE_LOADGLOBAL:

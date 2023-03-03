@@ -187,6 +187,27 @@ static cscript_statement make_nop()
 
 cscript_parsed_expression cscript_make_expression(cscript_context* ctxt, token** token_it, token** token_it_end);
 
+cscript_parsed_variable make_variable(cscript_context* ctxt, token** token_it, token** token_it_end)
+  {
+  cscript_parsed_variable var;
+  var.column_nr = (*token_it)->column_nr;
+  var.line_nr = (*token_it)->line_nr;
+  var.filename = make_null_string(); 
+  var.dims = make_null_vector();
+  cscript_string_copy(ctxt, &var.name, &(*token_it)->value);
+  if (token_next(ctxt, token_it, token_it_end) == 0)
+    return var;
+  if ((*token_it)->type == CSCRIPT_T_LEFT_SQUARE_BRACKET) // array call
+    {
+    cscript_vector_init(ctxt, &var.dims, cscript_parsed_expression);
+    token_next(ctxt, token_it, token_it_end);
+    cscript_parsed_expression expr = cscript_make_expression(ctxt, token_it, token_it_end);
+    cscript_vector_push_back(ctxt, &var.dims, expr, cscript_parsed_expression);
+    token_require(ctxt, token_it, token_it_end, "]");
+    }
+  return var;
+  }
+
 cscript_parsed_factor cscript_make_factor(cscript_context* ctxt, token** token_it, token** token_it_end)
   {
   cscript_parsed_factor expr;
@@ -241,13 +262,22 @@ cscript_parsed_factor cscript_make_factor(cscript_context* ctxt, token** token_i
       token_next(ctxt, token_it, token_it_end);
       break;
     case CSCRIPT_T_ID:
-      expr.factor.var.column_nr = column_nr;
+    {
+    token* t = *token_it;
+    ++t;
+    if (t != *token_it_end && t->type == CSCRIPT_T_LEFT_ROUND_BRACKET)
+      {
+      cscript_assert(0); //not implemented, this should be a function call
+      }
+    else
+      {
+      expr.factor.var = make_variable(ctxt, token_it, token_it_end);
       expr.factor.var.line_nr = line_nr;
       expr.factor.var.filename = make_null_string();
-      expr.type = cscript_factor_type_variable;
-      cscript_string_copy(ctxt, &expr.factor.var.name, &(*token_it)->value);
-      token_next(ctxt, token_it, token_it_end);
-      break;
+      expr.type = cscript_factor_type_variable;      
+      }
+    break;
+    }
     default:
       cscript_assert(0); //not implemented
     }
@@ -500,7 +530,7 @@ cscript_statement make_assignment(cscript_context* ctxt, token** token_it, token
     outstmt.statement.assignment = a;
     return outstmt;
     }
-  if (current_token_type(token_it, token_it) == CSCRIPT_T_LEFT_SQUARE_BRACKET)
+  if (current_token_type(token_it, token_it_end) == CSCRIPT_T_LEFT_SQUARE_BRACKET)
     {
     if (a.derefence)
       {
@@ -517,7 +547,7 @@ cscript_statement make_assignment(cscript_context* ctxt, token** token_it, token
     cscript_vector_push_back(ctxt, &a.dims, dims_expr, cscript_parsed_expression);
     token_require(ctxt, token_it, token_it_end, "]");
     }
-  if (current_token_type(token_it, token_it) == CSCRIPT_T_LEFT_SQUARE_BRACKET)
+  if (current_token_type(token_it, token_it_end) == CSCRIPT_T_LEFT_SQUARE_BRACKET)
     {
     cscript_string* fn = NULL;
     if (ctxt->filenames_list.vector_size > 0)
@@ -526,7 +556,7 @@ cscript_statement make_assignment(cscript_context* ctxt, token** token_it, token
     outstmt.statement.assignment = a;
     return outstmt;
     }
-  if (check_token_available(ctxt, token_it, token_it_end)==0)
+  if (check_token_available(ctxt, token_it, token_it_end) == 0)
     {
     outstmt.statement.assignment = a;
     return outstmt;
@@ -684,7 +714,40 @@ cscript_statement cscript_make_statement(cscript_context* ctxt, token** token_it
         }
       else if (t->type == CSCRIPT_T_LEFT_SQUARE_BRACKET)
         {
-        printf("array assignment");
+        // find corresponding right square bracket
+        int left_squares_encountered = 1;
+        int right_squares_encountered = 0;
+        token* it = *token_it;
+        token* it_end = *token_it_end;
+        it += 2;
+        while (it != it_end && (left_squares_encountered > right_squares_encountered))
+          {
+          if (it->type == CSCRIPT_T_LEFT_SQUARE_BRACKET)
+            ++left_squares_encountered;
+          if (it->type == CSCRIPT_T_RIGHT_SQUARE_BRACKET)
+            ++right_squares_encountered;
+          ++it;
+          }
+        if (left_squares_encountered != right_squares_encountered)
+          {
+          cscript_string* fn = NULL;
+          if (ctxt->filenames_list.vector_size > 0)
+            fn = cscript_vector_back(&ctxt->filenames_list, cscript_string);
+          cscript_syntax_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, last_token.line_nr, last_token.column_nr, fn, "[,] mismatch");
+          return make_nop();
+          }
+        if (it != it_end && is_assignment(it))
+          {
+          cscript_statement stmt = make_assignment(ctxt, token_it, token_it_end);
+          return stmt;
+          }
+        else
+          {
+          cscript_statement expr;
+          expr.type = cscript_statement_type_expression;
+          expr.statement.expr = cscript_make_expression(ctxt, token_it, token_it_end);
+          return expr;
+          }
         }
       else
         {
@@ -795,11 +858,12 @@ static void postvisit_assignment(cscript_context* ctxt, cscript_visitor* v, cscr
   cscript_string_destroy(ctxt, &a->name);
   cscript_string_destroy(ctxt, &a->op);
   }
-static void visit_variable(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_variable* var)
+static void postvisit_variable(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_variable* var)
   {
   UNUSED(v);
   cscript_string_destroy(ctxt, &var->filename);
   cscript_string_destroy(ctxt, &var->name);
+  cscript_vector_destroy(ctxt, &var->dims);
   }
 void cscript_program_destroy(cscript_context* ctxt, cscript_program* p)
   {
@@ -813,7 +877,7 @@ void cscript_program_destroy(cscript_context* ctxt, cscript_program* p)
   destroyer.visitor->postvisit_expression = postvisit_expression;
   destroyer.visitor->postvisit_statements = postvisit_statements;
   destroyer.visitor->postvisit_fixnum = postvisit_fixnum;
-  destroyer.visitor->visit_var = visit_variable;
+  destroyer.visitor->postvisit_var = postvisit_variable;
   destroyer.visitor->postvisit_assignment = postvisit_assignment;
   cscript_visit_program(ctxt, destroyer.visitor, p);
 

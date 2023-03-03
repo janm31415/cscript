@@ -20,7 +20,8 @@ enum cscript_visitor_entry_type
   CSCRIPT_VISITOR_TERM_POST,
   CSCRIPT_VISITOR_RELOP_PRE,
   CSCRIPT_VISITOR_RELOP_POST,
-  CSCRIPT_VISITOR_VAR,
+  CSCRIPT_VISITOR_VAR_PRE,
+  CSCRIPT_VISITOR_VAR_POST,
   CSCRIPT_VISITOR_FIXNUM_PRE,
   CSCRIPT_VISITOR_FIXNUM_POST,
   CSCRIPT_VISITOR_FLONUM_PRE,
@@ -54,7 +55,8 @@ struct cscript_visitor
   void (*postvisit_term)(cscript_context*, cscript_visitor*, cscript_parsed_term*);
   int (*previsit_relop)(cscript_context*, cscript_visitor*, cscript_parsed_relop*);
   void (*postvisit_relop)(cscript_context*, cscript_visitor*, cscript_parsed_relop*); 
-  void (*visit_var)(cscript_context*, cscript_visitor*, cscript_parsed_variable*);
+  int (*previsit_var)(cscript_context*, cscript_visitor*, cscript_parsed_variable*);
+  void (*postvisit_var)(cscript_context*, cscript_visitor*, cscript_parsed_variable*);
   int (*previsit_fixnum)(cscript_context*, cscript_visitor*, cscript_parsed_fixnum*);
   void (*postvisit_fixnum)(cscript_context*, cscript_visitor*, cscript_parsed_fixnum*);
   int (*previsit_flonum)(cscript_context*, cscript_visitor*, cscript_parsed_flonum*);

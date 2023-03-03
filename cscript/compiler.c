@@ -6,6 +6,7 @@
 #include "primitives.h"
 #include "context.h"
 #include "environment.h"
+#include "constant.h"
 
 static void make_code_abx(cscript_context* ctxt, cscript_function* fun, cscript_opcode opc, int a, int bx)
   {
@@ -116,6 +117,7 @@ static void compile_statement(cscript_context* ctxt, compiler_state* state, cscr
 
 static void compile_global_variable(cscript_context* ctxt, compiler_state* state, cscript_parsed_variable* v)
   {
+  cscript_assert(0);
   }
 
 static void compile_local_variable(cscript_context* ctxt, compiler_state* state, cscript_parsed_variable* v)
@@ -127,8 +129,17 @@ static void compile_local_variable(cscript_context* ctxt, compiler_state* state,
     }
   else
     {
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, entry.position);
-    state->reg_typeinfo = entry.variable_type;
+    if (v->dims.vector_size > 0)
+      {
+      compile_expression(ctxt, state, cscript_vector_begin(&v->dims, cscript_parsed_expression));
+      make_code_abc(ctxt, state->fun, CSCRIPT_OPCODE_MOVE_FROM_ARR, state->freereg, entry.position, state->freereg);
+      state->reg_typeinfo = entry.variable_type;
+      }
+    else
+      {
+      make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, entry.position);
+      state->reg_typeinfo = entry.variable_type;
+      }
     }
   }
 
@@ -421,10 +432,12 @@ static void compile_comma_seperated_statements(cscript_context* ctxt, compiler_s
 
 static void compile_fixnum_array(cscript_context* ctxt, compiler_state* state, cscript_parsed_fixnum* fx)
   {
+  cscript_assert(0);
   }
 
 static void compile_fixnum_global_single(cscript_context* ctxt, compiler_state* state, cscript_parsed_fixnum* fx)
   {
+  cscript_assert(0);
   }
 
 static void compile_fixnum_single(cscript_context* ctxt, compiler_state* state, cscript_parsed_fixnum* fx)
@@ -473,7 +486,7 @@ static void compile_fixnum(cscript_context* ctxt, compiler_state* state, cscript
     {
     if (fx->name.string_ptr[0] == '$')
       {
-      compile_fixnum_global_single(ctxt, state, fx);  
+      compile_fixnum_global_single(ctxt, state, fx);
       }
     else
       {
@@ -483,12 +496,43 @@ static void compile_fixnum(cscript_context* ctxt, compiler_state* state, cscript
   }
 
 
-static void compile_flonum_array(cscript_context* ctxt, compiler_state* state, cscript_parsed_flonum* fx)
+static void compile_flonum_array(cscript_context* ctxt, compiler_state* state, cscript_parsed_flonum* fl)
   {
+  cscript_parsed_expression* dim_expr = cscript_vector_begin(&fl->dims, cscript_parsed_expression);
+  if (cscript_is_constant_expression(dim_expr) == 0)
+    {
+    cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, fl->line_nr, fl->column_nr, &fl->filename, "array dimension should be a constant");
+    return;
+    }
+  int init = fl->expr.operands.vector_size > 0;
+  if (init)
+    {
+    cscript_assert(0);
+    }
+  cscript_environment_entry entry;
+  if (cscript_environment_find(&entry, ctxt, &fl->name))
+    {
+    cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, fl->line_nr, fl->column_nr, &fl->filename, "Variable already exists");
+    }
+  else
+    {
+    entry.type = CSCRIPT_ENV_TYPE_STACK;
+    entry.position = state->freereg;
+    entry.variable_type = cscript_reg_typeinfo_flonum;
+    cscript_string s;
+    cscript_string_copy(ctxt, &s, &fl->name);
+    cscript_environment_add(ctxt, &s, entry);
+    cscript_constant_value dim_size = cscript_get_constant_value_expression(dim_expr);
+    if (dim_size.type == cscript_number_type_fixnum)
+      state->freereg += dim_size.number.fx;
+    else
+      state->freereg += (int)dim_size.number.fl;
+    }
   }
 
 static void compile_flonum_global_single(cscript_context* ctxt, compiler_state* state, cscript_parsed_flonum* fx)
   {
+  cscript_assert(0);
   }
 
 static void compile_flonum_single(cscript_context* ctxt, compiler_state* state, cscript_parsed_flonum* fl)
@@ -546,6 +590,35 @@ static void compile_flonum(cscript_context* ctxt, compiler_state* state, cscript
     }
   }
 
+static void compile_assigment_array(cscript_context* ctxt, compiler_state* state, cscript_parsed_assignment* a, cscript_environment_entry entry)
+  {
+  cscript_parsed_expression* e = cscript_vector_begin(&a->dims, cscript_parsed_expression);
+  compile_expression(ctxt, state, e);
+  if (state->reg_typeinfo != cscript_reg_typeinfo_fixnum)
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, cscript_reg_typeinfo_fixnum);
+    state->reg_typeinfo = cscript_reg_typeinfo_fixnum;
+    }
+  ++state->freereg;
+  compile_expression(ctxt, state, &a->expr);
+  if (state->reg_typeinfo != entry.variable_type)
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, entry.variable_type);
+    state->reg_typeinfo = entry.variable_type;
+    }
+  --state->freereg;
+  switch (a->op.string_ptr[0])
+    {
+    case '=':
+    {
+    make_code_abc(ctxt, state->fun, CSCRIPT_OPCODE_MOVE_TO_ARR, (int)entry.position, state->freereg, state->freereg + 1);
+    break;
+    }
+    default:
+      break;
+    }
+  }
+
 static void compile_assigment_single(cscript_context* ctxt, compiler_state* state, cscript_parsed_assignment* a, cscript_environment_entry entry)
   {
   compile_expression(ctxt, state, &a->expr);
@@ -558,37 +631,37 @@ static void compile_assigment_single(cscript_context* ctxt, compiler_state* stat
     {
     case '=':
     {
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, entry.position, state->freereg);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, (int)entry.position, state->freereg);
     break;
     }
     case '+':
     {
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg+1, entry.position);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg + 1, (int)entry.position);
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, entry.variable_type == cscript_reg_typeinfo_flonum ? CSCRIPT_ADD_FLONUM : CSCRIPT_ADD_FIXNUM);
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, entry.position, state->freereg);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, (int)entry.position, state->freereg);
     break;
     }
     case '*':
     {
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg + 1, entry.position);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg + 1, (int)entry.position);
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, entry.variable_type == cscript_reg_typeinfo_flonum ? CSCRIPT_MUL_FLONUM : CSCRIPT_MUL_FIXNUM);
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, entry.position, state->freereg);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, (int)entry.position, state->freereg);
     break;
     }
     case '-':
     {
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg + 1, state->freereg);
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, entry.position);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, (int)entry.position);
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, entry.variable_type == cscript_reg_typeinfo_flonum ? CSCRIPT_SUB_FLONUM : CSCRIPT_SUB_FIXNUM);
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, entry.position, state->freereg);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, (int)entry.position, state->freereg);
     break;
     }
     case '/':
     {
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg + 1, state->freereg);
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, entry.position);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, (int)entry.position);
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, entry.variable_type == cscript_reg_typeinfo_flonum ? CSCRIPT_DIV_FLONUM : CSCRIPT_DIV_FIXNUM);
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, entry.position, state->freereg);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, (int)entry.position, state->freereg);
     break;
     }
     default:
@@ -612,6 +685,7 @@ static void compile_assigment(cscript_context* ctxt, compiler_state* state, cscr
       {
       if (a->dims.vector_size > 0)
         {
+        compile_assigment_array(ctxt, state, a, entry);
         }
       else if (a->derefence != 0)
         {

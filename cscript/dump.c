@@ -9,11 +9,12 @@ static void visit_nop(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_
   UNUSED(e);
   }
 
-static void visit_var(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_variable* e)
+static int previsit_var(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_variable* e)
   {
   UNUSED(e);
   cscript_dump_visitor* d = (cscript_dump_visitor*)(v->impl);
   cscript_string_append_cstr(ctxt, &(d->s), e->name.string_ptr);
+  return 1;
   }
 
 static void visit_number(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_variable* e)
@@ -102,7 +103,7 @@ static void dump_factor(cscript_context* ctxt, cscript_visitor* v, cscript_parse
     }
     case cscript_factor_type_variable:
     {
-    visit_var(ctxt, v, &e->factor.var);
+    previsit_var(ctxt, v, &e->factor.var);
     break;
     }
     }
@@ -168,7 +169,7 @@ cscript_dump_visitor* cscript_dump_visitor_new(cscript_context* ctxt)
   v->visitor = cscript_visitor_new(ctxt, v);
   cscript_string_init(ctxt, &(v->s), "");
   v->visitor->visit_nop = visit_nop;
-  v->visitor->visit_var = visit_var;
+  v->visitor->previsit_var = previsit_var;
   v->visitor->previsit_expression = previsit_expression;
   v->visitor->postvisit_statement = postvisit_statement;
   return v;

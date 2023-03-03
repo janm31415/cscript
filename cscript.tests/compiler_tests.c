@@ -248,7 +248,13 @@ static void test_assigment()
   test_compile_fixnum_aux(6, "float f; int i; f = 3.1415; i = 2; i*=f;i;");
   test_compile_flonum_aux(1.5707500000000001, "float f; int i; f = 3.1415; i = 2; f/=i;f;");
   test_compile_fixnum_aux(3, "float f; int i; f = 3.1415; i = 9; i/=f;i;");
-  test_compile_fixnum_aux(4.0, "int i = 9; i/=(1+1);i;");
+  test_compile_fixnum_aux(4, "int i = 9; i/=(1+1);i;");
+  }
+
+static void test_array()
+  {
+  test_compile_flonum_aux(1.0, "float f[3];\nf[0] = 1;f[0];");
+  test_compile_flonum_aux(6.0, "float f[3];\nf[0] = 1;\nf[1] = 2;\nf[2] = 3;\nf[0]*f[1]*f[2];");
   }
 
 void run_all_compiler_tests()
@@ -260,4 +266,5 @@ void run_all_compiler_tests()
   test_compile_named_fixnum();
   test_compile_named_flonum();
   test_assigment();
+  test_array();
   }
