@@ -33,7 +33,7 @@ void cscript_environment_add(cscript_context* ctxt, cscript_string* name, cscrip
   key.value.s = *name;
   cscript_object* entry_object = cscript_map_insert(ctxt, *active_map, &key);
   //abusing cscript_object type fo fit in cscript_environment_entry, but avoiding 0
-  entry_object->type = (cast(int, entry.type) + 1) | (entry.variable_type << 2);
+  entry_object->type = (cast(int, entry.type) + 1) | (entry.register_type << 2);
   entry_object->value.fx = entry.position;
   }
 
@@ -46,7 +46,7 @@ void cscript_environment_add_to_base(cscript_context* ctxt, cscript_string* name
   key.value.s = *name;
   cscript_object* entry_object = cscript_map_insert(ctxt, *active_map, &key);
   //abusing cscript_object type fo fit in cscript_environment_entry, but avoiding 0
-  entry_object->type = (cast(int, entry.type) + 1) | (entry.variable_type << 2);
+  entry_object->type = (cast(int, entry.type) + 1) | (entry.register_type << 2);
   entry_object->value.fx = entry.position;
   }
 
@@ -60,7 +60,7 @@ int cscript_environment_find(cscript_environment_entry* entry, cscript_context* 
   if (entry_object != NULL)
     {
     entry->type = (entry_object->type&3) - 1;
-    entry->variable_type = entry_object->type >> 2;
+    entry->register_type = entry_object->type >> 2;
     entry->position = entry_object->value.fx;
     return 1;
     }
@@ -82,7 +82,7 @@ int cscript_environment_find_recursive(cscript_environment_entry* entry, cscript
     if (entry_object != NULL)
       {
       entry->type = (entry_object->type & 3) - 1;
-      entry->variable_type = entry_object->type >> 2;
+      entry->register_type = entry_object->type >> 2;
       entry->position = entry_object->value.fx;
       return 1;
       }

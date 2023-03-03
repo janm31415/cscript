@@ -65,6 +65,8 @@ static int get_k(cscript_context* ctxt, cscript_function* fun, cscript_object* k
 
 #define cscript_reg_typeinfo_fixnum 0
 #define cscript_reg_typeinfo_flonum 1
+#define cscript_reg_typeinfo_fixnum_pointer 2
+#define cscript_reg_typeinfo_flonum_pointer 3
 
 typedef struct compiler_state
   {
@@ -133,12 +135,12 @@ static void compile_local_variable(cscript_context* ctxt, compiler_state* state,
       {
       compile_expression(ctxt, state, cscript_vector_begin(&v->dims, cscript_parsed_expression));
       make_code_abc(ctxt, state->fun, CSCRIPT_OPCODE_MOVE_FROM_ARR, state->freereg, entry.position, state->freereg);
-      state->reg_typeinfo = entry.variable_type;
+      state->reg_typeinfo = entry.register_type;
       }
     else
       {
       make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, entry.position);
-      state->reg_typeinfo = entry.variable_type;
+      state->reg_typeinfo = entry.register_type;
       }
     }
   }
@@ -452,7 +454,7 @@ static void compile_fixnum_array(cscript_context* ctxt, compiler_state* state, c
     {
     entry.type = CSCRIPT_ENV_TYPE_STACK;
     entry.position = state->freereg;
-    entry.variable_type = cscript_reg_typeinfo_fixnum;
+    entry.register_type = cscript_reg_typeinfo_fixnum;
     cscript_string s;
     cscript_string_copy(ctxt, &s, &fx->name);
     cscript_environment_add(ctxt, &s, entry);
@@ -490,7 +492,7 @@ static void compile_fixnum_single(cscript_context* ctxt, compiler_state* state, 
     {
     entry.type = CSCRIPT_ENV_TYPE_STACK;
     entry.position = state->freereg;
-    entry.variable_type = cscript_reg_typeinfo_fixnum;
+    entry.register_type = cscript_reg_typeinfo_fixnum;
     cscript_string s;
     cscript_string_copy(ctxt, &s, &fx->name);
     cscript_environment_add(ctxt, &s, entry);
@@ -547,7 +549,7 @@ static void compile_flonum_array(cscript_context* ctxt, compiler_state* state, c
     {
     entry.type = CSCRIPT_ENV_TYPE_STACK;
     entry.position = state->freereg;
-    entry.variable_type = cscript_reg_typeinfo_flonum;
+    entry.register_type = cscript_reg_typeinfo_flonum;
     cscript_string s;
     cscript_string_copy(ctxt, &s, &fl->name);
     cscript_environment_add(ctxt, &s, entry);
@@ -585,7 +587,7 @@ static void compile_flonum_single(cscript_context* ctxt, compiler_state* state, 
     {
     entry.type = CSCRIPT_ENV_TYPE_STACK;
     entry.position = state->freereg;
-    entry.variable_type = cscript_reg_typeinfo_flonum;
+    entry.register_type = cscript_reg_typeinfo_flonum;
     cscript_string s;
     cscript_string_copy(ctxt, &s, &fl->name);
     cscript_environment_add(ctxt, &s, entry);
@@ -630,10 +632,10 @@ static void compile_assigment_array(cscript_context* ctxt, compiler_state* state
     }
   state->freereg+=2;
   compile_expression(ctxt, state, &a->expr);
-  if (state->reg_typeinfo != entry.variable_type)
+  if (state->reg_typeinfo != entry.register_type)
     {
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, entry.variable_type);
-    state->reg_typeinfo = entry.variable_type;
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, entry.register_type);
+    state->reg_typeinfo = entry.register_type;
     }
   state->freereg-=2;
   switch (a->op.string_ptr[0])
@@ -646,28 +648,28 @@ static void compile_assigment_array(cscript_context* ctxt, compiler_state* state
     case '+':
     {
     make_code_abc(ctxt, state->fun, CSCRIPT_OPCODE_MOVE_FROM_ARR, state->freereg + 1, (int)entry.position, state->freereg);
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg+1, entry.variable_type == cscript_reg_typeinfo_flonum ? CSCRIPT_ADD_FLONUM : CSCRIPT_ADD_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg+1, entry.register_type == cscript_reg_typeinfo_flonum ? CSCRIPT_ADD_FLONUM : CSCRIPT_ADD_FIXNUM);
     make_code_abc(ctxt, state->fun, CSCRIPT_OPCODE_MOVE_TO_ARR, (int)entry.position, state->freereg, state->freereg + 1);
     break;
     }
     case '-':
     {
     make_code_abc(ctxt, state->fun, CSCRIPT_OPCODE_MOVE_FROM_ARR, state->freereg + 1, (int)entry.position, state->freereg);
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, entry.variable_type == cscript_reg_typeinfo_flonum ? CSCRIPT_SUB_FLONUM : CSCRIPT_SUB_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, entry.register_type == cscript_reg_typeinfo_flonum ? CSCRIPT_SUB_FLONUM : CSCRIPT_SUB_FIXNUM);
     make_code_abc(ctxt, state->fun, CSCRIPT_OPCODE_MOVE_TO_ARR, (int)entry.position, state->freereg, state->freereg + 1);
     break;
     }
     case '*':
     {
     make_code_abc(ctxt, state->fun, CSCRIPT_OPCODE_MOVE_FROM_ARR, state->freereg + 1, (int)entry.position, state->freereg);
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, entry.variable_type == cscript_reg_typeinfo_flonum ? CSCRIPT_MUL_FLONUM : CSCRIPT_MUL_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, entry.register_type == cscript_reg_typeinfo_flonum ? CSCRIPT_MUL_FLONUM : CSCRIPT_MUL_FIXNUM);
     make_code_abc(ctxt, state->fun, CSCRIPT_OPCODE_MOVE_TO_ARR, (int)entry.position, state->freereg, state->freereg + 1);
     break;
     }
     case '/':
     {
     make_code_abc(ctxt, state->fun, CSCRIPT_OPCODE_MOVE_FROM_ARR, state->freereg + 1, (int)entry.position, state->freereg);
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, entry.variable_type == cscript_reg_typeinfo_flonum ? CSCRIPT_DIV_FLONUM : CSCRIPT_DIV_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, entry.register_type == cscript_reg_typeinfo_flonum ? CSCRIPT_DIV_FLONUM : CSCRIPT_DIV_FIXNUM);
     make_code_abc(ctxt, state->fun, CSCRIPT_OPCODE_MOVE_TO_ARR, (int)entry.position, state->freereg, state->freereg + 1);
     break;
     }
@@ -681,10 +683,10 @@ static void compile_assigment_single(cscript_context* ctxt, compiler_state* stat
   ++state->freereg;
   compile_expression(ctxt, state, &a->expr);
   --state->freereg;
-  if (state->reg_typeinfo != entry.variable_type)
+  if (state->reg_typeinfo != entry.register_type)
     {
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg+1, entry.variable_type);
-    state->reg_typeinfo = entry.variable_type;
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg+1, entry.register_type);
+    state->reg_typeinfo = entry.register_type;
     }
   switch (a->op.string_ptr[0])
     {
@@ -696,28 +698,28 @@ static void compile_assigment_single(cscript_context* ctxt, compiler_state* stat
     case '+':
     {
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, (int)entry.position);
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, entry.variable_type == cscript_reg_typeinfo_flonum ? CSCRIPT_ADD_FLONUM : CSCRIPT_ADD_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, entry.register_type == cscript_reg_typeinfo_flonum ? CSCRIPT_ADD_FLONUM : CSCRIPT_ADD_FIXNUM);
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, (int)entry.position, state->freereg);
     break;
     }
     case '*':
     {
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, (int)entry.position);
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, entry.variable_type == cscript_reg_typeinfo_flonum ? CSCRIPT_MUL_FLONUM : CSCRIPT_MUL_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, entry.register_type == cscript_reg_typeinfo_flonum ? CSCRIPT_MUL_FLONUM : CSCRIPT_MUL_FIXNUM);
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, (int)entry.position, state->freereg);
     break;
     }
     case '-':
     {
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, (int)entry.position);
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, entry.variable_type == cscript_reg_typeinfo_flonum ? CSCRIPT_SUB_FLONUM : CSCRIPT_SUB_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, entry.register_type == cscript_reg_typeinfo_flonum ? CSCRIPT_SUB_FLONUM : CSCRIPT_SUB_FIXNUM);
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, (int)entry.position, state->freereg);
     break;
     }
     case '/':
     {
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, (int)entry.position);
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, entry.variable_type == cscript_reg_typeinfo_flonum ? CSCRIPT_DIV_FLONUM : CSCRIPT_DIV_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, entry.register_type == cscript_reg_typeinfo_flonum ? CSCRIPT_DIV_FLONUM : CSCRIPT_DIV_FIXNUM);
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, (int)entry.position, state->freereg);
     break;
     }
@@ -781,20 +783,46 @@ static void compile_statement(cscript_context* ctxt, compiler_state* state, cscr
     }
   }
 
-cscript_function* cscript_compile_statement(cscript_context* ctxt, cscript_statement* stmt)
+static void compile_parameter(cscript_context* ctxt, cscript_parameter* p, cscript_fixnum pos)
   {
-  cscript_compile_errors_clear(ctxt);
-  cscript_function* fun = cscript_function_new(ctxt);
-  compiler_state state = init_compiler_state(0, cscript_reg_typeinfo_fixnum, fun);
-  compile_statement(ctxt, &state, stmt);
-  return fun;
+  cscript_environment_entry entry;
+  entry.type = CSCRIPT_ENV_TYPE_STACK;
+  entry.position = pos;
+  switch (p->type)
+    {
+    case cscript_parameter_type_fixnum:
+      entry.register_type = cscript_reg_typeinfo_fixnum;
+      break;
+    case cscript_parameter_type_flonum:
+      entry.register_type = cscript_reg_typeinfo_flonum;
+      break;
+    case cscript_parameter_type_fixnum_pointer:
+      entry.register_type = cscript_reg_typeinfo_fixnum_pointer;
+      break;
+    case cscript_parameter_type_flonum_pointer:
+      entry.register_type = cscript_reg_typeinfo_flonum_pointer;
+      break;
+    default:
+      cscript_assert(0);
+      break;
+    }
+  cscript_string s;
+  cscript_string_copy(ctxt, &s, &p->name);
+  cscript_environment_add(ctxt, &s, entry);  
   }
 
 cscript_function* cscript_compile_program(cscript_context* ctxt, cscript_program* prog)
   {
   cscript_compile_errors_clear(ctxt);
   cscript_function* fun = cscript_function_new(ctxt);
-  compiler_state state = init_compiler_state(0, cscript_reg_typeinfo_fixnum, fun);
+  cscript_parameter* pit = cscript_vector_begin(&prog->parameters, cscript_parameter);
+  cscript_parameter* pit_end = cscript_vector_end(&prog->parameters, cscript_parameter);
+  cscript_fixnum parameter_pos = 0;
+  for (; pit != pit_end; ++pit, ++parameter_pos)
+    {
+    compile_parameter(ctxt, pit, parameter_pos);
+    }
+  compiler_state state = init_compiler_state(prog->parameters.vector_size, cscript_reg_typeinfo_fixnum, fun);
   cscript_statement* it = cscript_vector_begin(&prog->statements, cscript_statement);
   cscript_statement* it_end = cscript_vector_end(&prog->statements, cscript_statement);
   for (; it != it_end; ++it)

@@ -17,7 +17,7 @@ typedef struct cscript_environment_entry
   {
   cscript_environment_type type;
   cscript_fixnum position;
-  int variable_type;
+  int register_type;
   } cscript_environment_entry;
 
 void cscript_environment_init(cscript_context* ctxt);

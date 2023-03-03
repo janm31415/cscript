@@ -5,7 +5,6 @@
 #include "parser.h"
 #include "vector.h"
 
-CSCRIPT_API cscript_function* cscript_compile_statement(cscript_context* ctxt, cscript_statement* stmt);
 CSCRIPT_API cscript_function* cscript_compile_program(cscript_context* ctxt, cscript_program* prog);
 
 #endif //CSCRIPT_COMPILER_H
