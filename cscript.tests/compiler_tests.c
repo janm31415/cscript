@@ -430,8 +430,27 @@ static void test_parameter_dereference()
   pars_list[0] = &i;
   test_compile_fixnum_pars_aux(25, "(int* i) *i * *i;", 1, pars_list);
   pars_list[0] = &f;
-  //test_compile_flonum_pars_aux(0.0, "(float* f) *f = 1.2; 0.0;", 1, pars_list);
-  //TEST_EQ_DOUBLE(1.2, f);
+  test_compile_flonum_pars_aux(0.0, "(float* f) *f += 1.2; 0.0;", 1, pars_list);
+  TEST_EQ_DOUBLE(3.14 + 1.2, f);
+  test_compile_flonum_pars_aux(0.0, "(float* f) *f = 1.2; 0.0;", 1, pars_list);
+  TEST_EQ_DOUBLE(1.2, f);
+  test_compile_flonum_pars_aux(0.0, "(float* f) *f -= 1.4; 0.0;", 1, pars_list);
+  TEST_EQ_DOUBLE(1.2-1.4, f);
+  test_compile_flonum_pars_aux(0.0, "(float* f) *f *= 2.8; 0.0;", 1, pars_list);
+  TEST_EQ_DOUBLE((1.2 - 1.4)*2.8, f);
+  test_compile_flonum_pars_aux(0.0, "(float* f) *f /= 2.5; 0.0;", 1, pars_list);
+  TEST_EQ_DOUBLE((1.2 - 1.4) * 2.8 / 2.5, f);
+  pars_list[0] = &i;
+  test_compile_fixnum_pars_aux(0, "(int* i) *i += 2; 0;", 1, pars_list);
+  TEST_EQ_INT(7, i);
+  test_compile_fixnum_pars_aux(0, "(int* i) *i = 2; 0;", 1, pars_list);
+  TEST_EQ_INT(2, i);
+  test_compile_fixnum_pars_aux(0, "(int* i) *i -= 9; 0;", 1, pars_list);
+  TEST_EQ_INT(-7, i);
+  test_compile_fixnum_pars_aux(0, "(int* i) *i *= 9; 0;", 1, pars_list);
+  TEST_EQ_INT(-63, i);
+  test_compile_fixnum_pars_aux(0, "(int* i) *i /= 6; 0;", 1, pars_list);
+  TEST_EQ_INT(-10, i);
   }
 
 void run_all_compiler_tests()

@@ -749,6 +749,64 @@ static void compile_assigment_pointer(cscript_context* ctxt, compiler_state* sta
     }
   }
 
+
+static void compile_assigment_dereference(cscript_context* ctxt, compiler_state* state, cscript_parsed_assignment* a, cscript_environment_entry entry)
+  {
+  make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, entry.position);
+  /*
+  freereg + 0: address
+  freereg + 2: expr
+  */
+  state->freereg += 2;
+  compile_expression(ctxt, state, &a->expr);
+
+  if (state->reg_typeinfo != (entry.register_type & 1))
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, (entry.register_type & 1));
+    state->reg_typeinfo = (entry.register_type & 1);
+    }
+  state->freereg -= 2;
+
+  switch (a->op.string_ptr[0])
+    {
+    case '=':
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_STORE_MEMORY, state->freereg, state->freereg + 2);
+    break;
+    }
+    case '+':
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_LOAD_MEMORY, state->freereg + 1, state->freereg);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, (entry.register_type & 1) == cscript_reg_typeinfo_flonum ? CSCRIPT_ADD_FLONUM : CSCRIPT_ADD_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_STORE_MEMORY, state->freereg, state->freereg + 1);
+    break;
+    }
+    case '-':
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_LOAD_MEMORY, state->freereg + 1, state->freereg);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, (entry.register_type & 1) == cscript_reg_typeinfo_flonum ? CSCRIPT_SUB_FLONUM : CSCRIPT_SUB_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_STORE_MEMORY, state->freereg, state->freereg + 1);
+    break;
+    }
+    case '*':
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_LOAD_MEMORY, state->freereg + 1, state->freereg);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, (entry.register_type & 1) == cscript_reg_typeinfo_flonum ? CSCRIPT_MUL_FLONUM : CSCRIPT_MUL_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_STORE_MEMORY, state->freereg, state->freereg + 1);
+    break;
+    }
+    case '/':
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_LOAD_MEMORY, state->freereg + 1, state->freereg);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, (entry.register_type & 1) == cscript_reg_typeinfo_flonum ? CSCRIPT_DIV_FLONUM : CSCRIPT_DIV_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_STORE_MEMORY, state->freereg, state->freereg + 1);
+    break;
+    }
+    default:
+      break;
+    }
+  }
+
 static void compile_assigment_array(cscript_context* ctxt, compiler_state* state, cscript_parsed_assignment* a, cscript_environment_entry entry)
   {
   cscript_parsed_expression* e = cscript_vector_begin(&a->dims, cscript_parsed_expression);
@@ -891,6 +949,7 @@ static void compile_assigment(cscript_context* ctxt, compiler_state* state, cscr
         }
       else if (a->derefence != 0)
         {
+        compile_assigment_dereference(ctxt, state, a, entry);
         }
       else
         {

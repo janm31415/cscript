@@ -517,7 +517,7 @@ cscript_statement make_assignment(cscript_context* ctxt, token** token_it, token
   cscript_parsed_assignment a;
   a.line_nr = (*token_it)->line_nr;
   a.column_nr = (*token_it)->column_nr;
-  a.derefence = current_token_type(token_it, token_it) == CSCRIPT_T_MUL ? 1 : 0;
+  a.derefence = current_token_type(token_it, token_it_end) == CSCRIPT_T_MUL ? 1 : 0;
   a.name = make_null_string();
   a.filename = make_null_string();
   a.dims = make_null_vector();
@@ -864,6 +864,24 @@ cscript_statement cscript_make_statement(cscript_context* ctxt, token** token_it
       expr.statement.expr = cscript_make_expression(ctxt, token_it, token_it_end);
       return expr;
       }
+    }
+    case CSCRIPT_T_MUL:
+    {
+    uint64_t dist = *token_it_end - *token_it;
+    if (dist >= 4)
+      {
+      token* t = *token_it;
+      t+=2;
+      if (is_assignment(t))
+        {
+        cscript_statement stmt = make_assignment(ctxt, token_it, token_it_end);
+        return stmt;
+        }
+      }
+    cscript_statement expr;
+    expr.type = cscript_statement_type_expression;
+    expr.statement.expr = cscript_make_expression(ctxt, token_it, token_it_end);
+    return expr;
     }
     default:
     {
