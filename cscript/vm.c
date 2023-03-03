@@ -168,6 +168,16 @@ cscript_fixnum* cscript_run(cscript_context* ctxt, cscript_function* fun)
       memcpy(((cscript_fixnum*)ctxt->stack.vector_ptr) + a, ((cscript_fixnum*)ctxt->stack.vector_ptr) + b + rc, sizeof(cscript_fixnum));
       continue;
       }
+      case CSCRIPT_OPCODE_MOVE_DEREF:
+      {
+      const int a = CSCRIPT_GETARG_A(instruc);
+      const int b = CSCRIPT_GETARG_B(instruc);
+      cscript_fixnum ra = *(((cscript_fixnum*)ctxt->stack.vector_ptr) + a);
+      cscript_fixnum rb = *(((cscript_fixnum*)ctxt->stack.vector_ptr) + b);
+      cscript_fixnum* ptr_ra = cast(cscript_fixnum*, ra);
+      *ptr_ra = rb;
+      continue;
+      }
       case CSCRIPT_OPCODE_LOADGLOBAL:
       {
       const int a = CSCRIPT_GETARG_A(instruc);
@@ -210,12 +220,12 @@ cscript_fixnum* cscript_run(cscript_context* ctxt, cscript_function* fun)
       {
       const int a = CSCRIPT_GETARG_A(instruc);
       const int b = CSCRIPT_GETARG_B(instruc);
-      if (b == 1)
+      if (b == cscript_number_type_flonum)
         {
         cscript_flonum ra = cast(cscript_flonum, *cscript_vector_at(&ctxt->stack, a, cscript_fixnum));
         memcpy(cscript_vector_at(&ctxt->stack, a, cscript_fixnum), &ra, sizeof(cscript_fixnum));
         }
-      else
+      else if (b == cscript_number_type_fixnum)
         {
         cscript_fixnum ra = cast(cscript_fixnum, *cscript_vector_at(&ctxt->stack, a, cscript_flonum));
         memcpy(cscript_vector_at(&ctxt->stack, a, cscript_fixnum), &ra, sizeof(cscript_fixnum));

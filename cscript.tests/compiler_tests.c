@@ -338,6 +338,18 @@ static void test_parameter()
   test_compile_flonum_pars_aux(1.0 + 1.5 + 7.0 + 10.4 + 19.0 + 3.14, "(int i1, float f2, int i3, float f4, int i5, float f6) i1 + f2 + i3 + f4 + i5 + f6; ", 6, pars_list);
   }
 
+static void test_parameter_pointer()
+  {
+  cscript_fixnum i[3] = {9999, 9999, 9999};
+  cscript_flonum f[3] = {9999.0, 9999.0, 9999.0};
+  cscript_fixnum pars_list[6] = { 0, 0, 0, 0, 0, 0 };
+  pars_list[0] = &i[0];
+  test_compile_fixnum_pars_aux(15, "(int* i) i[0] = 0; i[1] = 1; i[2] = 2; 15;", 1, pars_list);
+  TEST_EQ_INT(0, i[0]);
+  TEST_EQ_INT(1, i[1]);
+  TEST_EQ_INT(2, i[2]);
+  }
+
 void run_all_compiler_tests()
   {
   test_compile_fixnum();
@@ -350,4 +362,5 @@ void run_all_compiler_tests()
   test_array();
   test_comment();
   test_parameter();
+  test_parameter_pointer();
   }

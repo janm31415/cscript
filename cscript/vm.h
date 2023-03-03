@@ -75,6 +75,7 @@ typedef enum
   CSCRIPT_OPCODE_MOVE,          /*  A B      R(A) := R(B)         */
   CSCRIPT_OPCODE_MOVE_TO_ARR,   /*  A B C    R(A + R(B)) := R(C)  */
   CSCRIPT_OPCODE_MOVE_FROM_ARR, /*  A B C    R(A) := R(B+R(C))    */
+  CSCRIPT_OPCODE_MOVE_DEREF,     /*  A B     *R(A) := R(B)        */
   CSCRIPT_OPCODE_LOADK,      /*  A Bx	    R(A) := Kst(Bx)      */
   CSCRIPT_OPCODE_SETFIXNUM,  /*  A sBx    R(A) := sBx        */
   CSCRIPT_OPCODE_CALLPRIM,   /*  A B	    R(A) := (B)(R(A),R(A+1),...) */

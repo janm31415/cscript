@@ -621,6 +621,62 @@ static void compile_flonum(cscript_context* ctxt, compiler_state* state, cscript
     }
   }
 
+static void compile_assigment_pointer(cscript_context* ctxt, compiler_state* state, cscript_parsed_assignment* a, cscript_environment_entry entry)
+  {
+  /*
+  freereg + 0: dim
+  */
+  cscript_parsed_expression* e = cscript_vector_begin(&a->dims, cscript_parsed_expression);
+  compile_expression(ctxt, state, e);
+  if (state->reg_typeinfo != cscript_reg_typeinfo_fixnum)
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, cscript_reg_typeinfo_fixnum);
+    state->reg_typeinfo = cscript_reg_typeinfo_fixnum;
+    }
+  /*
+  freereg + 0: dim*8
+  freereg + 1: 8
+  */
+  make_code_asbx(ctxt, state->fun, CSCRIPT_OPCODE_SETFIXNUM, state->freereg+1, 8);
+  make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, CSCRIPT_MUL_FIXNUM);
+  /*
+  freereg + 0: dim*8
+  freereg + 1: address
+  */
+  make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg+1, entry.position);
+  /*
+  freereg + 0: dim*8 + address
+  freereg + 1: address
+  */
+  make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, CSCRIPT_ADD_FIXNUM);
+
+  /*
+  freereg + 0: dim*8 + address
+  freereg + 1: address
+  freereg + 2: expr
+  */
+  state->freereg += 2;
+  compile_expression(ctxt, state, &a->expr);
+
+  if (state->reg_typeinfo != (entry.register_type&1))
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, (entry.register_type&1));
+    state->reg_typeinfo = (entry.register_type&1);
+    }
+  state->freereg -= 2;
+
+  switch (a->op.string_ptr[0])
+    {
+    case '=':
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE_DEREF, state->freereg, state->freereg + 2);
+    break;
+    }
+    default:
+      break;
+    }
+  }
+
 static void compile_assigment_array(cscript_context* ctxt, compiler_state* state, cscript_parsed_assignment* a, cscript_environment_entry entry)
   {
   cscript_parsed_expression* e = cscript_vector_begin(&a->dims, cscript_parsed_expression);
@@ -630,14 +686,18 @@ static void compile_assigment_array(cscript_context* ctxt, compiler_state* state
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, cscript_reg_typeinfo_fixnum);
     state->reg_typeinfo = cscript_reg_typeinfo_fixnum;
     }
-  state->freereg+=2;
+  state->freereg += 2;
   compile_expression(ctxt, state, &a->expr);
+  if (entry.register_type > cscript_reg_typeinfo_flonum)
+    {
+    cscript_assert(0);
+    }
   if (state->reg_typeinfo != entry.register_type)
     {
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, entry.register_type);
     state->reg_typeinfo = entry.register_type;
     }
-  state->freereg-=2;
+  state->freereg -= 2;
   switch (a->op.string_ptr[0])
     {
     case '=':
@@ -648,7 +708,7 @@ static void compile_assigment_array(cscript_context* ctxt, compiler_state* state
     case '+':
     {
     make_code_abc(ctxt, state->fun, CSCRIPT_OPCODE_MOVE_FROM_ARR, state->freereg + 1, (int)entry.position, state->freereg);
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg+1, entry.register_type == cscript_reg_typeinfo_flonum ? CSCRIPT_ADD_FLONUM : CSCRIPT_ADD_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, entry.register_type == cscript_reg_typeinfo_flonum ? CSCRIPT_ADD_FLONUM : CSCRIPT_ADD_FIXNUM);
     make_code_abc(ctxt, state->fun, CSCRIPT_OPCODE_MOVE_TO_ARR, (int)entry.position, state->freereg, state->freereg + 1);
     break;
     }
@@ -683,16 +743,20 @@ static void compile_assigment_single(cscript_context* ctxt, compiler_state* stat
   ++state->freereg;
   compile_expression(ctxt, state, &a->expr);
   --state->freereg;
+  if (entry.register_type > cscript_reg_typeinfo_flonum)
+    {
+    cscript_assert(0);
+    }
   if (state->reg_typeinfo != entry.register_type)
     {
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg+1, entry.register_type);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg + 1, entry.register_type);
     state->reg_typeinfo = entry.register_type;
     }
   switch (a->op.string_ptr[0])
     {
     case '=':
     {
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, (int)entry.position, state->freereg+1);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, (int)entry.position, state->freereg + 1);
     break;
     }
     case '+':
@@ -744,7 +808,14 @@ static void compile_assigment(cscript_context* ctxt, compiler_state* state, cscr
       {
       if (a->dims.vector_size > 0)
         {
-        compile_assigment_array(ctxt, state, a, entry);
+        if (entry.register_type > cscript_reg_typeinfo_flonum)
+          {
+          compile_assigment_pointer(ctxt, state, a, entry);
+          }
+        else
+          {
+          compile_assigment_array(ctxt, state, a, entry);
+          }
         }
       else if (a->derefence != 0)
         {
@@ -808,7 +879,7 @@ static void compile_parameter(cscript_context* ctxt, cscript_parameter* p, cscri
     }
   cscript_string s;
   cscript_string_copy(ctxt, &s, &p->name);
-  cscript_environment_add(ctxt, &s, entry);  
+  cscript_environment_add(ctxt, &s, entry);
   }
 
 cscript_function* cscript_compile_program(cscript_context* ctxt, cscript_program* prog)
