@@ -561,6 +561,36 @@ static void compile_assigment_single(cscript_context* ctxt, compiler_state* stat
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, entry.position, state->freereg);
     break;
     }
+    case '+':
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg+1, entry.position);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, entry.variable_type == cscript_reg_typeinfo_flonum ? CSCRIPT_ADD_FLONUM : CSCRIPT_ADD_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, entry.position, state->freereg);
+    break;
+    }
+    case '*':
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg + 1, entry.position);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, entry.variable_type == cscript_reg_typeinfo_flonum ? CSCRIPT_MUL_FLONUM : CSCRIPT_MUL_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, entry.position, state->freereg);
+    break;
+    }
+    case '-':
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg + 1, state->freereg);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, entry.position);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, entry.variable_type == cscript_reg_typeinfo_flonum ? CSCRIPT_SUB_FLONUM : CSCRIPT_SUB_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, entry.position, state->freereg);
+    break;
+    }
+    case '/':
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg + 1, state->freereg);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, entry.position);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, entry.variable_type == cscript_reg_typeinfo_flonum ? CSCRIPT_DIV_FLONUM : CSCRIPT_DIV_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, entry.position, state->freereg);
+    break;
+    }
     default:
       break;
     }

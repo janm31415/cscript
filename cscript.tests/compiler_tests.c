@@ -239,7 +239,16 @@ static void test_compile_named_flonum()
 
 static void test_assigment()
   {
-  test_compile_flonum_aux(3.1415 + 1.0, "float f; int i; f = 3.1415; i = 1; f+i;");
+  test_compile_flonum_aux(4.1415000000000006, "float f; int i; f = 3.1415; i = 1; f+i;");
+  test_compile_flonum_aux(4.1415000000000006, "float f; int i; f = 3.1415; i = 1; f+=i;f;");
+  test_compile_fixnum_aux(4, "float f; int i; f = 3.1415; i = 1; i+=f;i;");
+  test_compile_flonum_aux(2.1415, "float f; int i; f = 3.1415; i = 1; f-=i;f;");
+  test_compile_fixnum_aux(-2, "float f; int i; f = 3.1415; i = 1; i-=f;i;");
+  test_compile_flonum_aux(6.2830, "float f; int i; f = 3.1415; i = 2; f*=i;f;");
+  test_compile_fixnum_aux(6, "float f; int i; f = 3.1415; i = 2; i*=f;i;");
+  test_compile_flonum_aux(1.5707500000000001, "float f; int i; f = 3.1415; i = 2; f/=i;f;");
+  test_compile_fixnum_aux(3, "float f; int i; f = 3.1415; i = 9; i/=f;i;");
+  test_compile_fixnum_aux(4.0, "int i = 9; i/=(1+1);i;");
   }
 
 void run_all_compiler_tests()
