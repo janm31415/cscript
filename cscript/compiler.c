@@ -554,7 +554,16 @@ static void compile_assigment_single(cscript_context* ctxt, compiler_state* stat
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, entry.variable_type);
     state->reg_typeinfo = entry.variable_type;
     }
-
+  switch (a->op.string_ptr[0])
+    {
+    case '=':
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, entry.position, state->freereg);
+    break;
+    }
+    default:
+      break;
+    }
   }
 
 static void compile_assigment(cscript_context* ctxt, compiler_state* state, cscript_parsed_assignment* a)
