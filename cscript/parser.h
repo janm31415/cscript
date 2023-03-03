@@ -85,6 +85,17 @@ typedef struct cscript_parsed_flonum
   cscript_string filename;
   } cscript_parsed_flonum;
 
+typedef struct cscript_parsed_assignment
+  {
+  cscript_string name;
+  cscript_string op;
+  cscript_parsed_expression expr;
+  cscript_vector dims; //  vector of type cscript_parsed_expression
+  int derefence;
+  int line_nr, column_nr;
+  cscript_string filename;
+  } cscript_parsed_assignment;
+
 #define cscript_factor_type_number 0
 #define cscript_factor_type_expression 1
 #define cscript_factor_type_variable 2
@@ -121,6 +132,7 @@ typedef struct cscript_comma_separated_statements
 #define cscript_statement_type_if 4
 #define cscript_statement_type_for 5
 #define cscript_statement_type_comma_separated 6
+#define cscript_statement_type_assignment 7
 
 typedef union
   {
@@ -129,6 +141,7 @@ typedef union
   cscript_parsed_flonum flonum;
   cscript_parsed_nop nop;
   cscript_comma_separated_statements stmts;
+  cscript_parsed_assignment assignment;
   } cscript_parsed_statement;
 
 typedef struct cscript_statement

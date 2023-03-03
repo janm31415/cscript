@@ -546,6 +546,45 @@ static void compile_flonum(cscript_context* ctxt, compiler_state* state, cscript
     }
   }
 
+static void compile_assigment_single(cscript_context* ctxt, compiler_state* state, cscript_parsed_assignment* a, cscript_environment_entry entry)
+  {
+  compile_expression(ctxt, state, &a->expr);
+  if (state->reg_typeinfo != entry.variable_type)
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, entry.variable_type);
+    state->reg_typeinfo = entry.variable_type;
+    }
+
+  }
+
+static void compile_assigment(cscript_context* ctxt, compiler_state* state, cscript_parsed_assignment* a)
+  {
+  if (a->name.string_ptr[0] == '$')
+    {
+    }
+  else
+    {
+    cscript_environment_entry entry;
+    if (!cscript_environment_find_recursive(&entry, ctxt, &a->name))
+      {
+      cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_VARIABLE_UNKNOWN, a->line_nr, a->column_nr, &a->filename, a->name.string_ptr);
+      }
+    else
+      {
+      if (a->dims.vector_size > 0)
+        {
+        }
+      else if (a->derefence != 0)
+        {
+        }
+      else
+        {
+        compile_assigment_single(ctxt, state, a, entry);
+        }
+      }
+    }
+  }
+
 static void compile_statement(cscript_context* ctxt, compiler_state* state, cscript_statement* stmt)
   {
   switch (stmt->type)
@@ -563,6 +602,9 @@ static void compile_statement(cscript_context* ctxt, compiler_state* state, cscr
       compile_comma_seperated_statements(ctxt, state, &stmt->statement.stmts);
       break;
     case cscript_statement_type_nop:
+      break;
+    case cscript_statement_type_assignment:
+      compile_assigment(ctxt, state, &stmt->statement.assignment);
       break;
     default:
       cscript_throw(ctxt, CSCRIPT_ERROR_NOT_IMPLEMENTED);

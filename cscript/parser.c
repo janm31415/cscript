@@ -8,6 +8,15 @@
 
 #define CSCRIPT_MAX_SYNTAX_ERRORS 5
 
+static cscript_vector make_null_vector()
+  {
+  cscript_vector v;
+  v.element_size = 0;
+  v.vector_capacity = 0;
+  v.vector_ptr = 0;
+  v.vector_size = 0;
+  return v;
+  }
 
 static cscript_string make_filename(cscript_context* ctxt)
   {
@@ -21,6 +30,17 @@ static cscript_string make_filename(cscript_context* ctxt)
     cscript_string_init(ctxt, &s, "");
     }
   return s;
+  }
+
+static cscript_parsed_expression make_null_expr()
+  {
+  cscript_parsed_expression e;
+  e.column_nr = -1;
+  e.line_nr = -1;
+  e.filename = make_null_string();
+  e.fops = make_null_vector();
+  e.operands = make_null_vector();
+  return e;
   }
 
 static token make_bad_token()
@@ -52,6 +72,11 @@ static int token_next(cscript_context* ctxt, token** token_it, token** token_it_
   last_token = (**token_it);
   ++(*token_it);
   return 1;
+  }
+
+static int is_assignment(token* t)
+  {
+  return t->type >= CSCRIPT_T_ASSIGNMENT && t->type <= CSCRIPT_T_ASSIGNMENT_DIV ? 1 : 0;
   }
 
 static int check_token_available(cscript_context* ctxt, token** token_it, token** token_it_end)
@@ -164,7 +189,7 @@ cscript_parsed_expression cscript_make_expression(cscript_context* ctxt, token**
 
 cscript_parsed_factor cscript_make_factor(cscript_context* ctxt, token** token_it, token** token_it_end)
   {
-  cscript_parsed_factor expr;  
+  cscript_parsed_factor expr;
   expr.sign = '+';
   int line_nr = (*token_it)->line_nr;
   int column_nr = (*token_it)->column_nr;
@@ -335,13 +360,7 @@ cscript_statement make_int(cscript_context* ctxt, token** token_it, token** toke
     i.line_nr = (*token_it)->line_nr;
     i.column_nr = (*token_it)->column_nr;
     i.filename = make_null_string();
-    i.expr.filename = make_null_string();
-    i.expr.fops.vector_ptr = 0;
-    i.expr.fops.vector_capacity = 0;
-    i.expr.fops.vector_size = 0;
-    i.expr.operands.vector_ptr = 0;
-    i.expr.operands.vector_capacity = 0;
-    i.expr.operands.vector_size = 0;
+    i.expr = make_null_expr();
     cscript_vector_init(ctxt, &i.dims, cscript_parsed_expression);
     if (first_time)
       token_require(ctxt, token_it, token_it_end, "int");
@@ -404,13 +423,7 @@ cscript_statement make_float(cscript_context* ctxt, token** token_it, token** to
     f.line_nr = (*token_it)->line_nr;
     f.column_nr = (*token_it)->column_nr;
     f.filename = make_null_string();
-    f.expr.filename = make_null_string();
-    f.expr.fops.vector_ptr = 0;
-    f.expr.fops.vector_capacity = 0;
-    f.expr.fops.vector_size = 0;
-    f.expr.operands.vector_ptr = 0;
-    f.expr.operands.vector_capacity = 0;
-    f.expr.operands.vector_size = 0;
+    f.expr = make_null_expr();
     cscript_vector_init(ctxt, &f.dims, cscript_parsed_expression);
     if (first_time)
       token_require(ctxt, token_it, token_it_end, "float");
@@ -457,6 +470,71 @@ cscript_statement make_float(cscript_context* ctxt, token** token_it, token** to
   cscript_statement outstmt;
   outstmt.type = cscript_statement_type_comma_separated;
   outstmt.statement.stmts = stmts;
+  return outstmt;
+  }
+
+cscript_statement make_assignment(cscript_context* ctxt, token** token_it, token** token_it_end)
+  {
+  cscript_parsed_assignment a;
+  a.line_nr = (*token_it)->line_nr;
+  a.column_nr = (*token_it)->column_nr;
+  a.derefence = current_token_type(token_it, token_it) == CSCRIPT_T_MUL ? 1 : 0;
+  a.name = make_null_string();
+  a.filename = make_null_string();
+  a.dims = make_null_vector();
+  a.op = make_null_string();
+  a.expr = make_null_expr();
+  cscript_statement outstmt;
+  outstmt.type = cscript_statement_type_assignment;
+  if (a.derefence)
+    {
+    if (token_next(ctxt, token_it, token_it_end) == 0)
+      {
+      outstmt.statement.assignment = a;
+      return outstmt;
+      }
+    }
+  cscript_string_copy(ctxt, &a.name, &(*token_it)->value);
+  if (token_next(ctxt, token_it, token_it_end) == 0)
+    {
+    outstmt.statement.assignment = a;
+    return outstmt;
+    }
+  if (current_token_type(token_it, token_it) == CSCRIPT_T_LEFT_SQUARE_BRACKET)
+    {
+    if (a.derefence)
+      {
+      cscript_string* fn = NULL;
+      if (ctxt->filenames_list.vector_size > 0)
+        fn = cscript_vector_back(&ctxt->filenames_list, cscript_string);
+      cscript_syntax_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, last_token.line_nr, last_token.column_nr, fn, "cannot dereference array");
+      outstmt.statement.assignment = a;
+      return outstmt;
+      }
+    token_next(ctxt, token_it, token_it_end);
+    cscript_vector_init(ctxt, &a.dims, cscript_parsed_expression);
+    cscript_parsed_expression dims_expr = cscript_make_expression(ctxt, token_it, token_it_end);
+    cscript_vector_push_back(ctxt, &a.dims, dims_expr, cscript_parsed_expression);
+    token_require(ctxt, token_it, token_it_end, "]");
+    }
+  if (current_token_type(token_it, token_it) == CSCRIPT_T_LEFT_SQUARE_BRACKET)
+    {
+    cscript_string* fn = NULL;
+    if (ctxt->filenames_list.vector_size > 0)
+      fn = cscript_vector_back(&ctxt->filenames_list, cscript_string);
+    cscript_syntax_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, (*token_it)->line_nr, (*token_it)->column_nr, fn, "only single dimension arrays are allowed");
+    outstmt.statement.assignment = a;
+    return outstmt;
+    }
+  if (check_token_available(ctxt, token_it, token_it_end)==0)
+    {
+    outstmt.statement.assignment = a;
+    return outstmt;
+    }
+  cscript_string_copy(ctxt, &a.op, &(*token_it)->value);
+  token_next(ctxt, token_it, token_it_end);
+  a.expr = cscript_make_expression(ctxt, token_it, token_it_end);
+  outstmt.statement.assignment = a;
   return outstmt;
   }
 
@@ -594,6 +672,35 @@ cscript_statement cscript_make_statement(cscript_context* ctxt, token** token_it
       cscript_statement stmt = make_float(ctxt, token_it, token_it_end);
       return stmt;
       }
+    uint64_t dist = *token_it_end - *token_it;
+    if (dist >= 3)
+      {
+      token* t = *token_it;
+      ++t;
+      if (is_assignment(t))
+        {
+        cscript_statement stmt = make_assignment(ctxt, token_it, token_it_end);
+        return stmt;
+        }
+      else if (t->type == CSCRIPT_T_LEFT_SQUARE_BRACKET)
+        {
+        printf("array assignment");
+        }
+      else
+        {
+        cscript_statement expr;
+        expr.type = cscript_statement_type_expression;
+        expr.statement.expr = cscript_make_expression(ctxt, token_it, token_it_end);
+        return expr;
+        }
+      }
+    else
+      {
+      cscript_statement expr;
+      expr.type = cscript_statement_type_expression;
+      expr.statement.expr = cscript_make_expression(ctxt, token_it, token_it_end);
+      return expr;
+      }
     }
     default:
     {
@@ -680,6 +787,14 @@ static void postvisit_fixnum(cscript_context* ctxt, cscript_visitor* v, cscript_
   cscript_string_destroy(ctxt, &fx->filename);
   cscript_string_destroy(ctxt, &fx->name);
   }
+static void postvisit_assignment(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_assignment* a)
+  {
+  UNUSED(v);
+  cscript_vector_destroy(ctxt, &a->dims);
+  cscript_string_destroy(ctxt, &a->filename);
+  cscript_string_destroy(ctxt, &a->name);
+  cscript_string_destroy(ctxt, &a->op);
+  }
 static void visit_variable(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_variable* var)
   {
   UNUSED(v);
@@ -699,7 +814,7 @@ void cscript_program_destroy(cscript_context* ctxt, cscript_program* p)
   destroyer.visitor->postvisit_statements = postvisit_statements;
   destroyer.visitor->postvisit_fixnum = postvisit_fixnum;
   destroyer.visitor->visit_var = visit_variable;
-
+  destroyer.visitor->postvisit_assignment = postvisit_assignment;
   cscript_visit_program(ctxt, destroyer.visitor, p);
 
   cscript_vector_destroy(ctxt, &p->statements);

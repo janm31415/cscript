@@ -13,6 +13,8 @@ enum cscript_visitor_entry_type
   CSCRIPT_VISITOR_STATEMENTS_POST,
   CSCRIPT_VISITOR_EXPRESSION_PRE,
   CSCRIPT_VISITOR_EXPRESSION_POST,
+  CSCRIPT_VISITOR_ASSIGNMENT_PRE,
+  CSCRIPT_VISITOR_ASSIGNMENT_POST,
   CSCRIPT_VISITOR_NUMBER,
   CSCRIPT_VISITOR_TERM_PRE,
   CSCRIPT_VISITOR_TERM_POST,
@@ -45,6 +47,8 @@ struct cscript_visitor
   void (*postvisit_statements)(cscript_context*, cscript_visitor*, cscript_comma_separated_statements*);
   int (*previsit_expression)(cscript_context*, cscript_visitor*, cscript_parsed_expression*);
   void (*postvisit_expression)(cscript_context*, cscript_visitor*, cscript_parsed_expression*);
+  int (*previsit_assignment)(cscript_context*, cscript_visitor*, cscript_parsed_assignment*);
+  void (*postvisit_assignment)(cscript_context*, cscript_visitor*, cscript_parsed_assignment*);
   void (*visit_number)(cscript_context*, cscript_visitor*, cscript_parsed_number*);
   int (*previsit_term)(cscript_context*, cscript_visitor*, cscript_parsed_term*);
   void (*postvisit_term)(cscript_context*, cscript_visitor*, cscript_parsed_term*);

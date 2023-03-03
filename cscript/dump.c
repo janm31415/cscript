@@ -1,7 +1,11 @@
 #include "dump.h"
+#include "syscalls.h"
+#include <string.h>
 
 static void visit_nop(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_nop* e)
   {
+  UNUSED(ctxt);
+  UNUSED(v);
   UNUSED(e);
   }
 
@@ -69,7 +73,7 @@ static void dump_number(cscript_context* ctxt, cscript_visitor* v, cscript_parse
   switch (e->type)
     {
     case cscript_number_type_fixnum:
-      cscript_fixnum_to_char(buffer, e->number.fl);
+      cscript_fixnum_to_char(buffer, e->number.fx);
       cscript_string_append_cstr(ctxt, &(d->s), buffer);
       break;
     case cscript_number_type_flonum:

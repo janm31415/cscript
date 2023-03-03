@@ -34,6 +34,19 @@ static int previsit_expression(cscript_context* ctxt, cscript_visitor* v, cscrip
   UNUSED(s);
   return 1;
   }
+static int previsit_assignment(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_assignment* s)
+  {
+  UNUSED(ctxt);
+  UNUSED(v);
+  UNUSED(s);
+  return 1;
+  }
+static void postvisit_assignment(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_assignment* s)
+  {
+  UNUSED(ctxt);
+  UNUSED(v);
+  UNUSED(s);
+  }
 static void postvisit_expression(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_expression* s)
   {
   UNUSED(ctxt);
@@ -151,6 +164,8 @@ cscript_visitor* cscript_visitor_new(cscript_context* ctxt, void* impl)
   v->postvisit_statements = postvisit_statements;
   v->previsit_expression = previsit_expression;
   v->postvisit_expression = postvisit_expression;
+  v->previsit_assignment = previsit_assignment;
+  v->postvisit_assignment = postvisit_assignment;
   v->visit_number = visit_number;
   v->previsit_term = previsit_term;
   v->postvisit_term = postvisit_term;
@@ -199,6 +214,9 @@ static void visit_entry(cscript_context* ctxt, cscript_visitor* vis, cscript_vis
           break;
         case cscript_statement_type_nop:
           cscript_vector_push_back(ctxt, &(vis->v), make_entry(&cast(cscript_statement*, e.entry)->statement.nop, CSCRIPT_VISITOR_NOP), cscript_visitor_entry);
+          break;
+        case cscript_statement_type_assignment:
+          cscript_vector_push_back(ctxt, &(vis->v), make_entry(&cast(cscript_statement*, e.entry)->statement.assignment, CSCRIPT_VISITOR_ASSIGNMENT_PRE), cscript_visitor_entry);
           break;
         default:
           cscript_assert(0); // not implemented yet
@@ -302,6 +320,29 @@ static void visit_entry(cscript_context* ctxt, cscript_visitor* vis, cscript_vis
     case CSCRIPT_VISITOR_RELOP_POST:
     {
     vis->postvisit_relop(ctxt, vis, cast(cscript_parsed_relop*, e.entry));
+    break;
+    }
+    case CSCRIPT_VISITOR_ASSIGNMENT_PRE:
+    {
+    if (vis->previsit_assignment(ctxt, vis, cast(cscript_parsed_assignment*, e.entry)))
+      {
+      cscript_vector_push_back(ctxt, &(vis->v), make_entry(e.entry, CSCRIPT_VISITOR_ASSIGNMENT_POST), cscript_visitor_entry);
+      cscript_vector* dims = &(cast(cscript_parsed_assignment*, e.entry)->dims);
+      cscript_parsed_expression* expr_it = cscript_vector_begin(dims, cscript_parsed_expression);
+      cscript_parsed_expression* expr_it_end = cscript_vector_end(dims, cscript_parsed_expression);
+      cscript_parsed_expression* expr_rit = expr_it_end - 1;
+      cscript_parsed_expression* expr_rit_end = expr_it - 1;
+      for (; expr_rit != expr_rit_end; --expr_rit) // IMPORTANT: brackets necessary, as cscript_vector_push_back is a C macro
+        {
+        cscript_vector_push_back(ctxt, &(vis->v), make_entry(cast(void*, expr_rit), CSCRIPT_VISITOR_EXPRESSION_PRE), cscript_visitor_entry);
+        }
+      cscript_vector_push_back(ctxt, &(vis->v), make_entry(cast(void*, &cast(cscript_parsed_assignment*, e.entry)->expr), CSCRIPT_VISITOR_EXPRESSION_PRE), cscript_visitor_entry);
+      }
+    break;
+    }
+    case CSCRIPT_VISITOR_ASSIGNMENT_POST:
+    {
+    vis->postvisit_assignment(ctxt, vis, cast(cscript_parsed_assignment*, e.entry));
     break;
     }
     case CSCRIPT_VISITOR_VAR:

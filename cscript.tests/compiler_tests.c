@@ -237,6 +237,11 @@ static void test_compile_named_flonum()
   test_compile_flonum_aux(1512.0, "float f = 3*7*8*9; f;");
   }
 
+static void test_assigment()
+  {
+  //test_compile_flonum_aux(4.1415, "float f; int i; f = 3.1415; i = 1; f+i;");
+  }
+
 void run_all_compiler_tests()
   {
   test_compile_fixnum();
@@ -245,4 +250,5 @@ void run_all_compiler_tests()
   test_compile_expr();
   test_compile_named_fixnum();
   test_compile_named_flonum();
+  test_assigment();
   }
