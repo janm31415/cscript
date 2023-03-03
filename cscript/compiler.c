@@ -133,14 +133,58 @@ static void compile_local_variable(cscript_context* ctxt, compiler_state* state,
     {
     if (v->dims.vector_size > 0)
       {
-      compile_expression(ctxt, state, cscript_vector_begin(&v->dims, cscript_parsed_expression));
-      make_code_abc(ctxt, state->fun, CSCRIPT_OPCODE_MOVE_FROM_ARR, state->freereg, entry.position, state->freereg);
-      state->reg_typeinfo = entry.register_type;
+      if (entry.register_type > 1) // pointer type
+        {
+        cscript_assert(v->dereference == 0); // dereference is todo
+        compile_expression(ctxt, state, cscript_vector_begin(&v->dims, cscript_parsed_expression));
+        if (state->reg_typeinfo == cscript_reg_typeinfo_flonum)
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, cscript_number_type_fixnum);
+          state->reg_typeinfo = cscript_number_type_fixnum;
+          }
+        /*
+        freereg + 0: dim*8
+        freereg + 1: 8
+        */
+        make_code_asbx(ctxt, state->fun, CSCRIPT_OPCODE_SETFIXNUM, state->freereg + 1, 8);
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, CSCRIPT_MUL_FIXNUM);
+        /*
+        freereg + 0: dim*8
+        freereg + 1: address
+        */
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg + 1, entry.position);
+        /*
+        freereg + 0: dim*8 + address
+        freereg + 1: address
+        */
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, CSCRIPT_ADD_FIXNUM);
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_LOAD_MEMORY, state->freereg, state->freereg);
+        state->reg_typeinfo = entry.register_type&1;
+        }
+      else
+        {
+        cscript_assert(v->dereference == 0); // dereference is todo
+        compile_expression(ctxt, state, cscript_vector_begin(&v->dims, cscript_parsed_expression));
+        if (state->reg_typeinfo == cscript_reg_typeinfo_flonum)
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, cscript_number_type_fixnum);
+          state->reg_typeinfo = cscript_number_type_fixnum;
+          }
+        make_code_abc(ctxt, state->fun, CSCRIPT_OPCODE_MOVE_FROM_ARR, state->freereg, entry.position, state->freereg);
+        state->reg_typeinfo = entry.register_type;
+        }
       }
     else
       {
-      make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, entry.position);
-      state->reg_typeinfo = entry.register_type;
+      if (v->dereference != 0)
+        {
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_LOAD_MEMORY, state->freereg, entry.position);
+        }
+      else
+        {
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, entry.position);
+        }
+      state->reg_typeinfo = entry.register_type&1;
       }
     }
   }
@@ -637,13 +681,13 @@ static void compile_assigment_pointer(cscript_context* ctxt, compiler_state* sta
   freereg + 0: dim*8
   freereg + 1: 8
   */
-  make_code_asbx(ctxt, state->fun, CSCRIPT_OPCODE_SETFIXNUM, state->freereg+1, 8);
+  make_code_asbx(ctxt, state->fun, CSCRIPT_OPCODE_SETFIXNUM, state->freereg + 1, 8);
   make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, CSCRIPT_MUL_FIXNUM);
   /*
   freereg + 0: dim*8
   freereg + 1: address
   */
-  make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg+1, entry.position);
+  make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg + 1, entry.position);
   /*
   freereg + 0: dim*8 + address
   freereg + 1: address
@@ -658,10 +702,10 @@ static void compile_assigment_pointer(cscript_context* ctxt, compiler_state* sta
   state->freereg += 2;
   compile_expression(ctxt, state, &a->expr);
 
-  if (state->reg_typeinfo != (entry.register_type&1))
+  if (state->reg_typeinfo != (entry.register_type & 1))
     {
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, (entry.register_type&1));
-    state->reg_typeinfo = (entry.register_type&1);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, (entry.register_type & 1));
+    state->reg_typeinfo = (entry.register_type & 1);
     }
   state->freereg -= 2;
 
@@ -675,7 +719,7 @@ static void compile_assigment_pointer(cscript_context* ctxt, compiler_state* sta
     case '+':
     {
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_LOAD_MEMORY, state->freereg + 1, state->freereg);
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, (entry.register_type&1) == cscript_reg_typeinfo_flonum ? CSCRIPT_ADD_FLONUM : CSCRIPT_ADD_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, (entry.register_type & 1) == cscript_reg_typeinfo_flonum ? CSCRIPT_ADD_FLONUM : CSCRIPT_ADD_FIXNUM);
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_STORE_MEMORY, state->freereg, state->freereg + 1);
     break;
     }

@@ -402,7 +402,36 @@ static void test_parameter_pointer()
   TEST_EQ_DOUBLE(0.5, f[0]);
   TEST_EQ_DOUBLE(1.5, f[1]);
   TEST_EQ_DOUBLE(2.5, f[2]);
+  }
 
+static void test_parameter_dereference()
+  {
+  cscript_fixnum pars_list[6] = { 0, 0, 0, 0, 0, 0 };
+  cscript_flonum f = 3.14;
+  cscript_fixnum i = 5;
+  pars_list[0] = &f;
+  test_compile_flonum_pars_aux(3.14, "(float* f) float g = *f; g;", 1, pars_list);
+  pars_list[0] = &i;
+  test_compile_fixnum_pars_aux(5, "(int* i) int g = *i; g;", 1, pars_list);
+  pars_list[0] = &f;
+  test_compile_flonum_pars_aux(10.14, "(float* f) float g = (1 + (1 + (1 + (1 + (1 + (1 + ( 1 + *f))))))); g;", 1, pars_list);
+  pars_list[0] = &i;
+  test_compile_fixnum_pars_aux(12, "(int* i) int g = (1 + (1 + (1 + (1 + (1 + (1 + ( 1 + *i))))))); g;", 1, pars_list);
+  pars_list[0] = &f;
+  test_compile_flonum_pars_aux(3.14, "(float* f) float g = f[0]; g;", 1, pars_list);
+  pars_list[0] = &i;
+  test_compile_fixnum_pars_aux(5, "(int* i) int g = i[0]; g;", 1, pars_list);
+  pars_list[0] = &f;
+  test_compile_flonum_pars_aux(10.14, "(float* f) float g = (1 + (1 + (1 + (1 + (1 + (1 + ( 1 + f[0]))))))); g;", 1, pars_list);
+  pars_list[0] = &i;
+  test_compile_fixnum_pars_aux(12, "(int* i) int g = (1 + (1 + (1 + (1 + (1 + (1 + ( 1 + i[0]))))))); g;", 1, pars_list);
+  pars_list[0] = &f;
+  test_compile_flonum_pars_aux(3.14*3.14, "(float* f) *f * *f;", 1, pars_list);
+  pars_list[0] = &i;
+  test_compile_fixnum_pars_aux(25, "(int* i) *i * *i;", 1, pars_list);
+  pars_list[0] = &f;
+  //test_compile_flonum_pars_aux(0.0, "(float* f) *f = 1.2; 0.0;", 1, pars_list);
+  //TEST_EQ_DOUBLE(1.2, f);
   }
 
 void run_all_compiler_tests()
@@ -418,4 +447,5 @@ void run_all_compiler_tests()
   test_comment();
   test_parameter();
   test_parameter_pointer();
+  test_parameter_dereference();
   }

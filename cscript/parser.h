@@ -66,6 +66,7 @@ typedef struct cscript_parsed_variable
   int line_nr, column_nr;
   cscript_string filename;
   cscript_vector dims; //  vector of type cscript_parsed_expression
+  int dereference;
   } cscript_parsed_variable;
 
 typedef struct cscript_parsed_fixnum

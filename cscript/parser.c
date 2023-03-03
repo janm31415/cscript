@@ -194,6 +194,7 @@ cscript_parsed_variable make_variable(cscript_context* ctxt, token** token_it, t
   var.line_nr = (*token_it)->line_nr;
   var.filename = make_null_string(); 
   var.dims = make_null_vector();
+  var.dereference = 0;
   cscript_string_copy(ctxt, &var.name, &(*token_it)->value);
   if (token_next(ctxt, token_it, token_it_end) == 0)
     return var;
@@ -260,6 +261,14 @@ cscript_parsed_factor cscript_make_factor(cscript_context* ctxt, token** token_i
       expr.factor.number.filename = make_null_string();
       expr.type = cscript_factor_type_number;
       token_next(ctxt, token_it, token_it_end);
+      break;
+    case CSCRIPT_T_MUL:
+      token_next(ctxt, token_it, token_it_end);
+      expr.factor.var = make_variable(ctxt, token_it, token_it_end);
+      expr.factor.var.line_nr = line_nr;
+      expr.factor.var.filename = make_null_string();
+      expr.factor.var.dereference = 1;
+      expr.type = cscript_factor_type_variable;
       break;
     case CSCRIPT_T_ID:
     {
