@@ -255,6 +255,15 @@ static void test_array()
   {
   test_compile_flonum_aux(1.0, "float f[3];\nf[0] = 1;f[0];");
   test_compile_flonum_aux(6.0, "float f[3];\nf[0] = 1;\nf[1] = 2;\nf[2] = 3;\nf[0]*f[1]*f[2];");
+  test_compile_fixnum_aux(6, "int f[3];\nf[0] = 1;\nf[1] = 2;\nf[2] = 3;\nf[0]*f[1]*f[2];");
+  test_compile_flonum_aux(1.0 + 3.14, "float f[10];\nf[8] = 1;\nf[8] += 3.14;f[8];");
+  test_compile_fixnum_aux(4, "int f[10];\nf[8] = 1;\nf[8] += 3;f[8];");
+  test_compile_flonum_aux(1.0 - 3.14, "float f[10];\nf[8] = 1;\nf[8] -= 3.14;f[8];");
+  test_compile_fixnum_aux(-2, "int f[10];\nf[8] = 1;\nf[8] -= 3;f[8];");
+  test_compile_flonum_aux(6.28, "float f[10];\nf[8] = 2;\nf[8] *= 3.14;f[8];");
+  test_compile_fixnum_aux(6, "int f[10];\nf[8] = 2;\nf[8] *= 3;f[8];");
+  test_compile_flonum_aux(15.8 / 2.15, "float f[10];\nf[8] = 15.8;\nf[8] /= 2.15;f[8];");
+  test_compile_fixnum_aux(3, "int f[10];\nf[8] = 10;\nf[8] /= 3;f[8];");
   }
 
 void run_all_compiler_tests()

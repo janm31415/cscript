@@ -40,6 +40,18 @@ cscript_constant_value cscript_get_constant_value_factor(const cscript_parsed_fa
     default:
       cscript_assert(0);
     }
+  if (f->sign == '-')
+    {
+    switch (value.type)
+      {
+      case cscript_number_type_fixnum:
+        value.number.fx = -value.number.fx;
+        break;
+      case cscript_number_type_flonum:
+        value.number.fl = -value.number.fl;
+        break;
+      }
+    }
   return value;
   }
 
