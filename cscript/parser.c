@@ -740,8 +740,10 @@ cscript_vector make_parameters(cscript_context* ctxt, token** token_it, token** 
         {
         token_require(ctxt, token_it, token_it_end, ",");
         }
-      if (first_time)
+      if (first_time != 0)
+        {
         cscript_vector_init(ctxt, &pars, cscript_parameter);
+        }
       cscript_vector_push_back(ctxt, &pars, p, cscript_parameter);
       first_time = 0;
       }

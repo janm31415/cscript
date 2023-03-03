@@ -299,11 +299,43 @@ static void test_comment()
   test_compile_fixnum_aux(8, script2);
   }
 
+static cscript_fixnum convert_to_fx(cscript_flonum fl)
+  {
+  return *cast(cscript_fixnum*, &fl);
+  }
+
 static void test_parameter()
   {
-  cscript_fixnum i;
-  i = 3;
-  test_compile_fixnum_pars_aux(4, "(int i) i + 1;", 1, &i);
+  cscript_fixnum pars_list[6] = {0, 0, 0, 0, 0, 0};
+  pars_list[0] = 3;
+  test_compile_fixnum_pars_aux(4, "(int i) i + 1;", 1, pars_list);
+  pars_list[1] = 7;
+  test_compile_fixnum_pars_aux(10, "(int i, int j) i + j;", 2, pars_list);
+  pars_list[2] = 5;
+  test_compile_fixnum_pars_aux(15, "(int i, int j, int k) i + j + k;", 3, pars_list);
+  pars_list[3] = 20;
+  test_compile_fixnum_pars_aux(35, "(int i, int j, int k, int l) i + j + k + l;", 4, pars_list);
+  pars_list[4] = 100;
+  test_compile_fixnum_pars_aux(135, "(int i, int j, int k, int l, int m) i + j + k + l + m;", 5, pars_list);
+
+  pars_list[0] = convert_to_fx(1.2);
+  test_compile_flonum_pars_aux(1.2 + 1.5, "(float f) f + 1.5;", 1, pars_list);
+  pars_list[1] = convert_to_fx(1.5);
+  test_compile_flonum_pars_aux(1.2 + 1.5, "(float f, float g) f + g;", 2, pars_list);
+  pars_list[2] = convert_to_fx(7.9);
+  test_compile_flonum_pars_aux(1.2 + 1.5 + 7.9, "(float f, float g, float h) f + g + h;", 3, pars_list);
+  pars_list[3] = convert_to_fx(10.4);
+  test_compile_flonum_pars_aux(1.2 + 1.5 + 7.9 + 10.4, "(float f, float g, float h, float i) f + g + h + i;", 4, pars_list);
+  pars_list[4] = convert_to_fx(19.1);
+  test_compile_flonum_pars_aux(1.2 + 1.5 + 7.9 + 10.4 + 19.1, "(float f, float g, float h, float i, float j) f + g + h + i + j;", 5, pars_list);
+
+  pars_list[0] = 1;
+  pars_list[1] = convert_to_fx(1.5);
+  pars_list[2] = 7;
+  pars_list[3] = convert_to_fx(10.4);
+  pars_list[4] = 19;
+  pars_list[5] = convert_to_fx(3.14);
+  test_compile_flonum_pars_aux(1.0 + 1.5 + 7.0 + 10.4 + 19.0 + 3.14, "(int i1, float f2, int i3, float f4, int i5, float f6) i1 + f2 + i3 + f4 + i5 + f6; ", 6, pars_list);
   }
 
 void run_all_compiler_tests()
