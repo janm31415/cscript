@@ -30,6 +30,8 @@ int cscript_is_number(int* is_real, int* is_scientific, const char* value)
   int i = 0;
   if (value[0] == 'e' || value[0] == 'E')
     return 0;
+  if (value[0] == 'f' || value[0] == 'F')
+    return 0;
   if (value[0] == '-' || value[0] == '+')
     {
     ++i;
@@ -57,6 +59,15 @@ int cscript_is_number(int* is_real, int* is_scientific, const char* value)
           }
         if (*(s + 1) == '\0')
           return 0;
+        }
+      else if (*is_real && (*s == 'f' || *s == 'F'))
+        {
+        ++s;
+        if (*s == '\0')
+          {
+          return 1;
+          }
+        return 0;
         }
       else
         return 0;

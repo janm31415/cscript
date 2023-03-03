@@ -73,10 +73,43 @@ static void tokenize_comment()
   cscript_close(ctxt);
   }
 
+static void tokenize_floats()
+  {
+  int real;
+  int scientific;
+
+  TEST_EQ_INT(1, cscript_is_number(&real, &scientific, "2.0"));
+  TEST_EQ_INT(1, real);
+  TEST_EQ_INT(0, scientific);
+
+  TEST_EQ_INT(1, cscript_is_number(&real, &scientific, "2"));
+  TEST_EQ_INT(0, real);
+  TEST_EQ_INT(0, scientific);
+
+  TEST_EQ_INT(1, cscript_is_number(&real, &scientific, "2.0e-3"));
+  TEST_EQ_INT(1, real);
+  TEST_EQ_INT(1, scientific);
+
+  TEST_EQ_INT(0, cscript_is_number(&real, &scientific, "2.0e-3df"));
+ 
+  TEST_EQ_INT(1, cscript_is_number(&real, &scientific, "2.0f"));
+  TEST_EQ_INT(1, real);
+  TEST_EQ_INT(0, scientific);
+
+  TEST_EQ_INT(1, cscript_is_number(&real, &scientific, "2.f"));
+  TEST_EQ_INT(1, real);
+  TEST_EQ_INT(0, scientific);
+
+  TEST_EQ_INT(0, cscript_is_number(&real, &scientific, "2f"));
+  TEST_EQ_INT(0, real);
+  TEST_EQ_INT(0, scientific);
+  }
+
 void run_all_token_tests()
   {
   test_number_recognition();
   tokenize_list();
   tokenize_fixnum_real();
   tokenize_comment();
+  tokenize_floats();
   }

@@ -168,7 +168,7 @@ cscript_fixnum* cscript_run(cscript_context* ctxt, cscript_function* fun)
       memcpy(((cscript_fixnum*)ctxt->stack.vector_ptr) + a, ((cscript_fixnum*)ctxt->stack.vector_ptr) + b + rc, sizeof(cscript_fixnum));
       continue;
       }
-      case CSCRIPT_OPCODE_MOVE_DEREF:
+      case CSCRIPT_OPCODE_STORE_MEMORY:
       {
       const int a = CSCRIPT_GETARG_A(instruc);
       const int b = CSCRIPT_GETARG_B(instruc);
@@ -176,6 +176,15 @@ cscript_fixnum* cscript_run(cscript_context* ctxt, cscript_function* fun)
       cscript_fixnum rb = *(((cscript_fixnum*)ctxt->stack.vector_ptr) + b);
       cscript_fixnum* ptr_ra = cast(cscript_fixnum*, ra);
       *ptr_ra = rb;
+      continue;
+      }
+      case CSCRIPT_OPCODE_LOAD_MEMORY:
+      {
+      const int a = CSCRIPT_GETARG_A(instruc);
+      const int b = CSCRIPT_GETARG_B(instruc);      
+      cscript_fixnum rb = *(((cscript_fixnum*)ctxt->stack.vector_ptr) + b);
+      cscript_fixnum* ptr_rb = cast(cscript_fixnum*, rb);
+      memcpy(((cscript_fixnum*)ctxt->stack.vector_ptr) + a, ptr_rb, sizeof(cscript_fixnum));
       continue;
       }
       case CSCRIPT_OPCODE_LOADGLOBAL:

@@ -348,6 +348,61 @@ static void test_parameter_pointer()
   TEST_EQ_INT(0, i[0]);
   TEST_EQ_INT(1, i[1]);
   TEST_EQ_INT(2, i[2]);
+
+  pars_list[0] = &f[0];
+  test_compile_flonum_pars_aux(15.0, "(float* f)  f[0] = 0.5; f[1] = 1.5; f[2] = 2.5; 15.0;", 1, pars_list);
+  TEST_EQ_DOUBLE(0.5, f[0]);
+  TEST_EQ_DOUBLE(1.5, f[1]);
+  TEST_EQ_DOUBLE(2.5, f[2]);
+
+  pars_list[0] = &i[0];
+  test_compile_fixnum_pars_aux(15, "(int* i) i[0] += 7; i[1] += 4; i[2] += 2; 15;", 1, pars_list);
+  TEST_EQ_INT(7, i[0]);
+  TEST_EQ_INT(5, i[1]);
+  TEST_EQ_INT(4, i[2]);
+
+  pars_list[0] = &f[0];
+  test_compile_flonum_pars_aux(15.0, "(float* f) f[0] += 0.1; f[1] += 0.2; f[2] += 0.3; 15.0;", 1, pars_list);
+  TEST_EQ_DOUBLE(0.5 + 0.1, f[0]);
+  TEST_EQ_DOUBLE(1.5 + 0.2, f[1]);
+  TEST_EQ_DOUBLE(2.5 + 0.3, f[2]);
+
+  pars_list[0] = &i[0];
+  test_compile_fixnum_pars_aux(15, "(int* i) i[0] -= 10; i[1] -= 4; i[2] -= 21; 15;", 1, pars_list);
+  TEST_EQ_INT(-3, i[0]);
+  TEST_EQ_INT(1, i[1]);
+  TEST_EQ_INT(-17, i[2]);
+
+  pars_list[0] = &f[0];
+  test_compile_flonum_pars_aux(15.0, "(float* f) f[0] -= 0.1; f[1] -= 0.2; f[2] -= 0.3; 15.0;", 1, pars_list);
+  TEST_EQ_DOUBLE(0.5, f[0]);
+  TEST_EQ_DOUBLE(1.5, f[1]);
+  TEST_EQ_DOUBLE(2.5, f[2]);
+
+  pars_list[0] = &i[0];
+  test_compile_fixnum_pars_aux(15, "(int* i) i[0] *= 2;; 15;", 1, pars_list);
+  TEST_EQ_INT(-6, i[0]);
+  TEST_EQ_INT(1, i[1]);
+  TEST_EQ_INT(-17, i[2]);
+
+  pars_list[0] = &f[0];
+  test_compile_flonum_pars_aux(15.0, "(float* f)  f[1] *= 3.14f; 15.0;", 1, pars_list);
+  TEST_EQ_DOUBLE(0.5, f[0]);
+  TEST_EQ_DOUBLE(1.5 * 3.14, f[1]);
+  TEST_EQ_DOUBLE(2.5, f[2]);
+
+  pars_list[0] = &i[0];
+  test_compile_fixnum_pars_aux(15, "(int* i) i[0] /= 2; 15;", 1, pars_list);
+  TEST_EQ_INT(-3, i[0]);
+  TEST_EQ_INT(1, i[1]);
+  TEST_EQ_INT(-17, i[2]);
+
+  pars_list[0] = &f[0];
+  test_compile_flonum_pars_aux(15.0, "(float* f)  f[1] /= 3.14f; 15.0;", 1, pars_list);
+  TEST_EQ_DOUBLE(0.5, f[0]);
+  TEST_EQ_DOUBLE(1.5, f[1]);
+  TEST_EQ_DOUBLE(2.5, f[2]);
+
   }
 
 void run_all_compiler_tests()

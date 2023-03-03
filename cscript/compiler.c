@@ -669,7 +669,35 @@ static void compile_assigment_pointer(cscript_context* ctxt, compiler_state* sta
     {
     case '=':
     {
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE_DEREF, state->freereg, state->freereg + 2);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_STORE_MEMORY, state->freereg, state->freereg + 2);
+    break;
+    }
+    case '+':
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_LOAD_MEMORY, state->freereg + 1, state->freereg);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, (entry.register_type&1) == cscript_reg_typeinfo_flonum ? CSCRIPT_ADD_FLONUM : CSCRIPT_ADD_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_STORE_MEMORY, state->freereg, state->freereg + 1);
+    break;
+    }
+    case '-':
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_LOAD_MEMORY, state->freereg + 1, state->freereg);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, (entry.register_type & 1) == cscript_reg_typeinfo_flonum ? CSCRIPT_SUB_FLONUM : CSCRIPT_SUB_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_STORE_MEMORY, state->freereg, state->freereg + 1);
+    break;
+    }
+    case '*':
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_LOAD_MEMORY, state->freereg + 1, state->freereg);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, (entry.register_type & 1) == cscript_reg_typeinfo_flonum ? CSCRIPT_MUL_FLONUM : CSCRIPT_MUL_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_STORE_MEMORY, state->freereg, state->freereg + 1);
+    break;
+    }
+    case '/':
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_LOAD_MEMORY, state->freereg + 1, state->freereg);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, (entry.register_type & 1) == cscript_reg_typeinfo_flonum ? CSCRIPT_DIV_FLONUM : CSCRIPT_DIV_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_STORE_MEMORY, state->freereg, state->freereg + 1);
     break;
     }
     default:
