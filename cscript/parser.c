@@ -195,6 +195,12 @@ cscript_parsed_variable make_variable(cscript_context* ctxt, token** token_it, t
   var.filename = make_null_string(); 
   var.dims = make_null_vector();
   var.dereference = 0;
+  if ((*token_it)->type == CSCRIPT_T_MUL)
+    {
+    var.dereference = 1;
+    if (token_next(ctxt, token_it, token_it_end) == 0)
+      return var;
+    }
   cscript_string_copy(ctxt, &var.name, &(*token_it)->value);
   if (token_next(ctxt, token_it, token_it_end) == 0)
     return var;
@@ -207,6 +213,18 @@ cscript_parsed_variable make_variable(cscript_context* ctxt, token** token_it, t
     token_require(ctxt, token_it, token_it_end, "]");
     }
   return var;
+  }
+
+cscript_parsed_lvalue_operator make_lvalue_operator(cscript_context* ctxt, token** token_it, token** token_it_end)
+  {
+  cscript_parsed_lvalue_operator lv;
+  lv.column_nr = (*token_it)->column_nr;
+  lv.line_nr = (*token_it)->line_nr;
+  lv.filename = make_null_string();
+  cscript_string_copy(ctxt, &lv.name, &(*token_it)->value);
+  token_next(ctxt, token_it, token_it_end);
+  lv.lvalue = make_variable(ctxt, token_it, token_it_end);
+  return lv;
   }
 
 cscript_parsed_factor cscript_make_factor(cscript_context* ctxt, token** token_it, token** token_it_end)
@@ -265,8 +283,6 @@ cscript_parsed_factor cscript_make_factor(cscript_context* ctxt, token** token_i
     case CSCRIPT_T_MUL:
       token_next(ctxt, token_it, token_it_end);
       expr.factor.var = make_variable(ctxt, token_it, token_it_end);
-      expr.factor.var.line_nr = line_nr;
-      expr.factor.var.filename = make_null_string();
       expr.factor.var.dereference = 1;
       expr.type = cscript_factor_type_variable;
       break;
@@ -281,10 +297,15 @@ cscript_parsed_factor cscript_make_factor(cscript_context* ctxt, token** token_i
     else
       {
       expr.factor.var = make_variable(ctxt, token_it, token_it_end);
-      expr.factor.var.line_nr = line_nr;
-      expr.factor.var.filename = make_null_string();
       expr.type = cscript_factor_type_variable;      
       }
+    break;
+    }
+    case CSCRIPT_T_INCREMENT:
+    case CSCRIPT_T_DECREMENT:
+    {
+    expr.factor.lvop = make_lvalue_operator(ctxt, token_it, token_it_end);
+    expr.type = cscript_factor_type_lvalue_operator;
     break;
     }
     default:
@@ -679,6 +700,12 @@ cscript_vector make_parameters(cscript_context* ctxt, token** token_it, token** 
     {
     token* t = *token_it;
     ++t;
+    if (t != *token_it_end && t->type == CSCRIPT_T_RIGHT_ROUND_BRACKET)
+      {
+      token_next(ctxt, token_it, token_it_end);
+      token_next(ctxt, token_it, token_it_end);
+      return pars;
+      }
     if (t != *token_it_end && t->type != CSCRIPT_T_ID)
       return pars; // this is an expression probably
     if (token_next(ctxt, token_it, token_it_end)==0)
@@ -984,6 +1011,12 @@ static void postvisit_assignment(cscript_context* ctxt, cscript_visitor* v, cscr
   cscript_string_destroy(ctxt, &a->name);
   cscript_string_destroy(ctxt, &a->op);
   }
+static void postvisit_lvalueop(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_lvalue_operator* l)
+  {
+  UNUSED(v);
+  cscript_string_destroy(ctxt, &l->filename);
+  cscript_string_destroy(ctxt, &l->name);
+  }
 static void postvisit_variable(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_variable* var)
   {
   UNUSED(v);
@@ -1005,6 +1038,7 @@ void cscript_program_destroy(cscript_context* ctxt, cscript_program* p)
   destroyer.visitor->postvisit_fixnum = postvisit_fixnum;
   destroyer.visitor->postvisit_var = postvisit_variable;
   destroyer.visitor->postvisit_assignment = postvisit_assignment;
+  destroyer.visitor->postvisit_lvalueop = postvisit_lvalueop;
   destroyer.visitor->visit_parameter = visit_parameter;
   cscript_visit_program(ctxt, destroyer.visitor, p);
 

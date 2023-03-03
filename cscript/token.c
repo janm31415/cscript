@@ -297,6 +297,13 @@ int cscript_read_token_polymorph(token* tok, cscript_context* ctxt, cscript_stri
         state->column_nr += 2;
         return 1;
         }
+      else if (valid_peek && t == '+')
+        {
+        *tok = cscript_make_token_cstr(ctxt, CSCRIPT_T_INCREMENT, state->line_nr, state->column_nr, "++");
+        next_char(str);
+        state->column_nr += 2;
+        return 1;
+        }
       *tok = cscript_make_token_cstr(ctxt, CSCRIPT_T_PLUS, state->line_nr, state->column_nr, "+");
       ++state->column_nr;
       return 1;
@@ -313,6 +320,13 @@ int cscript_read_token_polymorph(token* tok, cscript_context* ctxt, cscript_stri
       if (valid_peek && t == '=')
         {
         *tok = cscript_make_token_cstr(ctxt, CSCRIPT_T_ASSIGNMENT_MINUS, state->line_nr, state->column_nr, "-=");
+        next_char(str);
+        state->column_nr += 2;
+        return 1;
+        }
+      else if (valid_peek && t == '-')
+        {
+        *tok = cscript_make_token_cstr(ctxt, CSCRIPT_T_DECREMENT, state->line_nr, state->column_nr, "--");
         next_char(str);
         state->column_nr += 2;
         return 1;

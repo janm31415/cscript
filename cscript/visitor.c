@@ -85,6 +85,19 @@ static void postvisit_relop(cscript_context* ctxt, cscript_visitor* v, cscript_p
   UNUSED(v);
   UNUSED(s);
   }
+static int previsit_lvalueop(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_lvalue_operator* s)
+  {
+  UNUSED(ctxt);
+  UNUSED(v);
+  UNUSED(s);
+  return 1;
+  }
+static void postvisit_lvalueop(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_lvalue_operator* s)
+  {
+  UNUSED(ctxt);
+  UNUSED(v);
+  UNUSED(s);
+  }
 static int previsit_var(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_variable* s)
   {
   UNUSED(ctxt);
@@ -184,6 +197,8 @@ cscript_visitor* cscript_visitor_new(cscript_context* ctxt, void* impl)
   v->postvisit_term = postvisit_term;
   v->previsit_relop = previsit_relop;
   v->postvisit_relop = postvisit_relop;
+  v->previsit_lvalueop = previsit_lvalueop;
+  v->postvisit_lvalueop = postvisit_lvalueop;
   v->previsit_var = previsit_var;
   v->postvisit_var = postvisit_var;
   v->previsit_fixnum = previsit_fixnum;
@@ -449,6 +464,9 @@ static void visit_entry(cscript_context* ctxt, cscript_visitor* vis, cscript_vis
         case cscript_factor_type_variable:
           cscript_vector_push_back(ctxt, &(vis->v), make_entry(&cast(cscript_parsed_factor*, e.entry)->factor.var, CSCRIPT_VISITOR_VAR_PRE), cscript_visitor_entry);
           break;
+        case cscript_factor_type_lvalue_operator:
+          cscript_vector_push_back(ctxt, &(vis->v), make_entry(&cast(cscript_parsed_factor*, e.entry)->factor.lvop, CSCRIPT_VISITOR_LVALUEOP_PRE), cscript_visitor_entry);
+          break;
         default:
           cscript_assert(0); // not implemented
           break;
@@ -464,6 +482,20 @@ static void visit_entry(cscript_context* ctxt, cscript_visitor* vis, cscript_vis
     case CSCRIPT_VISITOR_PARAMETER:
     {
     vis->visit_parameter(ctxt, vis, cast(cscript_parameter*, e.entry));
+    break;
+    }
+    case CSCRIPT_VISITOR_LVALUEOP_PRE:
+    {
+    if (vis->previsit_lvalueop(ctxt, vis, cast(cscript_parsed_lvalue_operator*, e.entry)))
+      {
+      cscript_vector_push_back(ctxt, &(vis->v), make_entry(e.entry, CSCRIPT_VISITOR_LVALUEOP_POST), cscript_visitor_entry);
+      cscript_vector_push_back(ctxt, &(vis->v), make_entry(&cast(cscript_parsed_lvalue_operator*, e.entry)->lvalue, CSCRIPT_VISITOR_VAR_PRE), cscript_visitor_entry);
+      }
+    break;
+    }
+    case CSCRIPT_VISITOR_LVALUEOP_POST:
+    {
+    vis->postvisit_lvalueop(ctxt, vis, cast(cscript_parsed_lvalue_operator*, e.entry));
     break;
     }
     default:

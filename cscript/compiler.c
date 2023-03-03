@@ -159,7 +159,7 @@ static void compile_local_variable(cscript_context* ctxt, compiler_state* state,
         */
         make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, CSCRIPT_ADD_FIXNUM);
         make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_LOAD_MEMORY, state->freereg, state->freereg);
-        state->reg_typeinfo = entry.register_type&1;
+        state->reg_typeinfo = entry.register_type & 1;
         }
       else
         {
@@ -184,7 +184,7 @@ static void compile_local_variable(cscript_context* ctxt, compiler_state* state,
         {
         make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, entry.position);
         }
-      state->reg_typeinfo = entry.register_type&1;
+      state->reg_typeinfo = entry.register_type & 1;
       }
     }
   }
@@ -195,6 +195,122 @@ static void compile_variable(cscript_context* ctxt, compiler_state* state, cscri
     compile_global_variable(ctxt, state, v);
   else
     compile_local_variable(ctxt, state, v);
+  }
+
+static void compile_lvalue_operator(cscript_context* ctxt, compiler_state* state, cscript_parsed_lvalue_operator* lvop)
+  {
+  cscript_fixnum adder = 1;
+  if (strcmp(lvop->name.string_ptr, "--") == 0)
+    adder = -1;
+  cscript_environment_entry entry;
+  if (!cscript_environment_find_recursive(&entry, ctxt, &lvop->lvalue.name))
+    {
+    cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_VARIABLE_UNKNOWN, lvop->lvalue.line_nr, lvop->lvalue.column_nr, &lvop->lvalue.filename, lvop->lvalue.name.string_ptr);
+    }
+  else
+    {
+    if (lvop->lvalue.dims.vector_size > 0)
+      {
+      if (entry.register_type > 1) // pointer type
+        {
+        cscript_assert(lvop->lvalue.dereference == 0); // dereference is todo
+        compile_expression(ctxt, state, cscript_vector_begin(&lvop->lvalue.dims, cscript_parsed_expression));
+        if (state->reg_typeinfo == cscript_reg_typeinfo_flonum)
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, cscript_number_type_fixnum);
+          state->reg_typeinfo = cscript_number_type_fixnum;
+          }
+        /*
+        freereg + 0: dim*8
+        freereg + 1: 8
+        */
+        make_code_asbx(ctxt, state->fun, CSCRIPT_OPCODE_SETFIXNUM, state->freereg + 1, 8);
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, CSCRIPT_MUL_FIXNUM);
+        /*
+        freereg + 0: dim*8
+        freereg + 1: address
+        */
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg + 1, entry.position);
+        /*
+        freereg + 0: dim*8 + address
+        freereg + 1: address
+        */
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, CSCRIPT_ADD_FIXNUM);
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_LOAD_MEMORY, state->freereg+1, state->freereg);
+        make_code_asbx(ctxt, state->fun, CSCRIPT_OPCODE_SETFIXNUM, state->freereg + 2, adder);
+        if ((entry.register_type & 1) == cscript_reg_typeinfo_flonum)
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg + 2, cscript_number_type_flonum);
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, CSCRIPT_ADD_FLONUM);
+          }
+        else
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, CSCRIPT_ADD_FIXNUM);
+          }
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_STORE_MEMORY, state->freereg, state->freereg+1);
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, state->freereg+1);
+        state->reg_typeinfo = entry.register_type & 1;
+        }
+      else
+        {
+        cscript_assert(lvop->lvalue.dereference == 0); // dereference is todo
+        compile_expression(ctxt, state, cscript_vector_begin(&lvop->lvalue.dims, cscript_parsed_expression));
+        if (state->reg_typeinfo == cscript_reg_typeinfo_flonum)
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, cscript_number_type_fixnum);
+          state->reg_typeinfo = cscript_number_type_fixnum;
+          }
+        make_code_abc(ctxt, state->fun, CSCRIPT_OPCODE_MOVE_FROM_ARR, state->freereg + 1, entry.position, state->freereg);
+        make_code_asbx(ctxt, state->fun, CSCRIPT_OPCODE_SETFIXNUM, state->freereg + 2, adder);
+        if ((entry.register_type & 1) == cscript_reg_typeinfo_flonum)
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg + 2, cscript_number_type_flonum);
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, CSCRIPT_ADD_FLONUM);
+          }
+        else
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, CSCRIPT_ADD_FIXNUM);
+          }
+        make_code_abc(ctxt, state->fun, CSCRIPT_OPCODE_MOVE_TO_ARR, entry.position, state->freereg, state->freereg + 1);
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, state->freereg + 1);
+        state->reg_typeinfo = entry.register_type & 1;
+        }
+      }
+    else
+      {
+      if (lvop->lvalue.dereference != 0)
+        {
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_LOAD_MEMORY, state->freereg, entry.position);
+        make_code_asbx(ctxt, state->fun, CSCRIPT_OPCODE_SETFIXNUM, state->freereg + 1, adder);
+        if ((entry.register_type & 1) == cscript_reg_typeinfo_flonum)
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg + 1, cscript_number_type_flonum);
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, CSCRIPT_ADD_FLONUM);
+          }
+        else
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, CSCRIPT_ADD_FIXNUM);
+          }
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_STORE_MEMORY, entry.position, state->freereg);
+        }
+      else
+        {
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, entry.position);
+        make_code_asbx(ctxt, state->fun, CSCRIPT_OPCODE_SETFIXNUM, state->freereg + 1, adder);
+        if ((entry.register_type & 1) == cscript_reg_typeinfo_flonum)
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg + 1, cscript_number_type_flonum);
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, CSCRIPT_ADD_FLONUM);
+          }
+        else
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, CSCRIPT_ADD_FIXNUM);
+          }
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, entry.position, state->freereg);
+        }
+      state->reg_typeinfo = entry.register_type & 1;
+      }
+    }
   }
 
 static void compile_factor(cscript_context* ctxt, compiler_state* state, cscript_parsed_factor* f)
@@ -209,6 +325,9 @@ static void compile_factor(cscript_context* ctxt, compiler_state* state, cscript
       break;
     case cscript_factor_type_variable:
       compile_variable(ctxt, state, &f->factor.var);
+      break;
+    case cscript_factor_type_lvalue_operator:
+      compile_lvalue_operator(ctxt, state, &f->factor.lvop);
       break;
     default:
       cscript_throw(ctxt, CSCRIPT_ERROR_NOT_IMPLEMENTED);
