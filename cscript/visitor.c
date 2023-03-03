@@ -143,6 +143,12 @@ static void visit_nop(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_
   UNUSED(v);
   UNUSED(s);
   }
+static void visit_parameter(cscript_context* ctxt, cscript_visitor* v, cscript_parameter* s)
+  {
+  UNUSED(ctxt);
+  UNUSED(v);
+  UNUSED(s);
+  }
 
 static cscript_visitor_entry make_entry(void* e, enum cscript_visitor_entry_type t)
   {
@@ -186,6 +192,7 @@ cscript_visitor* cscript_visitor_new(cscript_context* ctxt, void* impl)
   v->postvisit_flonum = postvisit_flonum;
   v->previsit_factor = previsit_factor;
   v->postvisit_factor = postvisit_factor;
+  v->visit_parameter = visit_parameter;
 
   v->visit_nop = visit_nop;
 
@@ -355,7 +362,7 @@ static void visit_entry(cscript_context* ctxt, cscript_visitor* vis, cscript_vis
     }
     case CSCRIPT_VISITOR_VAR_PRE:
     {
-    if (vis->previsit_assignment(ctxt, vis, cast(cscript_parsed_variable*, e.entry)))
+    if (vis->previsit_var(ctxt, vis, cast(cscript_parsed_variable*, e.entry)))
       {
       cscript_vector_push_back(ctxt, &(vis->v), make_entry(e.entry, CSCRIPT_VISITOR_VAR_POST), cscript_visitor_entry);
       cscript_vector* dims = &(cast(cscript_parsed_variable*, e.entry)->dims);
@@ -454,6 +461,11 @@ static void visit_entry(cscript_context* ctxt, cscript_visitor* vis, cscript_vis
     vis->postvisit_factor(ctxt, vis, cast(cscript_parsed_factor*, e.entry));
     break;
     }
+    case CSCRIPT_VISITOR_PARAMETER:
+    {
+    vis->visit_parameter(ctxt, vis, cast(cscript_parameter*, e.entry));
+    break;
+    }
     default:
       cscript_assert(0); // not implemented yet
     }
@@ -487,5 +499,16 @@ void cscript_visit_program(cscript_context* ctxt, cscript_visitor* vis, cscript_
     cscript_visitor_entry e = make_entry(stmt_rit, CSCRIPT_VISITOR_STATEMENT_PRE);
     cscript_vector_push_back(ctxt, &(vis->v), e, cscript_visitor_entry);
     }
+
+  cscript_parameter* par_it = cscript_vector_begin(&p->parameters, cscript_parameter);
+  cscript_parameter* par_it_end = cscript_vector_end(&p->parameters, cscript_parameter);
+  cscript_parameter* par_rit = par_it_end - 1;
+  cscript_parameter* par_rit_end = par_it - 1;
+  for (; par_rit != par_rit_end; --par_rit)
+    {
+    cscript_visitor_entry e = make_entry(par_rit, CSCRIPT_VISITOR_PARAMETER);
+    cscript_vector_push_back(ctxt, &(vis->v), e, cscript_visitor_entry);
+    }
+
   visit(ctxt, vis);
   }

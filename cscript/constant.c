@@ -2,7 +2,14 @@
 
 int cscript_is_constant_factor(const cscript_parsed_factor* f)
   {
-  return f->type == cscript_factor_type_number ? 1 : 0;
+  switch (f->type)
+    {
+    case cscript_factor_type_number:
+      return 1;
+    case cscript_factor_type_expression:
+      return cscript_is_constant_expression(&f->factor.expr);
+    }
+  return 0;
   }
 
 int cscript_is_constant_term(const cscript_parsed_term* t)
@@ -37,6 +44,8 @@ cscript_constant_value cscript_get_constant_value_factor(const cscript_parsed_fa
       value.number = f->factor.number.number;
       value.type = f->factor.number.type;
       break;
+    case cscript_factor_type_expression:
+      return cscript_get_constant_value_expression(&f->factor.expr);
     default:
       cscript_assert(0);
     }

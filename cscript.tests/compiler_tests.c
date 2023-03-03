@@ -8,17 +8,33 @@
 #include "cscript/error.h"
 #include "cscript/dump.h"
 
-
-static void test_compile_fixnum_aux_stack(cscript_fixnum expected, const char* script, int stack_size)
+static void test_compile_aux_stack(cscript_fixnum expected, const char* script, int stack_size, int nr_parameters, void* pars, int output_type)
   {
   cscript_context* ctxt = cscript_open(stack_size);
   cscript_vector tokens = cscript_script2tokens(ctxt, script);
   cscript_program prog = make_program(ctxt, &tokens);
 
   cscript_function* compiled_program = cscript_compile_program(ctxt, &prog);
+
+  // fill stack with parameters
+  for (int i = 0; i < nr_parameters; ++i)
+    {
+    cscript_fixnum* fx = cscript_vector_begin(&ctxt->stack, cscript_fixnum) + i;
+    *fx = *(cast(cscript_fixnum*, pars) + i);
+    }
+
   cscript_fixnum* res = cscript_run(ctxt, compiled_program);
 
-  TEST_EQ_INT(expected, *res);
+  if (output_type == cscript_number_type_fixnum)
+    {    
+    TEST_EQ_INT(expected, *res);
+    }
+  else
+    {
+    cscript_flonum* resf = cast(cscript_flonum*, res);
+    cscript_flonum expectedf = *cast(cscript_flonum*, &expected);
+    TEST_EQ_DOUBLE(expectedf, *resf);
+    }
 
   cscript_print_any_error(ctxt);
 
@@ -32,36 +48,34 @@ static void test_compile_fixnum_aux_stack(cscript_fixnum expected, const char* s
   cscript_close(ctxt);
   }
 
-
-static void test_compile_flonum_aux_stack(cscript_flonum expected, const char* script, int stack_size)
+static void test_compile_fixnum_aux_stack(cscript_fixnum expected, const char* script, int stack_size, int nr_parameters, void* pars)
   {
-  cscript_context* ctxt = cscript_open(stack_size);
-  cscript_vector tokens = cscript_script2tokens(ctxt, script);
-  cscript_program prog = make_program(ctxt, &tokens);
+  test_compile_aux_stack(expected, script, stack_size, nr_parameters, pars, cscript_number_type_fixnum);
+  }
 
-  cscript_function* compiled_program = cscript_compile_program(ctxt, &prog);
-  cscript_flonum* res = cast(cscript_flonum*, cscript_run(ctxt, compiled_program));
-
-  TEST_EQ_DOUBLE(expected, *res);
-
-  TEST_EQ_INT(0, ctxt->number_of_compile_errors);
-  TEST_EQ_INT(0, ctxt->number_of_syntax_errors);
-  TEST_EQ_INT(0, ctxt->number_of_runtime_errors);
-
-  cscript_function_free(ctxt, compiled_program);
-  destroy_tokens_vector(ctxt, &tokens);
-  cscript_program_destroy(ctxt, &prog);
-  cscript_close(ctxt);
+static void test_compile_flonum_aux_stack(cscript_flonum expected, const char* script, int stack_size, int nr_parameters, void* pars)
+  {
+  test_compile_aux_stack(*cast(cscript_fixnum*, &expected), script, stack_size, nr_parameters, pars, cscript_number_type_flonum);
   }
 
 static void test_compile_fixnum_aux(cscript_fixnum expected, const char* script)
   {
-  test_compile_fixnum_aux_stack(expected, script, 256);
+  test_compile_fixnum_aux_stack(expected, script, 256, 0, NULL);
   }
 
 static void test_compile_flonum_aux(cscript_flonum expected, const char* script)
   {
-  test_compile_flonum_aux_stack(expected, script, 256);
+  test_compile_flonum_aux_stack(expected, script, 256, 0, NULL);
+  }
+
+static void test_compile_fixnum_pars_aux(cscript_fixnum expected, const char* script, int nr_parameters, void* pars)
+  {
+  test_compile_fixnum_aux_stack(expected, script, 256, nr_parameters, pars);
+  }
+
+static void test_compile_flonum_pars_aux(cscript_flonum expected, const char* script, int nr_parameters, void* pars)
+  {
+  test_compile_flonum_aux_stack(expected, script, 256, nr_parameters, pars);
   }
 
 static void test_compile_fixnum()
@@ -266,6 +280,32 @@ static void test_array()
   test_compile_fixnum_aux(3, "int f[10];\nf[8] = 10;\nf[8] /= 3;f[8];");
   }
 
+static void test_comment()
+  {
+  const char* script =
+    "int i[3]; // make an array of 3 integers\n"
+    "i[1] = 8; // assign 8 to index 1 position\n"    
+    "i[1] /= 2; // divide index 1 position by 2\n"
+    "i[1]; // return the result in index 1";
+  test_compile_fixnum_aux(4, script);
+  const char* script2 =
+  "int i[3]; // make an array of 3 integers\n"
+  "i[1] = 8; // assign 8 to index 1 position\n"
+  "i[1];\n"
+  "/*\n"
+  "i[1] /= 2; // divide index 1 position by 2\n"
+  "i[1]; // return the result in index 1\n"
+  "*/\n";
+  test_compile_fixnum_aux(8, script2);
+  }
+
+static void test_parameter()
+  {
+  cscript_fixnum i;
+  i = 3;
+  test_compile_fixnum_pars_aux(4, "(int i) i + 1;", 1, &i);
+  }
+
 void run_all_compiler_tests()
   {
   test_compile_fixnum();
@@ -276,4 +316,6 @@ void run_all_compiler_tests()
   test_compile_named_flonum();
   test_assigment();
   test_array();
+  test_comment();
+  test_parameter();
   }

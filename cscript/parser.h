@@ -151,8 +151,22 @@ typedef struct cscript_statement
   int type;
   } cscript_statement;
 
+#define cscript_parameter_type_fixnum 0
+#define cscript_parameter_type_flonum 1
+#define cscript_parameter_type_fixnum_pointer 2
+#define cscript_parameter_type_flonum_pointer 3
+
+typedef struct cscript_parameter
+  {
+  cscript_string name;
+  int type;
+  int line_nr, column_nr;
+  cscript_string filename;
+  } cscript_parameter;
+
 typedef struct cscript_program
   {
+  cscript_vector parameters;
   cscript_vector statements;
   } cscript_program;
 

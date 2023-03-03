@@ -661,6 +661,95 @@ cscript_parsed_expression cscript_make_expression(cscript_context* ctxt, token**
   return expr;
   }
 
+cscript_vector make_parameters(cscript_context* ctxt, token** token_it, token** token_it_end)
+  {
+  cscript_vector pars = make_null_vector();
+  if (*token_it == *token_it_end)
+    return pars;
+  if (current_token_type(token_it, token_it_end) == CSCRIPT_T_LEFT_ROUND_BRACKET)
+    {
+    token* t = *token_it;
+    ++t;
+    if (t != *token_it_end && t->type != CSCRIPT_T_ID)
+      return pars; // this is an expression probably
+    if (token_next(ctxt, token_it, token_it_end)==0)
+      return pars;    
+    int read_parameters = 1;
+    int first_time = 1;
+    while (read_parameters)
+      {
+      if (current_token_type(token_it, token_it_end) == CSCRIPT_T_RIGHT_ROUND_BRACKET)
+        {
+        break;
+        }
+      if (current_token_type(token_it, token_it_end) != CSCRIPT_T_ID)
+        {
+        cscript_string* fn = NULL;
+        if (ctxt->filenames_list.vector_size > 0)
+          fn = cscript_vector_back(&ctxt->filenames_list, cscript_string);
+        cscript_syntax_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, (*token_it)->line_nr, (*token_it)->column_nr, fn, "invalid parameter declaration");
+        return pars;
+        }
+      cscript_parameter p;
+      p.line_nr = (*token_it)->line_nr;
+      p.column_nr = (*token_it)->column_nr;
+      p.filename = make_null_string();
+      if (strcmp((*token_it)->value.string_ptr, "int")==0)
+        {
+        token_require(ctxt, token_it, token_it_end, "int");
+        p.type = cscript_parameter_type_fixnum;
+        if (current_token_type(token_it, token_it_end) == CSCRIPT_T_MUL)
+          {
+          p.type = cscript_parameter_type_fixnum_pointer;
+          token_next(ctxt, token_it, token_it_end);
+          }
+        }
+      else if (strcmp((*token_it)->value.string_ptr, "float") == 0)
+        {
+        token_require(ctxt, token_it, token_it_end, "float");
+        p.type = cscript_parameter_type_flonum;
+        if (current_token_type(token_it, token_it_end) == CSCRIPT_T_MUL)
+          {
+          p.type = cscript_parameter_type_flonum_pointer;
+          token_next(ctxt, token_it, token_it_end);
+          }
+        }
+      else
+        {
+        cscript_string* fn = NULL;
+        if (ctxt->filenames_list.vector_size > 0)
+          fn = cscript_vector_back(&ctxt->filenames_list, cscript_string);
+        cscript_syntax_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, (*token_it)->line_nr, (*token_it)->column_nr, fn, "invalid parameter declaration");
+        return pars;
+        }
+      if (current_token_type(token_it, token_it_end) != CSCRIPT_T_ID)
+        {
+        cscript_string* fn = NULL;
+        if (ctxt->filenames_list.vector_size > 0)
+          fn = cscript_vector_back(&ctxt->filenames_list, cscript_string);
+        cscript_syntax_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, (*token_it)->line_nr, (*token_it)->column_nr, fn, "invalid parameter name");
+        return pars;
+        }
+      cscript_string_copy(ctxt, &p.name, &(*token_it)->value);
+      token_next(ctxt, token_it, token_it_end);
+      if (current_token_type(token_it, token_it_end) == CSCRIPT_T_RIGHT_ROUND_BRACKET)
+        {
+        read_parameters = 0;
+        }
+      else
+        {
+        token_require(ctxt, token_it, token_it_end, ",");
+        }
+      if (first_time)
+        cscript_vector_init(ctxt, &pars, cscript_parameter);
+      cscript_vector_push_back(ctxt, &pars, p, cscript_parameter);
+      first_time = 0;
+      }
+    token_require(ctxt, token_it, token_it_end, ")");
+    }
+  return pars;
+  }
+
 cscript_statement cscript_make_statement(cscript_context* ctxt, token** token_it, token** token_it_end)
   {
   if (ctxt->number_of_syntax_errors > CSCRIPT_MAX_SYNTAX_ERRORS)
@@ -783,11 +872,13 @@ cscript_program make_program(cscript_context* ctxt, cscript_vector* tokens)
   last_token = make_bad_token();
   cscript_syntax_errors_clear(ctxt);
   invalidate_popped();
-  cscript_program prog;
+  cscript_program prog;  
   cscript_vector_init(ctxt, &prog.statements, cscript_statement);
 
   token* token_it = cscript_vector_begin(tokens, token);
   token* token_it_end = cscript_vector_end(tokens, token);
+
+  prog.parameters = make_parameters(ctxt, &token_it, &token_it_end);
 
   for (; token_it != token_it_end;)
     {
@@ -816,6 +907,12 @@ static void visit_number(cscript_context* ctxt, cscript_visitor* v, cscript_pars
   {
   UNUSED(v);
   cscript_string_destroy(ctxt, &e->filename);
+  }
+static void visit_parameter(cscript_context* ctxt, cscript_visitor* v, cscript_parameter* p)
+  {
+  UNUSED(v);
+  cscript_string_destroy(ctxt, &p->filename);
+  cscript_string_destroy(ctxt, &p->name);
   }
 static void postvisit_expression(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_expression* e)
   {
@@ -879,8 +976,10 @@ void cscript_program_destroy(cscript_context* ctxt, cscript_program* p)
   destroyer.visitor->postvisit_fixnum = postvisit_fixnum;
   destroyer.visitor->postvisit_var = postvisit_variable;
   destroyer.visitor->postvisit_assignment = postvisit_assignment;
+  destroyer.visitor->visit_parameter = visit_parameter;
   cscript_visit_program(ctxt, destroyer.visitor, p);
 
+  cscript_vector_destroy(ctxt, &p->parameters);
   cscript_vector_destroy(ctxt, &p->statements);
 
   destroyer.visitor->destroy(ctxt, destroyer.visitor);
