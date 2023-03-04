@@ -28,7 +28,19 @@ typedef enum
   CSCRIPT_EQUAL_FLONUM,
   CSCRIPT_NOT_EQUAL_FIXNUM,
   CSCRIPT_NOT_EQUAL_FLONUM,
-  CSCRIPT_SQRT_FLONUM
+  CSCRIPT_SQRT_FLONUM,
+  CSCRIPT_SIN_FLONUM,
+  CSCRIPT_COS_FLONUM,
+  CSCRIPT_EXP_FLONUM,
+  CSCRIPT_LOG_FLONUM,
+  CSCRIPT_LOG2_FLONUM,
+  CSCRIPT_FABS_FLONUM,
+  CSCRIPT_TAN_FLONUM,
+  CSCRIPT_ATAN_FLONUM,
+  CSCRIPT_ATAN2_FLONUM,
+  CSCRIPT_POW_FLONUM,
+  CSCRIPT_MIN_FLONUM,
+  CSCRIPT_MAX_FLONUM,
   } cscript_primitives;
 
 void cscript_primitive_add_fixnum(cscript_context* ctxt, int a);
@@ -54,6 +66,18 @@ void cscript_primitive_equal_flonum(cscript_context* ctxt, int a);
 void cscript_primitive_not_equal_fixnum(cscript_context* ctxt, int a);
 void cscript_primitive_not_equal_flonum(cscript_context* ctxt, int a);
 void cscript_primitive_sqrt_flonum(cscript_context* ctxt, int a);
+void cscript_primitive_sin_flonum(cscript_context* ctxt, int a);
+void cscript_primitive_cos_flonum(cscript_context* ctxt, int a);
+void cscript_primitive_exp_flonum(cscript_context* ctxt, int a);
+void cscript_primitive_log_flonum(cscript_context* ctxt, int a);
+void cscript_primitive_log2_flonum(cscript_context* ctxt, int a);
+void cscript_primitive_fabs_flonum(cscript_context* ctxt, int a);
+void cscript_primitive_tan_flonum(cscript_context* ctxt, int a);
+void cscript_primitive_atan_flonum(cscript_context* ctxt, int a);
+void cscript_primitive_atan2_flonum(cscript_context* ctxt, int a);
+void cscript_primitive_pow_flonum(cscript_context* ctxt, int a);
+void cscript_primitive_min_flonum(cscript_context* ctxt, int a);
+void cscript_primitive_max_flonum(cscript_context* ctxt, int a);
 
 void cscript_call_primitive(cscript_context* ctxt, cscript_fixnum prim_id, int a);
 

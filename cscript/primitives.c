@@ -17,7 +17,7 @@
 void cscript_primitive_add_fixnum(cscript_context* ctxt, int a)
   {
   cscript_fixnum* ra = cscript_vector_at(&ctxt->stack, a, cscript_fixnum);
-  cscript_fixnum* rb = ra+1;
+  cscript_fixnum* rb = ra + 1;
   *ra += *rb;
   }
 
@@ -216,13 +216,89 @@ void cscript_primitive_sqrt_flonum(cscript_context* ctxt, int a)
   *ra = sqrt(*ra);
   }
 
+void cscript_primitive_sin_flonum(cscript_context* ctxt, int a)
+  {
+  cscript_flonum* ra = cscript_vector_at(&ctxt->stack, a, cscript_flonum);
+  *ra = sin(*ra);
+  }
+
+void cscript_primitive_cos_flonum(cscript_context* ctxt, int a)
+  {
+  cscript_flonum* ra = cscript_vector_at(&ctxt->stack, a, cscript_flonum);
+  *ra = cos(*ra);
+  }
+
+void cscript_primitive_exp_flonum(cscript_context* ctxt, int a)
+  {
+  cscript_flonum* ra = cscript_vector_at(&ctxt->stack, a, cscript_flonum);
+  *ra = exp(*ra);
+  }
+
+void cscript_primitive_log_flonum(cscript_context* ctxt, int a)
+  {
+  cscript_flonum* ra = cscript_vector_at(&ctxt->stack, a, cscript_flonum);
+  *ra = log(*ra);
+  }
+
+void cscript_primitive_log2_flonum(cscript_context* ctxt, int a)
+  {
+  cscript_flonum* ra = cscript_vector_at(&ctxt->stack, a, cscript_flonum);
+  *ra = log2(*ra);
+  }
+
+void cscript_primitive_fabs_flonum(cscript_context* ctxt, int a)
+  {
+  cscript_flonum* ra = cscript_vector_at(&ctxt->stack, a, cscript_flonum);
+  *ra = fabs(*ra);
+  }
+
+void cscript_primitive_tan_flonum(cscript_context* ctxt, int a)
+  {
+  cscript_flonum* ra = cscript_vector_at(&ctxt->stack, a, cscript_flonum);
+  *ra = tan(*ra);
+  }
+
+void cscript_primitive_atan_flonum(cscript_context* ctxt, int a)
+  {
+  cscript_flonum* ra = cscript_vector_at(&ctxt->stack, a, cscript_flonum);
+  *ra = atan(*ra);
+  }
+
+void cscript_primitive_atan2_flonum(cscript_context* ctxt, int a)
+  {
+  cscript_flonum* ra = cscript_vector_at(&ctxt->stack, a, cscript_flonum);
+  cscript_flonum* rb = cscript_vector_at(&ctxt->stack, a + 1, cscript_flonum);
+  *ra = atan2(*ra, *rb);
+  }
+
+void cscript_primitive_pow_flonum(cscript_context* ctxt, int a)
+  {
+  cscript_flonum* ra = cscript_vector_at(&ctxt->stack, a, cscript_flonum);
+  cscript_flonum* rb = cscript_vector_at(&ctxt->stack, a + 1, cscript_flonum);
+  *ra = pow(*ra, *rb);
+  }
+
+void cscript_primitive_min_flonum(cscript_context* ctxt, int a)
+  {
+  cscript_flonum* ra = cscript_vector_at(&ctxt->stack, a, cscript_flonum);
+  cscript_flonum* rb = cscript_vector_at(&ctxt->stack, a + 1, cscript_flonum);
+  *ra = *ra < *rb ? *ra : *rb;
+  }
+
+void cscript_primitive_max_flonum(cscript_context* ctxt, int a)
+  {
+  cscript_flonum* ra = cscript_vector_at(&ctxt->stack, a, cscript_flonum);
+  cscript_flonum* rb = cscript_vector_at(&ctxt->stack, a + 1, cscript_flonum);
+  *ra = *ra > *rb ? *ra : *rb;
+  }
+
 void cscript_call_primitive(cscript_context* ctxt, cscript_fixnum function_id, int a)
   {
   switch (function_id)
     {
     case CSCRIPT_ADD_FIXNUM:
       cscript_primitive_add_fixnum(ctxt, a);
-      break;  
+      break;
     case CSCRIPT_ADD_FLONUM:
       cscript_primitive_add_flonum(ctxt, a);
       break;
@@ -289,6 +365,42 @@ void cscript_call_primitive(cscript_context* ctxt, cscript_fixnum function_id, i
     case CSCRIPT_SQRT_FLONUM:
       cscript_primitive_sqrt_flonum(ctxt, a);
       break;
+    case CSCRIPT_SIN_FLONUM:
+      cscript_primitive_sin_flonum(ctxt, a);
+      break;
+    case CSCRIPT_COS_FLONUM:
+      cscript_primitive_cos_flonum(ctxt, a);
+      break;
+    case CSCRIPT_EXP_FLONUM:
+      cscript_primitive_exp_flonum(ctxt, a);
+      break;
+    case CSCRIPT_LOG_FLONUM:
+      cscript_primitive_log_flonum(ctxt, a);
+      break;
+    case CSCRIPT_LOG2_FLONUM:
+      cscript_primitive_log2_flonum(ctxt, a);
+      break;
+    case CSCRIPT_FABS_FLONUM:
+      cscript_primitive_fabs_flonum(ctxt, a);
+      break;
+    case CSCRIPT_TAN_FLONUM:
+      cscript_primitive_tan_flonum(ctxt, a);
+      break;
+    case CSCRIPT_ATAN_FLONUM:
+      cscript_primitive_atan_flonum(ctxt, a);
+      break;
+    case CSCRIPT_ATAN2_FLONUM:
+      cscript_primitive_atan2_flonum(ctxt, a);
+      break;
+    case CSCRIPT_POW_FLONUM:
+      cscript_primitive_pow_flonum(ctxt, a);
+      break;
+    case CSCRIPT_MIN_FLONUM:
+      cscript_primitive_min_flonum(ctxt, a);
+      break;
+    case CSCRIPT_MAX_FLONUM:
+      cscript_primitive_max_flonum(ctxt, a);
+      break;
     default:
       cscript_throw(ctxt, CSCRIPT_ERROR_NOT_IMPLEMENTED);
       break;
@@ -305,6 +417,18 @@ static void map_insert(cscript_context* ctxt, cscript_map* m, const char* str, i
 cscript_map* generate_primitives_map(cscript_context* ctxt)
   {
   cscript_map* m = cscript_map_new(ctxt, 0, 8);
-  map_insert(ctxt, m, "sqrt", CSCRIPT_SQRT_FLONUM);  
+  map_insert(ctxt, m, "sqrt", CSCRIPT_SQRT_FLONUM);
+  map_insert(ctxt, m, "sin", CSCRIPT_SIN_FLONUM);
+  map_insert(ctxt, m, "cos", CSCRIPT_COS_FLONUM);
+  map_insert(ctxt, m, "exp", CSCRIPT_EXP_FLONUM);
+  map_insert(ctxt, m, "log", CSCRIPT_LOG_FLONUM);
+  map_insert(ctxt, m, "log2", CSCRIPT_LOG2_FLONUM);
+  map_insert(ctxt, m, "fabs", CSCRIPT_FABS_FLONUM);
+  map_insert(ctxt, m, "tan", CSCRIPT_TAN_FLONUM);
+  map_insert(ctxt, m, "atan", CSCRIPT_ATAN_FLONUM);
+  map_insert(ctxt, m, "atan2", CSCRIPT_ATAN2_FLONUM);
+  map_insert(ctxt, m, "pow", CSCRIPT_POW_FLONUM);
+  map_insert(ctxt, m, "min", CSCRIPT_MIN_FLONUM);
+  map_insert(ctxt, m, "max", CSCRIPT_MAX_FLONUM);
   return m;
   }

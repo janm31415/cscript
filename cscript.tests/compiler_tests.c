@@ -523,6 +523,18 @@ static void test_for_loop()
 static void test_funccall()
   {
   test_compile_flonum_aux(sqrt(2.0), "() sqrt(2.f);");
+  test_compile_flonum_aux(sin(0.5), "() sin(0.5f);");
+  test_compile_flonum_aux(cos(0.5), "() cos(0.5f);");
+  test_compile_flonum_aux(exp(0.5), "() exp(0.5f);");
+  test_compile_flonum_aux(log(0.5), "() log(0.5f);");
+  test_compile_flonum_aux(log2(0.5), "() log2(0.5f);");
+  test_compile_flonum_aux(fabs(-0.5), "() fabs(0.5f);");
+  test_compile_flonum_aux(tan(0.5), "() tan(0.5f);");
+  test_compile_flonum_aux(atan(0.5), "() atan(0.5f);");
+  test_compile_flonum_aux(atan2(0.5, 0.7), "() atan2(0.5f,0.7);");
+  test_compile_flonum_aux(pow(0.5, 0.7), "() pow(0.5f,0.7);");
+  test_compile_flonum_aux(0.5, "() min(0.5f,0.7);");
+  test_compile_flonum_aux(0.7, "() max(0.5f,0.7);");
   }
 
 void run_all_compiler_tests()

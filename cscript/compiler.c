@@ -347,6 +347,7 @@ static void compile_function(cscript_context* ctxt, compiler_state* state, cscri
       ++state->freereg;
       }
     state->freereg = freereg;
+    state->reg_typeinfo = cscript_reg_typeinfo_flonum;
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, fun->value.fx);
     }
   }
