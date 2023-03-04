@@ -506,7 +506,7 @@ static void test_inc_dec()
 
 static void test_for_loop()
   {
-  //test_compile_flonum_aux(1225.0, "() float f = 0; for (int i = 0; i < 50; ++i) { f += i; } f;");
+  test_compile_flonum_aux(1225.0, "() float f = 0; for (int i = 0; i < 50; ++i) { f += i; } f;");
   }
 
 void run_all_compiler_tests()

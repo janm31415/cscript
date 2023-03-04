@@ -192,7 +192,7 @@ cscript_parsed_variable make_variable(cscript_context* ctxt, token** token_it, t
   cscript_parsed_variable var;
   var.column_nr = (*token_it)->column_nr;
   var.line_nr = (*token_it)->line_nr;
-  var.filename = make_null_string(); 
+  var.filename = make_null_string();
   var.dims = make_null_vector();
   var.dereference = 0;
   if ((*token_it)->type == CSCRIPT_T_MUL)
@@ -297,7 +297,7 @@ cscript_parsed_factor cscript_make_factor(cscript_context* ctxt, token** token_i
     else
       {
       expr.factor.var = make_variable(ctxt, token_it, token_it_end);
-      expr.type = cscript_factor_type_variable;      
+      expr.type = cscript_factor_type_variable;
       }
     break;
     }
@@ -533,6 +533,81 @@ cscript_statement make_float(cscript_context* ctxt, token** token_it, token** to
   return outstmt;
   }
 
+cscript_statement make_if(cscript_context* ctxt, token** token_it, token** token_it_end)
+  {
+  cscript_assert(0);
+  cscript_statement outstmt;
+  outstmt.type = cscript_statement_type_if;
+  return outstmt;
+  }
+
+cscript_vector make_statements(cscript_context* ctxt, token** token_it, token** token_it_end, const char* terminator)
+  {
+  cscript_vector stmts;
+  cscript_vector_init(ctxt, &stmts, cscript_statement);
+  if (check_token_available(ctxt, token_it, token_it_end) == 0)
+    return stmts;
+  while (strcmp((*token_it)->value.string_ptr, terminator) != 0)
+    {
+    cscript_statement stmt = cscript_make_statement(ctxt, token_it, token_it_end);
+    cscript_vector_push_back(ctxt, &stmts, stmt, cscript_statement);
+    check_for_semicolon(ctxt, token_it, token_it_end, &stmt);
+    if (check_token_available(ctxt, token_it, token_it_end) == 0)
+      return stmts;
+    }
+  token_require(ctxt, token_it, token_it_end, terminator);
+  return stmts;
+  }
+
+cscript_statement make_for(cscript_context* ctxt, token** token_it, token** token_it_end)
+  {
+  cscript_parsed_for f;
+  f.line_nr = (*token_it)->line_nr;
+  f.column_nr = (*token_it)->column_nr;
+  f.filename = make_null_string();
+  token_require(ctxt, token_it, token_it_end, "for");
+  token_require(ctxt, token_it, token_it_end, "(");
+  cscript_vector_init(ctxt, &f.init_cond_inc, cscript_statement);
+  cscript_statement init = cscript_make_statement(ctxt, token_it, token_it_end);
+  cscript_vector_push_back(ctxt, &f.init_cond_inc, init, cscript_statement);
+  token_require(ctxt, token_it, token_it_end, ";");
+  cscript_statement cond = cscript_make_statement(ctxt, token_it, token_it_end);
+  cscript_vector_push_back(ctxt, &f.init_cond_inc, cond, cscript_statement);
+  token_require(ctxt, token_it, token_it_end, ";");
+  cscript_statement inc = cscript_make_statement(ctxt, token_it, token_it_end);
+  cscript_vector_push_back(ctxt, &f.init_cond_inc, inc, cscript_statement);
+  token_require(ctxt, token_it, token_it_end, ")");
+  token_require(ctxt, token_it, token_it_end, "{");
+  f.statements = make_statements(ctxt, token_it, token_it_end, "}");
+  cscript_statement outstmt;
+  outstmt.type = cscript_statement_type_for;
+  outstmt.statement.forloop = f;
+  return outstmt;
+  }
+
+cscript_statement make_while(cscript_context* ctxt, token** token_it, token** token_it_end)
+  {
+  cscript_parsed_for f;
+  f.line_nr = (*token_it)->line_nr;
+  f.column_nr = (*token_it)->column_nr;
+  f.filename = make_null_string();
+  token_require(ctxt, token_it, token_it_end, "while");
+  token_require(ctxt, token_it, token_it_end, "(");
+  cscript_vector_init(ctxt, &f.init_cond_inc, cscript_statement);
+  cscript_statement nop = make_nop();
+  cscript_vector_push_back(ctxt, &f.init_cond_inc, nop, cscript_statement);
+  cscript_statement cond = cscript_make_statement(ctxt, token_it, token_it_end);
+  cscript_vector_push_back(ctxt, &f.init_cond_inc, cond, cscript_statement);
+  cscript_vector_push_back(ctxt, &f.init_cond_inc, nop, cscript_statement);
+  token_require(ctxt, token_it, token_it_end, ")");
+  token_require(ctxt, token_it, token_it_end, "{");
+  f.statements = make_statements(ctxt, token_it, token_it_end, "}");
+  cscript_statement outstmt;
+  outstmt.type = cscript_statement_type_for;
+  outstmt.statement.forloop = f;
+  return outstmt;
+  }
+
 cscript_statement make_assignment(cscript_context* ctxt, token** token_it, token** token_it_end)
   {
   cscript_parsed_assignment a;
@@ -708,8 +783,8 @@ cscript_vector make_parameters(cscript_context* ctxt, token** token_it, token** 
       }
     if (t != *token_it_end && t->type != CSCRIPT_T_ID)
       return pars; // this is an expression probably
-    if (token_next(ctxt, token_it, token_it_end)==0)
-      return pars;    
+    if (token_next(ctxt, token_it, token_it_end) == 0)
+      return pars;
     int read_parameters = 1;
     int first_time = 1;
     while (read_parameters)
@@ -730,7 +805,7 @@ cscript_vector make_parameters(cscript_context* ctxt, token** token_it, token** 
       p.line_nr = (*token_it)->line_nr;
       p.column_nr = (*token_it)->column_nr;
       p.filename = make_null_string();
-      if (strcmp((*token_it)->value.string_ptr, "int")==0)
+      if (strcmp((*token_it)->value.string_ptr, "int") == 0)
         {
         token_require(ctxt, token_it, token_it_end, "int");
         p.type = cscript_parameter_type_fixnum;
@@ -829,6 +904,21 @@ cscript_statement cscript_make_statement(cscript_context* ctxt, token** token_it
       cscript_statement stmt = make_float(ctxt, token_it, token_it_end);
       return stmt;
       }
+    if (strcmp((*token_it)->value.string_ptr, "for") == 0)
+      {
+      cscript_statement stmt = make_for(ctxt, token_it, token_it_end);
+      return stmt;
+      }
+    if (strcmp((*token_it)->value.string_ptr, "while") == 0)
+      {
+      cscript_statement stmt = make_while(ctxt, token_it, token_it_end);
+      return stmt;
+      }
+    if (strcmp((*token_it)->value.string_ptr, "if") == 0)
+      {
+      cscript_statement stmt = make_if(ctxt, token_it, token_it_end);
+      return stmt;
+      }
     uint64_t dist = *token_it_end - *token_it;
     if (dist >= 3)
       {
@@ -898,7 +988,7 @@ cscript_statement cscript_make_statement(cscript_context* ctxt, token** token_it
     if (dist >= 4)
       {
       token* t = *token_it;
-      t+=2;
+      t += 2;
       if (is_assignment(t))
         {
         cscript_statement stmt = make_assignment(ctxt, token_it, token_it_end);
@@ -912,15 +1002,15 @@ cscript_statement cscript_make_statement(cscript_context* ctxt, token** token_it
     }
     default:
     {
-    cscript_statement expr;
-    expr.type = cscript_statement_type_expression;
-    expr.statement.expr = cscript_make_expression(ctxt, token_it, token_it_end);
-    return expr;
+    break;
     }
 
     }
 
-  return make_nop();
+  cscript_statement expr;
+  expr.type = cscript_statement_type_expression;
+  expr.statement.expr = cscript_make_expression(ctxt, token_it, token_it_end);
+  return expr;
   }
 
 cscript_program make_program(cscript_context* ctxt, cscript_vector* tokens)
@@ -928,7 +1018,7 @@ cscript_program make_program(cscript_context* ctxt, cscript_vector* tokens)
   last_token = make_bad_token();
   cscript_syntax_errors_clear(ctxt);
   invalidate_popped();
-  cscript_program prog;  
+  cscript_program prog;
   cscript_vector_init(ctxt, &prog.statements, cscript_statement);
 
   token* token_it = cscript_vector_begin(tokens, token);

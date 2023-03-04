@@ -1078,6 +1078,15 @@ static void compile_assigment(cscript_context* ctxt, compiler_state* state, cscr
     }
   }
 
+static void compile_for(cscript_context* ctxt, compiler_state* state, cscript_parsed_for* f)
+  {
+  }
+
+static void compile_if(cscript_context* ctxt, compiler_state* state, cscript_parsed_if* f)
+  {
+  cscript_assert(0);
+  }
+
 static void compile_statement(cscript_context* ctxt, compiler_state* state, cscript_statement* stmt)
   {
   switch (stmt->type)
@@ -1090,6 +1099,12 @@ static void compile_statement(cscript_context* ctxt, compiler_state* state, cscr
       break;
     case cscript_statement_type_flonum:
       compile_flonum(ctxt, state, &stmt->statement.flonum);
+      break;
+    case cscript_statement_type_for:
+      compile_for(ctxt, state, &stmt->statement.forloop);
+      break;
+    case cscript_statement_type_if:
+      compile_if(ctxt, state, &stmt->statement.iftest);
       break;
     case cscript_statement_type_comma_separated:
       compile_comma_seperated_statements(ctxt, state, &stmt->statement.stmts);
