@@ -280,7 +280,7 @@ static void visit_entry(cscript_context* ctxt, cscript_visitor* vis, cscript_vis
           break;
         case cscript_statement_type_comma_separated:
           cscript_vector_push_back(ctxt, &(vis->v), make_entry(&cast(cscript_statement*, e.entry)->statement.stmts, CSCRIPT_VISITOR_STATEMENTS_PRE), cscript_visitor_entry);
-        break;
+          break;
         case cscript_statement_type_fixnum:
           cscript_vector_push_back(ctxt, &(vis->v), make_entry(&cast(cscript_statement*, e.entry)->statement.fixnum, CSCRIPT_VISITOR_FIXNUM_PRE), cscript_visitor_entry);
           break;
@@ -439,7 +439,7 @@ static void visit_entry(cscript_context* ctxt, cscript_visitor* vis, cscript_vis
       for (; expr_rit != expr_rit_end; --expr_rit) // IMPORTANT: brackets necessary, as cscript_vector_push_back is a C macro
         {
         cscript_vector_push_back(ctxt, &(vis->v), make_entry(cast(void*, expr_rit), CSCRIPT_VISITOR_EXPRESSION_PRE), cscript_visitor_entry);
-        }      
+        }
       }
     break;
     }
@@ -512,7 +512,7 @@ static void visit_entry(cscript_context* ctxt, cscript_visitor* vis, cscript_vis
       for (; expr_rit != expr_rit_end; --expr_rit) // IMPORTANT: brackets necessary, as cscript_vector_push_back is a C macro
         {
         cscript_vector_push_back(ctxt, &(vis->v), make_entry(cast(void*, expr_rit), CSCRIPT_VISITOR_EXPRESSION_PRE), cscript_visitor_entry);
-        }      
+        }
       }
     break;
     }
@@ -607,7 +607,7 @@ static void visit_entry(cscript_context* ctxt, cscript_visitor* vis, cscript_vis
     {
     if (vis->previsit_if(ctxt, vis, cast(cscript_parsed_if*, e.entry)))
       {
-      cscript_vector_push_back(ctxt, &(vis->v), make_entry(e.entry, CSCRIPT_VISITOR_IF_POST), cscript_visitor_entry);      
+      cscript_vector_push_back(ctxt, &(vis->v), make_entry(e.entry, CSCRIPT_VISITOR_IF_POST), cscript_visitor_entry);
       cscript_statement* stmt_it = cscript_vector_begin(&cast(cscript_parsed_if*, e.entry)->alternative, cscript_statement);
       cscript_statement* stmt_it_end = cscript_vector_end(&cast(cscript_parsed_if*, e.entry)->alternative, cscript_statement);
       cscript_statement* stmt_rit = stmt_it_end - 1;

@@ -1154,9 +1154,45 @@ static void compile_for(cscript_context* ctxt, compiler_state* state, cscript_pa
   cscript_environment_pop_child(ctxt);
   }
 
-static void compile_if(cscript_context* ctxt, compiler_state* state, cscript_parsed_if* f)
+static void compile_if(cscript_context* ctxt, compiler_state* state, cscript_parsed_if* i)
   {
-  cscript_assert(0);
+  cscript_statement* cond = cscript_vector_at(&i->condition, 0, cscript_statement);
+  compile_statement(ctxt, state, cond);
+  make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_NEQ, state->freereg, 0);
+  cscript_instruction i1 = 0;
+  CSCRIPT_SET_OPCODE(i1, CSCRIPT_OPCODE_JMP);
+  cscript_vector_push_back(ctxt, &state->fun->code, i1, cscript_instruction);
+  int if_jump = (int)state->fun->code.vector_size - 1;
+  cscript_environment_push_child(ctxt);
+  cscript_statement* it = cscript_vector_begin(&i->body, cscript_statement);
+  cscript_statement* it_end = cscript_vector_end(&i->body, cscript_statement);
+  for (; it != it_end; ++it)
+    {
+    compile_statement(ctxt, state, it);
+    }
+  cscript_environment_pop_child(ctxt);
+  if (i->alternative.vector_size == 0)
+    {
+    cscript_instruction i2 = 0;
+    CSCRIPT_SET_OPCODE(i2, CSCRIPT_OPCODE_JMP);
+    cscript_vector_push_back(ctxt, &state->fun->code, i2, cscript_instruction);
+    int else_jump = (int)state->fun->code.vector_size - 1;
+
+    cscript_environment_push_child(ctxt);
+    it = cscript_vector_begin(&i->alternative, cscript_statement);
+    it_end = cscript_vector_end(&i->alternative, cscript_statement);
+    for (; it != it_end; ++it)
+      {
+      compile_statement(ctxt, state, it);
+      }
+    cscript_environment_pop_child(ctxt);
+
+    cscript_instruction* alt_jump = cscript_vector_at(&state->fun->code, else_jump, cscript_instruction);
+    CSCRIPT_SETARG_sBx(*alt_jump, (int)state->fun->code.vector_size - else_jump - 1);
+    }
+
+  cscript_instruction* first_jump = cscript_vector_at(&state->fun->code, if_jump, cscript_instruction);
+  CSCRIPT_SETARG_sBx(*first_jump, (int)state->fun->code.vector_size - if_jump - 1);
   }
 
 static void compile_statement(cscript_context* ctxt, compiler_state* state, cscript_statement* stmt)
