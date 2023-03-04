@@ -640,7 +640,7 @@ static void compile_comma_seperated_statements(cscript_context* ctxt, compiler_s
 static void compile_fixnum_array(cscript_context* ctxt, compiler_state* state, cscript_parsed_fixnum* fx)
   {
   cscript_parsed_expression* dim_expr = cscript_vector_begin(&fx->dims, cscript_parsed_expression);
-  if (cscript_is_constant_expression(dim_expr) == 0)
+  if (cscript_is_constant_expression(ctxt, dim_expr) == 0)
     {
     cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, fx->line_nr, fx->column_nr, &fx->filename, "array dimension should be a constant");
     return;
@@ -663,7 +663,10 @@ static void compile_fixnum_array(cscript_context* ctxt, compiler_state* state, c
     cscript_string s;
     cscript_string_copy(ctxt, &s, &fx->name);
     cscript_environment_add(ctxt, &s, entry);
-    cscript_constant_value dim_size = cscript_get_constant_value_expression(dim_expr);
+    cscript_vector dim_size_vec = cscript_get_constant_value_expression(ctxt, dim_expr);
+    cscript_assert(dim_size_vec.vector_size == 1);
+    cscript_constant_value dim_size = *cscript_vector_begin(&dim_size_vec, cscript_constant_value);
+    cscript_vector_destroy(ctxt, &dim_size_vec);
     if (dim_size.type == cscript_number_type_fixnum)
       state->freereg += (int)dim_size.number.fx;
     else
@@ -735,15 +738,23 @@ static void compile_fixnum(cscript_context* ctxt, compiler_state* state, cscript
 static void compile_flonum_array(cscript_context* ctxt, compiler_state* state, cscript_parsed_flonum* fl)
   {
   cscript_parsed_expression* dim_expr = cscript_vector_begin(&fl->dims, cscript_parsed_expression);
-  if (cscript_is_constant_expression(dim_expr) == 0)
+  if (cscript_is_constant_expression(ctxt, dim_expr) == 0)
     {
     cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, fl->line_nr, fl->column_nr, &fl->filename, "array dimension should be a constant");
     return;
     }
   int init = fl->expr.operands.vector_size > 0;
+  cscript_vector init_values;
+  init_values.element_size = 0;
+  init_values.vector_capacity = 0;
+  init_values.vector_size = 0;
+  init_values.vector_ptr = NULL;
   if (init)
     {
-    cscript_assert(0);
+    if (!cscript_is_constant_expression(ctxt, &fl->expr))
+      cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, fl->line_nr, fl->column_nr, &fl->filename, "array initialization expects a constant expression list");
+    else
+      init_values = cscript_get_constant_value_expression(ctxt, &fl->expr);
     }
   cscript_environment_entry entry;
   if (cscript_environment_find(&entry, ctxt, &fl->name))
@@ -758,11 +769,34 @@ static void compile_flonum_array(cscript_context* ctxt, compiler_state* state, c
     cscript_string s;
     cscript_string_copy(ctxt, &s, &fl->name);
     cscript_environment_add(ctxt, &s, entry);
-    cscript_constant_value dim_size = cscript_get_constant_value_expression(dim_expr);
+    cscript_vector dim_size_vec = cscript_get_constant_value_expression(ctxt, dim_expr);
+    cscript_assert(dim_size_vec.vector_size == 1);
+    cscript_constant_value dim_size = *cscript_vector_begin(&dim_size_vec, cscript_constant_value);
+    cscript_vector_destroy(ctxt, &dim_size_vec);
+    int dimension = 0;
     if (dim_size.type == cscript_number_type_fixnum)
-      state->freereg += (int)dim_size.number.fx;
+      dimension = (int)dim_size.number.fx;
     else
-      state->freereg += (int)dim_size.number.fl;
+      dimension = (int)dim_size.number.fl;
+    state->freereg += dimension;
+    if (init)
+      {
+      if (init_values.vector_size != dimension)
+        {
+        cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, fl->line_nr, fl->column_nr, &fl->filename, "array initializer list has wrong dimension");
+        }
+      else
+        {    
+        cscript_constant_value* it = cscript_vector_begin(&init_values, cscript_constant_value);
+        cscript_constant_value* it_end = cscript_vector_end(&init_values, cscript_constant_value);
+        cscript_fixnum* stack_pos = cscript_vector_at(&ctxt->stack, entry.position, cscript_fixnum);
+        for (; it != it_end; ++it, ++stack_pos)
+          {
+          memcpy(stack_pos, &it->number.fx, sizeof(cscript_fixnum));
+          }
+        }
+      cscript_vector_destroy(ctxt, &init_values);
+      }
     }
   }
 
