@@ -551,6 +551,11 @@ static void test_if()
   test_compile_flonum_aux(11.0, "() float f = 0; if (3 < 2) { f = 9; } else if (3 == 2) { f = 10; } else { f = 11; } f;");
   }
 
+static void test_array_assignment()
+  {
+  test_compile_flonum_aux(3.4, "() float f[3] = {1.2, 3.4, 5.6}; f[1];");
+  }
+
 void run_all_compiler_tests()
   {
   test_compile_fixnum();
@@ -569,4 +574,5 @@ void run_all_compiler_tests()
   test_for_loop();
   test_funccall();
   test_if();
+  test_array_assignment();
   }

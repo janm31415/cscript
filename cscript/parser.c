@@ -201,7 +201,7 @@ cscript_parsed_function make_function(cscript_context* ctxt, token** token_it, t
     {
     token_next(ctxt, token_it, token_it_end);
     return f;
-    }  
+    }
   cscript_parsed_expression e = cscript_make_expression(ctxt, token_it, token_it_end);
   cscript_vector_push_back(ctxt, &f.args, e, cscript_parsed_expression);
   while (current_token_type(token_it, token_it_end) == CSCRIPT_T_COMMA)
@@ -252,6 +252,32 @@ cscript_parsed_lvalue_operator make_lvalue_operator(cscript_context* ctxt, token
   token_next(ctxt, token_it, token_it_end);
   lv.lvalue = make_variable(ctxt, token_it, token_it_end);
   return lv;
+  }
+
+cscript_parsed_expression_list make_expression_list(cscript_context* ctxt, token** token_it, token** token_it_end)
+  {
+  cscript_parsed_expression_list l;
+  l.column_nr = (*token_it)->column_nr;
+  l.line_nr = (*token_it)->line_nr;
+  l.filename = make_null_string();
+  l.expressions = make_null_vector();
+  token_require(ctxt, token_it, token_it_end, "{");
+  if (current_token_type(token_it, token_it_end) == CSCRIPT_T_RIGHT_CURLY_BRACE)
+    {
+    token_require(ctxt, token_it, token_it_end, "}");
+    return l;
+    }
+  cscript_vector_init(ctxt, &l.expressions, cscript_parsed_expression);
+  cscript_parsed_expression e = cscript_make_expression(ctxt, token_it, token_it_end);
+  cscript_vector_push_back(ctxt, &l.expressions, e, cscript_parsed_expression);
+  while (current_token_type(token_it, token_it_end) == CSCRIPT_T_COMMA)
+    {
+    token_next(ctxt, token_it, token_it_end);
+    e = cscript_make_expression(ctxt, token_it, token_it_end);
+    cscript_vector_push_back(ctxt, &l.expressions, e, cscript_parsed_expression);
+    }
+  token_require(ctxt, token_it, token_it_end, "}");
+  return l;
   }
 
 cscript_parsed_factor cscript_make_factor(cscript_context* ctxt, token** token_it, token** token_it_end)
@@ -336,8 +362,20 @@ cscript_parsed_factor cscript_make_factor(cscript_context* ctxt, token** token_i
     expr.type = cscript_factor_type_lvalue_operator;
     break;
     }
+    case CSCRIPT_T_LEFT_CURLY_BRACE:
+    {
+    expr.factor.exprlist = make_expression_list(ctxt, token_it, token_it_end);
+    expr.type = cscript_factor_type_expression_list;
+    break;
+    }
     default:
-      cscript_assert(0); //not implemented
+    {
+    cscript_string* fn = NULL;
+    if (ctxt->filenames_list.vector_size > 0)
+      fn = cscript_vector_back(&ctxt->filenames_list, cscript_string);
+    cscript_syntax_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, last_token.line_nr, last_token.column_nr, fn, "unknown type");
+    break;
+    }
     }
   return expr;
   }
@@ -1187,7 +1225,13 @@ static void postvisit_function(cscript_context* ctxt, cscript_visitor* v, cscrip
   UNUSED(v);
   cscript_string_destroy(ctxt, &f->name);
   cscript_string_destroy(ctxt, &f->filename);
-  cscript_vector_destroy(ctxt, &f->args);  
+  cscript_vector_destroy(ctxt, &f->args);
+  }
+static void postvisit_expression_list(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_expression_list* l)
+  {
+  UNUSED(v);  
+  cscript_string_destroy(ctxt, &l->filename);
+  cscript_vector_destroy(ctxt, &l->expressions);
   }
 static void postvisit_variable(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_variable* var)
   {
@@ -1214,6 +1258,7 @@ void cscript_program_destroy(cscript_context* ctxt, cscript_program* p)
   destroyer.visitor->postvisit_for = postvisit_for;
   destroyer.visitor->postvisit_if = postvisit_if;
   destroyer.visitor->postvisit_function = postvisit_function;
+  destroyer.visitor->postvisit_expression_list = postvisit_expression_list;
   destroyer.visitor->visit_parameter = visit_parameter;
   cscript_visit_program(ctxt, destroyer.visitor, p);
 
