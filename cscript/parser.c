@@ -561,14 +561,6 @@ cscript_statement make_float(cscript_context* ctxt, token** token_it, token** to
   return outstmt;
   }
 
-cscript_statement make_if(cscript_context* ctxt, token** token_it, token** token_it_end)
-  {
-  cscript_assert(0);
-  cscript_statement outstmt;
-  outstmt.type = cscript_statement_type_if;
-  return outstmt;
-  }
-
 cscript_vector make_statements(cscript_context* ctxt, token** token_it, token** token_it_end, const char* terminator)
   {
   cscript_vector stmts;
@@ -585,6 +577,42 @@ cscript_vector make_statements(cscript_context* ctxt, token** token_it, token** 
     }
   token_require(ctxt, token_it, token_it_end, terminator);
   return stmts;
+  }
+
+
+cscript_statement make_if(cscript_context* ctxt, token** token_it, token** token_it_end)
+  {
+  cscript_parsed_if i;
+  i.line_nr = (*token_it)->line_nr;
+  i.column_nr = (*token_it)->column_nr;
+  i.filename = make_null_string();
+  token_require(ctxt, token_it, token_it_end, "if");
+  token_require(ctxt, token_it, token_it_end, "(");
+  cscript_vector_init(ctxt, &i.condition, cscript_statement);
+  cscript_statement cond = cscript_make_statement(ctxt, token_it, token_it_end);
+  cscript_vector_push_back(ctxt, &i.condition, cond, cscript_statement);
+  token_require(ctxt, token_it, token_it_end, ")");
+  token_require(ctxt, token_it, token_it_end, "{");
+  i.body = make_statements(ctxt, token_it, token_it_end, "}");
+  if (current_token_equals(token_it, token_it_end, "else") != 0)
+    {
+    token_require(ctxt, token_it, token_it_end, "else");
+    if (current_token_equals(token_it, token_it_end, "if") != 0)
+      {
+      cscript_statement i2 = make_if(ctxt, token_it, token_it_end);
+      cscript_vector_init(ctxt, &i.alternative, cscript_statement);
+      cscript_vector_push_back(ctxt, &i.alternative, i2, cscript_statement);
+      }
+    else
+      {
+      token_require(ctxt, token_it, token_it_end, "{");
+      i.alternative = make_statements(ctxt, token_it, token_it_end, "}");
+      }
+    }
+  cscript_statement outstmt;
+  outstmt.type = cscript_statement_type_if;
+  outstmt.statement.iftest = i;
+  return outstmt;
   }
 
 cscript_statement make_for(cscript_context* ctxt, token** token_it, token** token_it_end)

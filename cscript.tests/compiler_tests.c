@@ -243,6 +243,9 @@ static void test_compile_expr()
   test_compile_flonum_aux(0, "(1.0*(1.0*(1.0*(1.0*(1.0*(3.0 != 3.0))))));");
   test_compile_flonum_aux(1, "(1.0*(1.0*(1.0*(1.0*(1.0*(1.0*(5.0 != 3.0)))))));");
   test_compile_flonum_aux(0, "(1.0*(1.0*(1.0*(1.0*(1.0*(1.0*(3.0 != 3.0)))))));");
+
+  test_compile_fixnum_aux(2, "() 5%3;");
+  test_compile_flonum_aux(0.14000000000000012, "() 3.14%3;");
   }
 
 static void test_compile_named_fixnum()
@@ -537,6 +540,11 @@ static void test_funccall()
   test_compile_flonum_aux(0.7, "() max(0.5f,0.7);");
   }
 
+static void test_if()
+  {
+  test_compile_flonum_aux(7.0, "() float f = 0; if (3 > 2) { f = 7; } else { f = 9; } f;");
+  }
+
 void run_all_compiler_tests()
   {
   test_compile_fixnum();
@@ -554,4 +562,5 @@ void run_all_compiler_tests()
   test_inc_dec();
   test_for_loop();
   test_funccall();
+  test_if();
   }
