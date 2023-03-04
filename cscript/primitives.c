@@ -210,6 +210,12 @@ void cscript_primitive_not_equal_flonum(cscript_context* ctxt, int a)
     }
   }
 
+void cscript_primitive_sqrt_flonum(cscript_context* ctxt, int a)
+  {
+  cscript_flonum* ra = cscript_vector_at(&ctxt->stack, a, cscript_flonum);
+  *ra = sqrt(*ra);
+  }
+
 void cscript_call_primitive(cscript_context* ctxt, cscript_fixnum function_id, int a)
   {
   switch (function_id)
@@ -280,6 +286,9 @@ void cscript_call_primitive(cscript_context* ctxt, cscript_fixnum function_id, i
     case CSCRIPT_NOT_EQUAL_FLONUM:
       cscript_primitive_not_equal_flonum(ctxt, a);
       break;
+    case CSCRIPT_SQRT_FLONUM:
+      cscript_primitive_sqrt_flonum(ctxt, a);
+      break;
     default:
       cscript_throw(ctxt, CSCRIPT_ERROR_NOT_IMPLEMENTED);
       break;
@@ -296,6 +305,6 @@ static void map_insert(cscript_context* ctxt, cscript_map* m, const char* str, i
 cscript_map* generate_primitives_map(cscript_context* ctxt)
   {
   cscript_map* m = cscript_map_new(ctxt, 0, 8);
-  //map_insert(ctxt, m, "+", CSCRIPT_ADD);  
+  map_insert(ctxt, m, "sqrt", CSCRIPT_SQRT_FLONUM);  
   return m;
   }

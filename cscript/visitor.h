@@ -34,6 +34,8 @@ enum cscript_visitor_entry_type
   CSCRIPT_VISITOR_FOR_POST,
   CSCRIPT_VISITOR_IF_PRE,
   CSCRIPT_VISITOR_IF_POST,
+  CSCRIPT_VISITOR_FUNCTION_PRE,
+  CSCRIPT_VISITOR_FUNCTION_POST,
   CSCRIPT_VISITOR_PARAMETER,
   CSCRIPT_VISITOR_NOP
   };
@@ -76,6 +78,8 @@ struct cscript_visitor
   void (*postvisit_for)(cscript_context*, cscript_visitor*, cscript_parsed_for*);
   int (*previsit_if)(cscript_context*, cscript_visitor*, cscript_parsed_if*);
   void (*postvisit_if)(cscript_context*, cscript_visitor*, cscript_parsed_if*);
+  int (*previsit_function)(cscript_context*, cscript_visitor*, cscript_parsed_function*);
+  void (*postvisit_function)(cscript_context*, cscript_visitor*, cscript_parsed_function*);
   void (*visit_parameter)(cscript_context*, cscript_visitor*, cscript_parameter*);
   void (*visit_nop)(cscript_context*, cscript_visitor*, cscript_parsed_nop*);
 

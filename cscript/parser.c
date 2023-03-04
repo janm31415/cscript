@@ -187,6 +187,33 @@ static cscript_statement make_nop()
 
 cscript_parsed_expression cscript_make_expression(cscript_context* ctxt, token** token_it, token** token_it_end);
 
+cscript_parsed_function make_function(cscript_context* ctxt, token** token_it, token** token_it_end)
+  {
+  cscript_parsed_function f;
+  f.column_nr = (*token_it)->column_nr;
+  f.line_nr = (*token_it)->line_nr;
+  f.filename = make_null_string();
+  cscript_string_copy(ctxt, &f.name, &(*token_it)->value);
+  cscript_vector_init(ctxt, &f.args, cscript_parsed_expression);
+  token_next(ctxt, token_it, token_it_end);
+  token_require(ctxt, token_it, token_it_end, "(");
+  if (current_token_type(token_it, token_it_end) == CSCRIPT_T_RIGHT_ROUND_BRACKET)
+    {
+    token_next(ctxt, token_it, token_it_end);
+    return f;
+    }  
+  cscript_parsed_expression e = cscript_make_expression(ctxt, token_it, token_it_end);
+  cscript_vector_push_back(ctxt, &f.args, e, cscript_parsed_expression);
+  while (current_token_type(token_it, token_it_end) == CSCRIPT_T_COMMA)
+    {
+    token_next(ctxt, token_it, token_it_end);
+    e = cscript_make_expression(ctxt, token_it, token_it_end);
+    cscript_vector_push_back(ctxt, &f.args, e, cscript_parsed_expression);
+    }
+  token_require(ctxt, token_it, token_it_end, ")");
+  return f;
+  }
+
 cscript_parsed_variable make_variable(cscript_context* ctxt, token** token_it, token** token_it_end)
   {
   cscript_parsed_variable var;
@@ -292,7 +319,8 @@ cscript_parsed_factor cscript_make_factor(cscript_context* ctxt, token** token_i
     ++t;
     if (t != *token_it_end && t->type == CSCRIPT_T_LEFT_ROUND_BRACKET)
       {
-      cscript_assert(0); //not implemented, this should be a function call
+      expr.factor.fun = make_function(ctxt, token_it, token_it_end);
+      expr.type = cscript_factor_type_function;
       }
     else
       {
@@ -1122,6 +1150,13 @@ static void postvisit_if(cscript_context* ctxt, cscript_visitor* v, cscript_pars
   cscript_vector_destroy(ctxt, &i->body);
   cscript_vector_destroy(ctxt, &i->alternative);
   }
+static void postvisit_function(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_function* f)
+  {
+  UNUSED(v);
+  cscript_string_destroy(ctxt, &f->name);
+  cscript_string_destroy(ctxt, &f->filename);
+  cscript_vector_destroy(ctxt, &f->args);  
+  }
 static void postvisit_variable(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_variable* var)
   {
   UNUSED(v);
@@ -1146,6 +1181,7 @@ void cscript_program_destroy(cscript_context* ctxt, cscript_program* p)
   destroyer.visitor->postvisit_lvalueop = postvisit_lvalueop;
   destroyer.visitor->postvisit_for = postvisit_for;
   destroyer.visitor->postvisit_if = postvisit_if;
+  destroyer.visitor->postvisit_function = postvisit_function;
   destroyer.visitor->visit_parameter = visit_parameter;
   cscript_visit_program(ctxt, destroyer.visitor, p);
 

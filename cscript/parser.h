@@ -106,10 +106,19 @@ typedef struct cscript_parsed_lvalue_operator
   cscript_string filename;
   } cscript_parsed_lvalue_operator;
 
+typedef struct cscript_parsed_function
+  {
+  cscript_string name;
+  cscript_vector args;
+  int line_nr, column_nr;
+  cscript_string filename;
+  } cscript_parsed_function;
+
 #define cscript_factor_type_number 0
 #define cscript_factor_type_expression 1
 #define cscript_factor_type_variable 2
 #define cscript_factor_type_lvalue_operator 3
+#define cscript_factor_type_function 4
 
 typedef union
   {
@@ -117,6 +126,7 @@ typedef union
   cscript_parsed_expression expr;
   cscript_parsed_variable var;
   cscript_parsed_lvalue_operator lvop;
+  cscript_parsed_function fun;
   } cscript_factor;
 
 typedef struct cscript_parsed_factor

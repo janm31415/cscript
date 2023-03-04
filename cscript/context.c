@@ -2,6 +2,7 @@
 #include "memory.h"
 #include "error.h"
 #include "environment.h"
+#include "primitives.h"
 
 static cscript_context* context_new(cscript_context* ctxt)
   {
@@ -61,6 +62,7 @@ cscript_context* cscript_open(cscript_memsize heap_size)
     get_value(g->dummy_node)->type = cscript_object_type_undefined;
     g->dummy_node->next = NULL;
     g->main_context = ctxt;  
+    g->primitives_map = generate_primitives_map(ctxt);
     context_init(ctxt, heap_size);
     }
   return ctxt;
@@ -69,6 +71,8 @@ cscript_context* cscript_open(cscript_memsize heap_size)
 void cscript_close(cscript_context* ctxt)
   {
   ctxt = ctxt->global->main_context; 
+  cscript_map_keys_free(ctxt, ctxt->global->primitives_map);
+  cscript_map_free(ctxt, ctxt->global->primitives_map);
   cscript_free(ctxt, ctxt->global, sizeof(cscript_global_context));
   context_free(ctxt);
   }

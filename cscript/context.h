@@ -26,6 +26,7 @@ typedef struct cscript_global_context
   {
   cscript_map_node dummy_node[1]; //common node array for all empty tables
   cscript_context* main_context;
+  cscript_map* primitives_map;
   } cscript_global_context; 
 
 // per thread state

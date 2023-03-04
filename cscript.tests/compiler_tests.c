@@ -8,6 +8,8 @@
 #include "cscript/error.h"
 #include "cscript/dump.h"
 
+#include <math.h>
+
 static int debug = 0;
 
 static void test_compile_aux_stack(cscript_fixnum expected, const char* script, int stack_size, int nr_parameters, void* pars, int output_type)
@@ -515,9 +517,12 @@ static void test_inc_dec()
 
 static void test_for_loop()
   {
-  debug = 1;
   test_compile_flonum_aux(1225.0, "() float f = 0; for (int i = 0; i < 50; ++i) { f += i; } f;");
-  debug = 0;
+  }
+
+static void test_funccall()
+  {
+  test_compile_flonum_aux(sqrt(2.0), "() sqrt(2.f);");
   }
 
 void run_all_compiler_tests()
@@ -536,4 +541,5 @@ void run_all_compiler_tests()
   test_parameter_dereference();
   test_inc_dec();
   test_for_loop();
+  test_funccall();
   }

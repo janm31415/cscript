@@ -28,6 +28,7 @@ typedef enum
   CSCRIPT_EQUAL_FLONUM,
   CSCRIPT_NOT_EQUAL_FIXNUM,
   CSCRIPT_NOT_EQUAL_FLONUM,
+  CSCRIPT_SQRT_FLONUM
   } cscript_primitives;
 
 void cscript_primitive_add_fixnum(cscript_context* ctxt, int a);
@@ -52,6 +53,7 @@ void cscript_primitive_equal_fixnum(cscript_context* ctxt, int a);
 void cscript_primitive_equal_flonum(cscript_context* ctxt, int a);
 void cscript_primitive_not_equal_fixnum(cscript_context* ctxt, int a);
 void cscript_primitive_not_equal_flonum(cscript_context* ctxt, int a);
+void cscript_primitive_sqrt_flonum(cscript_context* ctxt, int a);
 
 void cscript_call_primitive(cscript_context* ctxt, cscript_fixnum prim_id, int a);
 
