@@ -1171,7 +1171,7 @@ static void compile_if(cscript_context* ctxt, compiler_state* state, cscript_par
     compile_statement(ctxt, state, it);
     }
   cscript_environment_pop_child(ctxt);
-  if (i->alternative.vector_size == 0)
+  if (i->alternative.vector_size > 0)
     {
     cscript_instruction i2 = 0;
     CSCRIPT_SET_OPCODE(i2, CSCRIPT_OPCODE_JMP);
@@ -1189,10 +1189,15 @@ static void compile_if(cscript_context* ctxt, compiler_state* state, cscript_par
 
     cscript_instruction* alt_jump = cscript_vector_at(&state->fun->code, else_jump, cscript_instruction);
     CSCRIPT_SETARG_sBx(*alt_jump, (int)state->fun->code.vector_size - else_jump - 1);
-    }
 
-  cscript_instruction* first_jump = cscript_vector_at(&state->fun->code, if_jump, cscript_instruction);
-  CSCRIPT_SETARG_sBx(*first_jump, (int)state->fun->code.vector_size - if_jump - 1);
+    cscript_instruction* first_jump = cscript_vector_at(&state->fun->code, if_jump, cscript_instruction);
+    CSCRIPT_SETARG_sBx(*first_jump, else_jump - if_jump);
+    }
+  else
+    {
+    cscript_instruction* first_jump = cscript_vector_at(&state->fun->code, if_jump, cscript_instruction);
+    CSCRIPT_SETARG_sBx(*first_jump, (int)state->fun->code.vector_size - if_jump - 1);
+    }
   }
 
 static void compile_statement(cscript_context* ctxt, compiler_state* state, cscript_statement* stmt)

@@ -543,6 +543,12 @@ static void test_funccall()
 static void test_if()
   {
   test_compile_flonum_aux(7.0, "() float f = 0; if (3 > 2) { f = 7; } else { f = 9; } f;");
+  test_compile_flonum_aux(9.0, "() float f = 0; if (3 < 2) { f = 7; } else { f = 9; } f;");
+  test_compile_flonum_aux(9.0,"() float f = 0; if (3 > 2) { f = 9; } f;");
+  test_compile_flonum_aux(9.0,"() float f = 0; if (3 < 2) { f = 7; } else { f = 9; } f;");
+  test_compile_flonum_aux(0.0,"() float f = 0; if (3 < 2) { f = 9; } f;");
+  test_compile_flonum_aux(10.0, "() float f = 0; if (3 < 2) { f = 9; } else if (3 > 2) { f = 10; } else { f = 11; } f;");
+  test_compile_flonum_aux(11.0, "() float f = 0; if (3 < 2) { f = 9; } else if (3 == 2) { f = 10; } else { f = 11; } f;");
   }
 
 void run_all_compiler_tests()

@@ -609,6 +609,10 @@ cscript_statement make_if(cscript_context* ctxt, token** token_it, token** token
       i.alternative = make_statements(ctxt, token_it, token_it_end, "}");
       }
     }
+  else
+    {
+    i.alternative = make_null_vector();
+    }
   cscript_statement outstmt;
   outstmt.type = cscript_statement_type_if;
   outstmt.statement.iftest = i;
