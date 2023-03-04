@@ -31,6 +31,66 @@ static cscript_string instruction_to_string(cscript_context* ctxt, cscript_instr
     cscript_string_append_cstr(ctxt, &s, ")");
     break;
     }
+    case CSCRIPT_OPCODE_MOVE_TO_ARR:
+    {
+    const int a = CSCRIPT_GETARG_A(instruc);
+    const int b = CSCRIPT_GETARG_B(instruc);
+    const int c = CSCRIPT_GETARG_C(instruc);
+    cscript_string_append_cstr(ctxt, &s, "MOVE_TO_ARR R(");
+    cscript_int_to_char(buffer, a);
+    cscript_string_append_cstr(ctxt, &s, buffer);
+    cscript_string_append_cstr(ctxt, &s, " + R(");
+    cscript_int_to_char(buffer, b);
+    cscript_string_append_cstr(ctxt, &s, buffer);
+    cscript_string_append_cstr(ctxt, &s, ")) := R(");
+    cscript_int_to_char(buffer, c);
+    cscript_string_append_cstr(ctxt, &s, buffer);
+    cscript_string_append_cstr(ctxt, &s, ")");
+    break;
+    }
+    case CSCRIPT_OPCODE_MOVE_FROM_ARR:
+    {
+    const int a = CSCRIPT_GETARG_A(instruc);
+    const int b = CSCRIPT_GETARG_B(instruc);
+    const int c = CSCRIPT_GETARG_C(instruc);
+    cscript_string_append_cstr(ctxt, &s, "MOVE_FROM_ARR R(");
+    cscript_int_to_char(buffer, a);
+    cscript_string_append_cstr(ctxt, &s, buffer);
+    cscript_string_append_cstr(ctxt, &s, ") := R(");
+    cscript_int_to_char(buffer, b);
+    cscript_string_append_cstr(ctxt, &s, buffer);
+    cscript_string_append_cstr(ctxt, &s, " + R(");
+    cscript_int_to_char(buffer, c);
+    cscript_string_append_cstr(ctxt, &s, buffer);
+    cscript_string_append_cstr(ctxt, &s, "))");
+    break;
+    }
+    case CSCRIPT_OPCODE_STORE_MEMORY:
+    {
+    const int a = CSCRIPT_GETARG_A(instruc);
+    const int b = CSCRIPT_GETARG_B(instruc);
+    cscript_string_append_cstr(ctxt, &s, "STORE_MEMORY *R(");
+    cscript_int_to_char(buffer, a);
+    cscript_string_append_cstr(ctxt, &s, buffer);
+    cscript_string_append_cstr(ctxt, &s, ") := R(");
+    cscript_int_to_char(buffer, b);
+    cscript_string_append_cstr(ctxt, &s, buffer);
+    cscript_string_append_cstr(ctxt, &s, ")");
+    break;
+    }
+    case CSCRIPT_OPCODE_LOAD_MEMORY:
+    {
+    const int a = CSCRIPT_GETARG_A(instruc);
+    const int b = CSCRIPT_GETARG_B(instruc);
+    cscript_string_append_cstr(ctxt, &s, "LOAD_MEMORY R(");
+    cscript_int_to_char(buffer, a);
+    cscript_string_append_cstr(ctxt, &s, buffer);
+    cscript_string_append_cstr(ctxt, &s, ") := *R(");
+    cscript_int_to_char(buffer, b);
+    cscript_string_append_cstr(ctxt, &s, buffer);
+    cscript_string_append_cstr(ctxt, &s, ")");
+    break;
+    }
     case CSCRIPT_OPCODE_LOADGLOBAL:
     {
     const int a = CSCRIPT_GETARG_A(instruc);
@@ -85,20 +145,30 @@ static cscript_string instruction_to_string(cscript_context* ctxt, cscript_instr
     case CSCRIPT_OPCODE_CALLPRIM:
     {
     const int a = CSCRIPT_GETARG_A(instruc);
+    const int b = CSCRIPT_GETARG_B(instruc);
     cscript_string_append_cstr(ctxt, &s, "CALLPRIM R(");
     cscript_int_to_char(buffer, a);
     cscript_string_append_cstr(ctxt, &s, buffer);
-    cscript_string_append_cstr(ctxt, &s, ")");
+    cscript_string_append_cstr(ctxt, &s, ") := (");
+    cscript_int_to_char(buffer, b);
+    cscript_string_append_cstr(ctxt, &s, buffer);
+    cscript_string_append_cstr(ctxt, &s, ")(R(");
+    cscript_int_to_char(buffer, a);
+    cscript_string_append_cstr(ctxt, &s, buffer);
+    cscript_string_append_cstr(ctxt, &s, "), R(");
+    cscript_int_to_char(buffer, a+1);
+    cscript_string_append_cstr(ctxt, &s, buffer);
+    cscript_string_append_cstr(ctxt, &s, "), ...)");
     break;
     }
-    case CSCRIPT_OPCODE_EQTYPE:
+    case CSCRIPT_OPCODE_NEQ:
     {
     const int a = CSCRIPT_GETARG_A(instruc);
     const int b = CSCRIPT_GETARG_B(instruc);
-    cscript_string_append_cstr(ctxt, &s, "EQTYPE if R(");
+    cscript_string_append_cstr(ctxt, &s, "EQ if R(");
     cscript_int_to_char(buffer, a);
     cscript_string_append_cstr(ctxt, &s, buffer);
-    cscript_string_append_cstr(ctxt, &s, ")->type == ");
+    cscript_string_append_cstr(ctxt, &s, ") != ");
     cscript_int_to_char(buffer, b);
     cscript_string_append_cstr(ctxt, &s, buffer);
     cscript_string_append_cstr(ctxt, &s, " then skip next line");
@@ -112,6 +182,22 @@ static cscript_string instruction_to_string(cscript_context* ctxt, cscript_instr
     cscript_string_append_cstr(ctxt, &s, buffer);
     break;
     }
+    case CSCRIPT_OPCODE_CAST:
+    {
+    const int a = CSCRIPT_GETARG_A(instruc);
+    const int b = CSCRIPT_GETARG_B(instruc);
+    cscript_string_append_cstr(ctxt, &s, "CAST R(");
+    cscript_int_to_char(buffer, a);
+    cscript_string_append_cstr(ctxt, &s, buffer);
+    cscript_string_append_cstr(ctxt, &s, ") = (");
+    cscript_int_to_char(buffer, b);
+    cscript_string_append_cstr(ctxt, &s, buffer);
+    cscript_string_append_cstr(ctxt, &s, ")R(");
+    cscript_int_to_char(buffer, a);
+    cscript_string_append_cstr(ctxt, &s, buffer);
+    cscript_string_append_cstr(ctxt, &s, ")");
+    break;
+    }
     case CSCRIPT_OPCODE_RETURN:
     {
     const int a = CSCRIPT_GETARG_A(instruc);
@@ -122,6 +208,7 @@ static cscript_string instruction_to_string(cscript_context* ctxt, cscript_instr
     break;
     }   
     default:
+      cscript_string_append_cstr(ctxt, &s, "instruction not in debug list yet");
       break;
     }
   return s;
@@ -241,13 +328,12 @@ cscript_fixnum* cscript_run(cscript_context* ctxt, cscript_function* fun)
         }
       continue;
       }
-      case CSCRIPT_OPCODE_EQTYPE:
-      {
-      /*
+      case CSCRIPT_OPCODE_NEQ:
+      {      
       const int a = CSCRIPT_GETARG_A(instruc);
       const int b = CSCRIPT_GETARG_B(instruc);
-      const cscript_object* ra = cscript_vector_at(&ctxt->stack, a, cscript_object);
-      if (cscript_object_get_type(ra) == b)
+      const cscript_fixnum* ra = cscript_vector_at(&ctxt->stack, a, cscript_fixnum);
+      if (*ra != b)
         {
         ++pc;
         }
@@ -257,8 +343,7 @@ cscript_fixnum* cscript_run(cscript_context* ctxt, cscript_function* fun)
         cscript_assert(CSCRIPT_GET_OPCODE(next_i) == CSCRIPT_OPCODE_JMP);
         const int offset = CSCRIPT_GETARG_sBx(next_i);
         pc += offset;
-        }
-        */
+        }        
       continue;
       }
       case CSCRIPT_OPCODE_JMP:
@@ -293,15 +378,21 @@ cscript_string cscript_fun_to_string(cscript_context* ctxt, cscript_function* fu
   {
   cscript_string s;
   cscript_string_init(ctxt, &s, "");
+  char buffer[256];
+  int counter = 0;
   cscript_instruction* it = cscript_vector_begin(&fun->code, cscript_instruction);
   cscript_instruction* it_end = cscript_vector_end(&fun->code, cscript_instruction);
   for (; it != it_end; ++it)
     {
+    cscript_int_to_char(buffer, counter);
+    cscript_string_append_cstr(ctxt, &s, buffer);
+    cscript_string_append_cstr(ctxt, &s, ": ");
     const cscript_instruction instruc = *it;
     cscript_string tmp = instruction_to_string(ctxt, instruc);
     cscript_string_append(ctxt, &s, &tmp);
     cscript_string_destroy(ctxt, &tmp);
     cscript_string_append_cstr(ctxt, &s, "\n");
+    ++counter;
     }
   return s;
   }

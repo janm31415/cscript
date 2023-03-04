@@ -8,6 +8,8 @@
 #include "cscript/error.h"
 #include "cscript/dump.h"
 
+static int debug = 0;
+
 static void test_compile_aux_stack(cscript_fixnum expected, const char* script, int stack_size, int nr_parameters, void* pars, int output_type)
   {
   cscript_context* ctxt = cscript_open(stack_size);
@@ -15,6 +17,13 @@ static void test_compile_aux_stack(cscript_fixnum expected, const char* script, 
   cscript_program prog = make_program(ctxt, &tokens);
 
   cscript_function* compiled_program = cscript_compile_program(ctxt, &prog);
+
+  if (debug != 0)
+    {
+    cscript_string s = cscript_fun_to_string(ctxt, compiled_program);
+    printf("%s\n", s.string_ptr);
+    cscript_string_destroy(ctxt, &s);
+    }
 
   // fill stack with parameters
   for (int i = 0; i < nr_parameters; ++i)
@@ -506,7 +515,9 @@ static void test_inc_dec()
 
 static void test_for_loop()
   {
+  debug = 1;
   test_compile_flonum_aux(1225.0, "() float f = 0; for (int i = 0; i < 50; ++i) { f += i; } f;");
+  debug = 0;
   }
 
 void run_all_compiler_tests()

@@ -236,7 +236,7 @@ static void compile_lvalue_operator(cscript_context* ctxt, compiler_state* state
         freereg + 1: address
         */
         make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, CSCRIPT_ADD_FIXNUM);
-        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_LOAD_MEMORY, state->freereg+1, state->freereg);
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_LOAD_MEMORY, state->freereg + 1, state->freereg);
         make_code_asbx(ctxt, state->fun, CSCRIPT_OPCODE_SETFIXNUM, state->freereg + 2, adder);
         if ((entry.register_type & 1) == cscript_reg_typeinfo_flonum)
           {
@@ -247,8 +247,8 @@ static void compile_lvalue_operator(cscript_context* ctxt, compiler_state* state
           {
           make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, CSCRIPT_ADD_FIXNUM);
           }
-        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_STORE_MEMORY, state->freereg, state->freereg+1);
-        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, state->freereg+1);
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_STORE_MEMORY, state->freereg, state->freereg + 1);
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, state->freereg + 1);
         state->reg_typeinfo = entry.register_type & 1;
         }
       else
@@ -1080,6 +1080,36 @@ static void compile_assigment(cscript_context* ctxt, compiler_state* state, cscr
 
 static void compile_for(cscript_context* ctxt, compiler_state* state, cscript_parsed_for* f)
   {
+  cscript_environment_push_child(ctxt);
+  cscript_statement* init = cscript_vector_at(&f->init_cond_inc, 0, cscript_statement);
+  cscript_statement* cond = cscript_vector_at(&f->init_cond_inc, 1, cscript_statement);
+  cscript_statement* inc = cscript_vector_at(&f->init_cond_inc, 2, cscript_statement);
+  compile_statement(ctxt, state, init);
+  int for_loop_cond_start = (int)state->fun->code.vector_size;
+  compile_statement(ctxt, state, cond);
+  make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_NEQ, state->freereg, 0);
+  cscript_instruction i1 = 0;
+  CSCRIPT_SET_OPCODE(i1, CSCRIPT_OPCODE_JMP);
+  cscript_vector_push_back(ctxt, &state->fun->code, i1, cscript_instruction);
+  int for_loop_jump = (int)state->fun->code.vector_size - 1;
+
+  cscript_statement* it = cscript_vector_begin(&f->statements, cscript_statement);
+  cscript_statement* it_end = cscript_vector_end(&f->statements, cscript_statement);
+  for (; it != it_end; ++it)
+    {
+    compile_statement(ctxt, state, it);
+    }
+
+  compile_statement(ctxt, state, inc);
+
+  cscript_instruction i2 = 0;
+  CSCRIPT_SET_OPCODE(i2, CSCRIPT_OPCODE_JMP);
+  CSCRIPT_SETARG_sBx(i2, for_loop_cond_start - (int)state->fun->code.vector_size - 1);
+  cscript_vector_push_back(ctxt, &state->fun->code, i2, cscript_instruction);
+
+  cscript_instruction* first_jump = cscript_vector_at(&state->fun->code, for_loop_jump, cscript_instruction);
+  CSCRIPT_SETARG_sBx(*first_jump, (int)state->fun->code.vector_size - for_loop_jump - 1);
+  cscript_environment_pop_child(ctxt);
   }
 
 static void compile_if(cscript_context* ctxt, compiler_state* state, cscript_parsed_if* f)
