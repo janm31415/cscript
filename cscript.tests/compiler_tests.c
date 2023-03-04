@@ -554,6 +554,7 @@ static void test_if()
 static void test_array_assignment()
   {
   test_compile_flonum_aux(3.4, "() float f[3] = {1.2, 3.4, 5.6}; f[1];");
+  test_compile_fixnum_aux(34, "() int i[3] = {12, 34, 56}; i[1];");
   }
 
 void run_all_compiler_tests()
