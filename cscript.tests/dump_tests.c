@@ -56,4 +56,5 @@ void run_all_dump_tests()
   test_dump("sqrt(4);\n");
   test_dump("pow(2, 7);\n");
   test_dump("if (i>2) { 3; } else { 4; };\n");
+  test_dump("for (int i = 0; i<3; ++i) { 7; };\n");
   }

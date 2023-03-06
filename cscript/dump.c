@@ -276,6 +276,25 @@ static void dump_comma_separated_statements(cscript_context* ctxt, cscript_visit
 
 static void dump_for(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_for* f)
   {
+  cscript_dump_visitor* d = (cscript_dump_visitor*)(v->impl);
+  cscript_statement* init = cscript_vector_at(&f->init_cond_inc, 0, cscript_statement);
+  cscript_statement* cond = cscript_vector_at(&f->init_cond_inc, 1, cscript_statement);
+  cscript_statement* inc = cscript_vector_at(&f->init_cond_inc, 2, cscript_statement);
+  cscript_string_append_cstr(ctxt, &(d->s), "for (");
+  dump_statement(ctxt, v, init);
+  cscript_string_append_cstr(ctxt, &(d->s), "; ");
+  dump_statement(ctxt, v, cond);
+  cscript_string_append_cstr(ctxt, &(d->s), "; ");
+  dump_statement(ctxt, v, inc);
+  cscript_statement* it = cscript_vector_begin(&f->statements, cscript_statement);
+  cscript_statement* it_end = cscript_vector_end(&f->statements, cscript_statement);
+  cscript_string_append_cstr(ctxt, &(d->s), ") { ");
+  for (; it != it_end; ++it)
+    {
+    dump_statement(ctxt, v, it);
+    cscript_string_append_cstr(ctxt, &(d->s), "; ");
+    }
+  cscript_string_append_cstr(ctxt, &(d->s), "}");
   }
 
 static void dump_if(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_if* i)
