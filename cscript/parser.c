@@ -370,6 +370,9 @@ cscript_parsed_factor cscript_make_factor(cscript_context* ctxt, token** token_i
     }
     default:
     {
+    expr.type = cscript_factor_type_expression;
+    expr.sign = '+';
+    expr.factor.expr = make_null_expr();
     cscript_string* fn = NULL;
     if (ctxt->filenames_list.vector_size > 0)
       fn = cscript_vector_back(&ctxt->filenames_list, cscript_string);
