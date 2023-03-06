@@ -814,8 +814,8 @@ static void test_quicksort()
     "  0;\n"
     "  }";
 
-  pars_list[0] = a;
-  pars_list[1] = st;
+  pars_list[0] = (cscript_fixnum)a;
+  pars_list[1] = (cscript_fixnum)st;
   pars_list[2] = max_size;
 
   int c0 = clock();
@@ -902,8 +902,8 @@ static void test_quicksort_flonum()
     "  0;\n"
     "  }";
 
-  pars_list[0] = a;
-  pars_list[1] = st;
+  pars_list[0] = (cscript_fixnum)a;
+  pars_list[1] = (cscript_fixnum)st;
   pars_list[2] = max_size;
 
   int c0 = clock();
@@ -946,6 +946,163 @@ static void test_digits_pi()
   printf("Digits pi time: %lldms\n", (int64_t)(c1 - c0) * (int64_t)1000 / (int64_t)CLOCKS_PER_SEC);
   }
 
+static void test_comparison_with_input()
+  {
+  cscript_fixnum pars_list[6] = { 0, 0, 0, 0, 0, 0 };
+
+  pars_list[0] = 2;
+  pars_list[1] = 3;
+  test_compile_fixnum_pars_aux(1, "(int a, int b) a <= b-1;", 2, pars_list);
+  pars_list[0] = 2;
+  pars_list[1] = 2;
+  test_compile_fixnum_pars_aux(0, "(int a, int b) a <= b-1;", 2, pars_list);
+  pars_list[0] = 2;
+  pars_list[1] = 3;
+  test_compile_fixnum_pars_aux(1, "(int a, int b) a <= -1+b;", 2, pars_list);
+  pars_list[0] = 2;
+  pars_list[1] = 2;
+  test_compile_fixnum_pars_aux(0, "(int a, int b) a <= -1+b;", 2, pars_list);
+  pars_list[0] = 2;
+  pars_list[1] = 3;
+  test_compile_fixnum_pars_aux(1, "(int a, int b) a+1 <= b;", 2, pars_list);
+  pars_list[0] = 2;
+  pars_list[1] = 2;
+  test_compile_fixnum_pars_aux(0, "(int a, int b) a+1 <= b;", 2, pars_list);
+  pars_list[0] = 2;
+  pars_list[1] = 3;
+  test_compile_fixnum_pars_aux(1, "(int a, int b) 1+a <= b;", 2, pars_list);
+  pars_list[0] = 2;
+  pars_list[1] = 2;
+  test_compile_fixnum_pars_aux(0, "(int a, int b) 1+a <= b;", 2, pars_list);
+  pars_list[0] = 3;
+  pars_list[1] = 2;
+  test_compile_fixnum_pars_aux(1, "(int a, int b) a >= b+1;", 2, pars_list);
+  pars_list[0] = 2;
+  pars_list[1] = 2;
+  test_compile_fixnum_pars_aux(0, "(int a, int b) a >= b+1;", 2, pars_list);
+  pars_list[0] = 3;
+  pars_list[1] = 2;
+  test_compile_fixnum_pars_aux(1, "(int a, int b) a >= 1+b;", 2, pars_list);
+  pars_list[0] = 2;
+  pars_list[1] = 2;
+  test_compile_fixnum_pars_aux(0, "(int a, int b) a >= 1+b;", 2, pars_list);
+  pars_list[0] = 3;
+  pars_list[1] = 2;
+  test_compile_fixnum_pars_aux(1, "(int a, int b) a-1 >= b;", 2, pars_list);
+  pars_list[0] = 2;
+  pars_list[1] = 2;
+  test_compile_fixnum_pars_aux(0, "(int a, int b) a-1 >= b;", 2, pars_list);
+  pars_list[0] = 3;
+  pars_list[1] = 2;
+  test_compile_fixnum_pars_aux(1, "(int a, int b) -1+a >= b;", 2, pars_list);
+  pars_list[0] = 2;
+  pars_list[1] = 2;
+  test_compile_fixnum_pars_aux(0, "(int a, int b) -1+a >= b;", 2, pars_list);
+  pars_list[0] = 3;
+  pars_list[1] = 2;
+  test_compile_fixnum_pars_aux(0, "(int a, int b) a < b+1;", 2, pars_list);
+  pars_list[0] = 3;
+  pars_list[1] = 3;
+  test_compile_fixnum_pars_aux(1, "(int a, int b) a < b+1;", 2, pars_list);
+  pars_list[0] = 3;
+  pars_list[1] = 2;
+  test_compile_fixnum_pars_aux(0, "(int a, int b) a < 1+b;", 2, pars_list);
+  pars_list[0] = 3;
+  pars_list[1] = 3;
+  test_compile_fixnum_pars_aux(1, "(int a, int b) a < 1+b;", 2, pars_list);
+  pars_list[0] = 3;
+  pars_list[1] = 2;
+  test_compile_fixnum_pars_aux(0, "(int a, int b) a-1 < b;", 2, pars_list);
+  pars_list[0] = 3;
+  pars_list[1] = 3;
+  test_compile_fixnum_pars_aux(1, "(int a, int b) a-1 < b;", 2, pars_list);
+  pars_list[0] = 3;
+  pars_list[1] = 2;
+  test_compile_fixnum_pars_aux(0, "(int a, int b) -1+a < b;", 2, pars_list);
+  pars_list[0] = 3;
+  pars_list[1] = 3;
+  test_compile_fixnum_pars_aux(1, "(int a, int b) -1+a < b;", 2, pars_list);
+  pars_list[0] = 2;
+  pars_list[1] = 3;
+  test_compile_fixnum_pars_aux(0, "(int a, int b) a > b-1;", 2, pars_list);
+  pars_list[0] = 3;
+  pars_list[1] = 3;
+  test_compile_fixnum_pars_aux(1, "(int a, int b) a > b-1;", 2, pars_list);
+  pars_list[0] = 2;
+  pars_list[1] = 3;
+  test_compile_fixnum_pars_aux(0, "(int a, int b) a > -1+b;", 2, pars_list);
+  pars_list[0] = 3;
+  pars_list[1] = 3;
+  test_compile_fixnum_pars_aux(1, "(int a, int b) a > -1+b;", 2, pars_list);
+  pars_list[0] = 2;
+  pars_list[1] = 3;
+  test_compile_fixnum_pars_aux(0, "(int a, int b) a+1 > b;", 2, pars_list);
+  pars_list[0] = 3;
+  pars_list[1] = 3;
+  test_compile_fixnum_pars_aux(1, "(int a, int b) a+1 > b;", 2, pars_list);
+  pars_list[0] = 2;
+  pars_list[1] = 3;
+  test_compile_fixnum_pars_aux(0, "(int a, int b) 1+a > b;", 2, pars_list);
+  pars_list[0] = 3;
+  pars_list[1] = 3;
+  test_compile_fixnum_pars_aux(1, "(int a, int b) 1+a > b;", 2, pars_list);
+  cscript_flonum fl = 2.8;
+  pars_list[0] = *((cscript_fixnum*)&fl);
+  fl = 3.5;
+  pars_list[1] = *((cscript_fixnum*)&fl);
+  test_compile_fixnum_pars_aux(0, "(float a, float b) a <= b-1;", 2, pars_list);
+  }
+
+static void test_many_variables()
+  {
+  const char* script = "()\n"
+    "int a=1,b=2,c=3,d=4,e=5,f=6,g=7,h=8,i=9,j=10,k=11,l=12,m=13,n=14,o=15,p=16,q=17,r=18;\n"
+    "float s = pow(1+2*pow(7+5*9, 2+3*8), 5);\n"
+    "a+b+c+d+e+f+g+h+i+j+k+l+m+n+o+p+q+r;\n";
+  test_compile_fixnum_aux(9 * 19, script);
+
+  const char* script2 = "()"
+    "float a = 1, b = 2, c = 3, d = 4, e = 5, f = 6, g = 7, h = 8, i = 9, j = 10, k = 11, l = 12, m = 13, n = 14, o = 15, p = 16, q = 17, r = 18;\n"
+    "int result[3];\n"
+    "result[2] = 0;\n"
+    "float s = pow(1 + 2 * pow(7 + 5 * 9, 2 + 3 * 8 + result[pow(1, 0)]), 5);\n"
+    "a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + q + r;\n";
+  test_compile_flonum_aux(9 * 19, script2);
+
+  const char* script3 = "()\n"
+    "int result[3];\n"
+    "result[0] = 0;\n"
+    "result[1] = 0;\n"
+    "float s = pow(1 + 2 * pow(7 + 5 * 9, 1 + 1 * 1 + (++result[pow(1, 0)])), 1);\n"
+    "s;";
+  test_compile_flonum_aux(281217, script3);
+
+  const char* script4 = "()\n"
+    "float a = 1, b = 2, c = 3, d = 4, e = 5, f = 6, g = 7, h = 8, i = 9, j = 10, k = 11, l = 12, m = 13, n = 14, o = 15, p = 16, q = 17, r = 18;\n"
+    "float result[3];\n"
+    "result[0] = 0;\n"
+    "float s = pow(1 + 2 * pow(7 + 5 * 9, 2 + 3 * 8 + (++result[pow(1, 0)])), 5);\n"
+    "a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + q + r;\n";
+  test_compile_flonum_aux(9 * 19, script4);
+
+  const char* script5 = "()\n"
+    "float a = 1, b = 2, c = 3, d = 4, e = 5, f = 6, g = 7, h = 8, i = 9, j = 10, k = 11, l = 12, m = 13, n = 14, o = 15, p = 16, q = 17, r = 18;\n"
+    "int result[3];\n"
+    "result[0] = 0;\n"
+    "result[1] = 0;\n"
+    "result[2] = 0;\n"
+    "float s = ++result[pow(1, 0) + 1];\n"
+    "a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + q + r;\n";
+  test_compile_flonum_aux(9 * 19, script5);
+  }
+
+static void test_computation_order()
+  {
+  cscript_fixnum pars_list[6] = { 0, 0, 0, 0, 0, 0 };
+  pars_list[0] = 127;
+  test_compile_flonum_pars_aux(4.0, "(int i) i/127.0*4.0;", 1, pars_list);
+  }
+
 void run_all_compiler_tests()
   {
   test_compile_fixnum();
@@ -973,4 +1130,7 @@ void run_all_compiler_tests()
   test_quicksort();
   test_quicksort_flonum();
   test_digits_pi();
+  test_comparison_with_input();
+  test_many_variables();
+  test_computation_order();
   }
