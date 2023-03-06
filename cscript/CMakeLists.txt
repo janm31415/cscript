@@ -13,7 +13,6 @@ map.h
 memory.h
 object.h
 parser.h
-pool.h
 primitives.h
 stream.h
 string.h
@@ -37,7 +36,6 @@ map.c
 memory.c
 object.c
 parser.c
-pool.c
 primitives.c
 stream.c
 string.c
