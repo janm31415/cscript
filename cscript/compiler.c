@@ -345,10 +345,6 @@ static void compile_external_function(cscript_context* ctxt, compiler_state* sta
     for (; it != it_end; ++it)
       {
       compile_expression(ctxt, state, it);
-      if (state->reg_typeinfo != cscript_reg_typeinfo_flonum)
-        {
-        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, cscript_number_type_flonum);
-        }
       ++state->freereg;
       }
     state->freereg = freereg;

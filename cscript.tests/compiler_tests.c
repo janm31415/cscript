@@ -608,6 +608,16 @@ static void text_foreign_aux(cscript_fixnum expected, const char* script, const 
   cscript_close(ctxt);
   }
 
+static void test_foreign_fixnum_aux(cscript_fixnum expected, const char* script, const char* name, void* address, cscript_foreign_return_type ret_type, int nr_parameters, void* pars)
+  {
+  text_foreign_aux(expected, script, name, address, ret_type, nr_parameters, pars, cscript_number_type_fixnum);
+  }
+
+static void test_foreign_flonum_aux(cscript_flonum expected, const char* script, const char* name, void* address, cscript_foreign_return_type ret_type, int nr_parameters, void* pars)
+  {
+  text_foreign_aux(*cast(cscript_fixnum*, &expected), script, name, address, ret_type, nr_parameters, pars, cscript_number_type_flonum);
+  }
+
 static cscript_fixnum seventeen()
   {
   return 17;
@@ -618,9 +628,22 @@ static cscript_flonum pi()
   return 3.14159;
   }
 
+static cscript_fixnum simple_add_fixnum(cscript_fixnum* a, cscript_fixnum* b)
+  {
+  return *a + *b;
+  }
+
+static cscript_flonum simple_add_flonum(cscript_flonum* a, cscript_flonum* b)
+  {
+  return *a+*b;
+  }
+
 static void text_external_calls()
   {
-  text_foreign_aux(17, "() seventeen();", "seventeen", cast(void*, &seventeen), cscript_foreign_fixnum, 0, NULL, cscript_number_type_fixnum);
+  test_foreign_fixnum_aux(17, "() seventeen();", "seventeen", cast(void*, &seventeen), cscript_foreign_fixnum, 0, NULL);
+  test_foreign_flonum_aux(3.14159, "() pi();", "pi", cast(void*, &pi), cscript_foreign_flonum, 0, NULL);
+  test_foreign_fixnum_aux(4, "() add(3, 1);", "add", cast(void*, &simple_add_fixnum), cscript_foreign_fixnum, 0, NULL);
+  test_foreign_flonum_aux(3.24, "() add(3.14, 0.1);", "add", cast(void*, &simple_add_flonum), cscript_foreign_flonum, 0, NULL);
   }
 
 void run_all_compiler_tests()
