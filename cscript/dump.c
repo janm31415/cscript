@@ -2,26 +2,12 @@
 #include "syscalls.h"
 #include <string.h>
 
-static void visit_nop(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_nop* e)
-  {
-  UNUSED(ctxt);
-  UNUSED(v);
-  UNUSED(e);
-  }
-
-static int previsit_var(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_variable* e)
+static int dump_var(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_variable* e)
   {
   UNUSED(e);
   cscript_dump_visitor* d = (cscript_dump_visitor*)(v->impl);
   cscript_string_append_cstr(ctxt, &(d->s), e->name.string_ptr);
   return 1;
-  }
-
-static void visit_number(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_variable* e)
-  {
-  UNUSED(e);
-  cscript_dump_visitor* d = (cscript_dump_visitor*)(v->impl);
-  cscript_string_append_cstr(ctxt, &(d->s), e->name.string_ptr);
   }
 
 static void append_op(cscript_context* ctxt, cscript_string* s, int op)
@@ -64,7 +50,7 @@ static void append_op(cscript_context* ctxt, cscript_string* s, int op)
     }
   }
 
-static int previsit_expression(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_expression* e);
+static void dump_expression(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_expression* e);
 
 static void dump_number(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_number* e)
   {
@@ -84,6 +70,19 @@ static void dump_number(cscript_context* ctxt, cscript_visitor* v, cscript_parse
     }
   }
 
+static void dump_lvalueop(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_lvalue_operator* l)
+  {
+  
+  }
+
+static void dump_function(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_function* f)
+  {
+  }
+
+static void dump_expression_list(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_expression_list* l)
+  {
+  }
+
 static void dump_factor(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_factor* e)
   {
   cscript_dump_visitor* d = (cscript_dump_visitor*)(v->impl);
@@ -97,19 +96,34 @@ static void dump_factor(cscript_context* ctxt, cscript_visitor* v, cscript_parse
     case cscript_factor_type_expression:
     {
     cscript_string_append_cstr(ctxt, &(d->s), "(");
-    previsit_expression(ctxt, v, &e->factor.expr);
+    dump_expression(ctxt, v, &e->factor.expr);
     cscript_string_append_cstr(ctxt, &(d->s), ")");
     break;
     }
     case cscript_factor_type_variable:
     {
-    previsit_var(ctxt, v, &e->factor.var);
+    dump_var(ctxt, v, &e->factor.var);
+    break;
+    }
+    case cscript_factor_type_lvalue_operator:
+    {
+    dump_lvalueop(ctxt, v, &e->factor.lvop);
+    break;
+    }
+    case cscript_factor_type_function:
+    {
+    dump_function(ctxt, v, &e->factor.fun);
+    break;
+    }
+    case cscript_factor_type_expression_list:
+    {
+    dump_expression_list(ctxt, v, &e->factor.exprlist);
     break;
     }
     }
   }
 
-static int previsit_expression(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_expression* e)
+static void dump_expression(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_expression* e)
   {
   cscript_dump_visitor* d = (cscript_dump_visitor*)(v->impl);
   cscript_vector* operands = &e->operands;
@@ -149,18 +163,58 @@ static int previsit_expression(cscript_context* ctxt, cscript_visitor* v, cscrip
 
     if (expr_op != expr_op_end)
       {
-      append_op(ctxt, &(d->s), *expr_op);      
+      append_op(ctxt, &(d->s), *expr_op);
       ++expr_op;
       }
     }
-  return 0;
   }
 
-void postvisit_statement(cscript_context* ctxt, cscript_visitor* v, cscript_statement* e)
+static void dump_fixnum(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_fixnum* fx)
   {
-  UNUSED(e);
   cscript_dump_visitor* d = (cscript_dump_visitor*)(v->impl);
-  cscript_string_append_cstr(ctxt, &(d->s), ";\n");
+  cscript_string_append_cstr(ctxt, &(d->s), "int ");
+  cscript_string_append_cstr(ctxt, &(d->s), fx->name.string_ptr);
+  }
+
+static void dump_flonum(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_flonum* fl)
+  {
+  cscript_dump_visitor* d = (cscript_dump_visitor*)(v->impl);
+  cscript_string_append_cstr(ctxt, &(d->s), "float ");
+  cscript_string_append_cstr(ctxt, &(d->s), fl->name.string_ptr);
+  }
+
+static int previsit_statement(cscript_context* ctxt, cscript_visitor* v, cscript_statement* s)
+  {
+  cscript_dump_visitor* d = (cscript_dump_visitor*)(v->impl);
+  switch (s->type)
+    {
+    case cscript_statement_type_expression:
+      dump_expression(ctxt, v, &s->statement.expr);
+      cscript_string_append_cstr(ctxt, &(d->s), ";\n");
+      return 0;
+    case cscript_statement_type_fixnum:
+      dump_fixnum(ctxt, v, &s->statement.fixnum);
+      cscript_string_append_cstr(ctxt, &(d->s), ";\n");
+      return 0;
+    case cscript_statement_type_flonum:
+      dump_flonum(ctxt, v, &s->statement.flonum);
+      cscript_string_append_cstr(ctxt, &(d->s), ";\n");
+      return 0;
+    case cscript_statement_type_for:
+      break;
+    case cscript_statement_type_if:
+      break;
+    case cscript_statement_type_comma_separated:
+      break;
+    case cscript_statement_type_nop:
+      cscript_string_append_cstr(ctxt, &(d->s), ";\n");
+      break;
+    case cscript_statement_type_assignment:
+      break;
+    default:
+      break;
+    }
+  return 1;
   }
 
 cscript_dump_visitor* cscript_dump_visitor_new(cscript_context* ctxt)
@@ -168,10 +222,8 @@ cscript_dump_visitor* cscript_dump_visitor_new(cscript_context* ctxt)
   cscript_dump_visitor* v = cscript_new(ctxt, cscript_dump_visitor);
   v->visitor = cscript_visitor_new(ctxt, v);
   cscript_string_init(ctxt, &(v->s), "");
-  v->visitor->visit_nop = visit_nop;
-  v->visitor->previsit_var = previsit_var;
-  v->visitor->previsit_expression = previsit_expression;
-  v->visitor->postvisit_statement = postvisit_statement;
+  
+  v->visitor->previsit_statement = previsit_statement;
   return v;
   }
 
