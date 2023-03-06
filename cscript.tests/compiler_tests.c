@@ -283,7 +283,7 @@ static void test_assigment()
 static void test_array()
   {
   test_compile_flonum_aux(1.0, "float f[3];\nf[0] = 1;f[0];");
-  test_compile_flonum_aux(6.0, "float f[3];\nf[0] = 1;\nf[1] = 2;\nf[2] = 3;\nf[0]*f[1]*f[2];");
+  test_compile_flonum_aux(6.0, "float f[3];\nf[0] = 1;\nf[1] = 2;\nf[2] = 3;\nf[0]*f[1]*f[2];");  
   test_compile_fixnum_aux(6, "int f[3];\nf[0] = 1;\nf[1] = 2;\nf[2] = 3;\nf[0]*f[1]*f[2];");
   test_compile_flonum_aux(1.0 + 3.14, "float f[10];\nf[8] = 1;\nf[8] += 3.14;f[8];");
   test_compile_fixnum_aux(4, "int f[10];\nf[8] = 1;\nf[8] += 3;f[8];");
@@ -646,6 +646,17 @@ static void text_external_calls()
   test_foreign_flonum_aux(3.24, "() add(3.14, 0.1);", "add", cast(void*, &simple_add_flonum), cscript_foreign_flonum, 0, NULL);
   }
 
+static void test_array_address()
+  {
+  cscript_fixnum pars_list[6] = { 0, 0, 0, 0, 0, 0 };
+  cscript_fixnum addr = 999;
+  pars_list[0] = (cscript_fixnum)&addr;
+  debug = 1;
+  test_compile_fixnum_pars_aux(0, "(int* addr) int my_array[5] = { 1, 2, 3, 4, 5 }; *addr = my_array; 0;", 1, pars_list);
+  debug = 0;
+  TEST_EQ_INT(0, addr);
+  }
+
 void run_all_compiler_tests()
   {
   test_compile_fixnum();
@@ -666,4 +677,5 @@ void run_all_compiler_tests()
   test_if();
   test_array_assignment();
   text_external_calls();
+  //test_array_address();
   }
