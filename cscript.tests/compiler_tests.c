@@ -762,57 +762,57 @@ static void test_quicksort()
     }
 
   const char* script = "(int* a, int* stack, int size)\n"
-  "int lo = 0;\n"
-  "int hi = size - 1;\n"
-  "// initialize top of stack\n"
-  "int top = -1;\n"
-  "// push initial values of l and h to stack\n"
-  "stack[++top] = lo;\n"
-  "stack[++top] = hi;\n"
-  "while (top >= 0)\n"
-  "  {\n"
-  "  hi = stack[top];\n"
-  "  --top;\n"
-  "  lo = stack[top];\n"
-  "  --top;\n"
-  "  // partitioning algorithm\n"
-  "  // Set pivot element at its correct position\n"
-  "  // in sorted array\n"
-  "  int x = a[hi];\n"
-  "  int i = (lo - 1);\n"
-  "  for (int j = lo; j <= hi - 1; ++j)\n"
-  "    {\n"
-  "    if (a[j] <= x)\n"
-  "      {\n"
-  "      ++i;\n"
-  "      int tmp = a[i];\n"
-  "      a[i] = a[j];\n"
-  "      a[j] = tmp;\n"
-  "      }\n"
-  "    }\n"
-  "  int tmp2 = a[i + 1];\n"
-  "  a[i + 1] = a[hi];\n"
-  "  a[hi] = tmp2;\n"
-  "  int p = i + 1;\n"
-  "  // end partitioning algorithm\n"
-  "\n"
-  "  // If there are elements on left side of pivot,\n"
-  "  // then push left side to stack\n"
-  "  if (p - 1 > lo)\n"
-  "    {\n"
-  "    stack[++top] = lo;\n"
-  "    stack[++top] = p - 1;\n"
-  "    }\n"
-  "\n"
-  "  // If there are elements on right side of pivot,\n"
-  "  // then push right side to stack\n"
-  "  if (p + 1 < hi)\n"
-  "    {\n"
-  "    stack[++top] = p + 1;\n"
-  "    stack[++top] = hi;\n"
-  "    }\n"
-  "  0;\n"
-  "  }";
+    "int lo = 0;\n"
+    "int hi = size - 1;\n"
+    "// initialize top of stack\n"
+    "int top = -1;\n"
+    "// push initial values of l and h to stack\n"
+    "stack[++top] = lo;\n"
+    "stack[++top] = hi;\n"
+    "while (top >= 0)\n"
+    "  {\n"
+    "  hi = stack[top];\n"
+    "  --top;\n"
+    "  lo = stack[top];\n"
+    "  --top;\n"
+    "  // partitioning algorithm\n"
+    "  // Set pivot element at its correct position\n"
+    "  // in sorted array\n"
+    "  int x = a[hi];\n"
+    "  int i = (lo - 1);\n"
+    "  for (int j = lo; j <= hi - 1; ++j)\n"
+    "    {\n"
+    "    if (a[j] <= x)\n"
+    "      {\n"
+    "      ++i;\n"
+    "      int tmp = a[i];\n"
+    "      a[i] = a[j];\n"
+    "      a[j] = tmp;\n"
+    "      }\n"
+    "    }\n"
+    "  int tmp2 = a[i + 1];\n"
+    "  a[i + 1] = a[hi];\n"
+    "  a[hi] = tmp2;\n"
+    "  int p = i + 1;\n"
+    "  // end partitioning algorithm\n"
+    "\n"
+    "  // If there are elements on left side of pivot,\n"
+    "  // then push left side to stack\n"
+    "  if (p - 1 > lo)\n"
+    "    {\n"
+    "    stack[++top] = lo;\n"
+    "    stack[++top] = p - 1;\n"
+    "    }\n"
+    "\n"
+    "  // If there are elements on right side of pivot,\n"
+    "  // then push right side to stack\n"
+    "  if (p + 1 < hi)\n"
+    "    {\n"
+    "    stack[++top] = p + 1;\n"
+    "    stack[++top] = hi;\n"
+    "    }\n"
+    "  0;\n"
+    "  }";
 
   pars_list[0] = a;
   pars_list[1] = st;
@@ -830,6 +830,120 @@ static void test_quicksort()
   TEST_EQ_INT(1, array_is_sorted);
   free(a);
   free(st);
+  }
+
+static void test_quicksort_flonum()
+  {
+  cscript_fixnum pars_list[6] = { 0, 0, 0, 0, 0, 0 };
+  cscript_fixnum max_size = 10000;
+  uint32_t x = 0x76543513;
+  cscript_flonum* a;
+  cscript_fixnum* st;
+  a = malloc(max_size * sizeof(cscript_flonum));
+  st = malloc(max_size * sizeof(cscript_fixnum));
+  for (cscript_fixnum i = 0; i < max_size; ++i)
+    {
+    x ^= x << 13;
+    x ^= x >> 17;
+    x ^= x << 5;
+    a[i] = (cscript_flonum)(x % max_size) / (cscript_flonum)max_size;
+    }
+
+  const char* script = "(float* a, int* stack, int size)\n"
+    "int lo = 0;\n"
+    "int hi = size - 1;\n"
+    "// initialize top of stack\n"
+    "int top = -1;\n"
+    "// push initial values of l and h to stack\n"
+    "stack[++top] = lo;\n"
+    "stack[++top] = hi;\n"
+    "while (top >= 0)\n"
+    "  {\n"
+    "  hi = stack[top];\n"
+    "  --top;\n"
+    "  lo = stack[top];\n"
+    "  --top;\n"
+    "  // partitioning algorithm\n"
+    "  // Set pivot element at its correct position\n"
+    "  // in sorted array\n"
+    "  float x = a[hi];\n"
+    "  int i = (lo - 1);\n"
+    "  for (int j = lo; j <= hi - 1; ++j)\n"
+    "    {\n"
+    "    if (a[j] <= x)\n"
+    "      {\n"
+    "      ++i;\n"
+    "      float tmp = a[i];\n"
+    "      a[i] = a[j];\n"
+    "      a[j] = tmp;\n"
+    "      }\n"
+    "    }\n"
+    "  float tmp2 = a[i + 1];\n"
+    "  a[i + 1] = a[hi];\n"
+    "  a[hi] = tmp2;\n"
+    "  int p = i + 1;\n"
+    "  // end partitioning algorithm\n"
+    "\n"
+    "  // If there are elements on left side of pivot,\n"
+    "  // then push left side to stack\n"
+    "  if (p - 1 > lo)\n"
+    "    {\n"
+    "    stack[++top] = lo;\n"
+    "    stack[++top] = p - 1;\n"
+    "    }\n"
+    "\n"
+    "  // If there are elements on right side of pivot,\n"
+    "  // then push right side to stack\n"
+    "  if (p + 1 < hi)\n"
+    "    {\n"
+    "    stack[++top] = p + 1;\n"
+    "    stack[++top] = hi;\n"
+    "    }\n"
+    "  0;\n"
+    "  }";
+
+  pars_list[0] = a;
+  pars_list[1] = st;
+  pars_list[2] = max_size;
+
+  int c0 = clock();
+  test_compile_fixnum_pars_aux(0, script, 3, pars_list);
+  int c1 = clock();
+  printf("Quiksort flonum time: %lldms\n", (int64_t)(c1 - c0) * (int64_t)1000 / (int64_t)CLOCKS_PER_SEC);
+  int array_is_sorted = 1;
+  for (cscript_fixnum i = 0; i < max_size - 1; ++i)
+    {
+    array_is_sorted &= a[i] <= a[i + 1];
+    }
+  TEST_EQ_INT(1, array_is_sorted);
+  free(a);
+  free(st);
+  }
+
+static void test_digits_pi()
+  {
+  const char* script = "(int nr_of_terms)\n"
+    "  /* This method computes pi by using the power series expansion of\n"
+    "     atan(x) = x - x^3/3 + x^5/5 - ... together with formulas like\n"
+    "     pi = 16*atan(1/5) - 4*atan(1/239).\n"
+    "     This gives about 1.4 decimals per term.\n"
+    "  */\n"
+    "  float x1 = 1.0 / 5.0;\n"
+    "float x2 = 1.0 / 239.0;\n"
+    "float pi = 0;\n"
+    "for (int i = 0; i < nr_of_terms; ++i)\n"
+    "  {\n"
+    "  float sign = pow(-1.0, i);\n"
+    "  float power = 2 * i + 1;\n"
+    "  pi += 16 * sign * pow(x1, power) / power - 4 * sign * pow(x2, power) / power;\n"
+    "  }\n"
+    "pi; ";
+  cscript_fixnum pars_list[6] = { 0, 0, 0, 0, 0, 0 };
+  pars_list[0] = 10000;
+  int c0 = clock();
+  test_compile_flonum_aux_close(3.1415926535, script, 1, pars_list, 0.00001);
+  int c1 = clock();
+  printf("Digits pi time: %lldms\n", (int64_t)(c1 - c0) * (int64_t)1000 / (int64_t)CLOCKS_PER_SEC);
   }
 
 void run_all_compiler_tests()
@@ -857,4 +971,6 @@ void run_all_compiler_tests()
   test_hamming();
   test_fibonacci();
   test_quicksort();
+  test_quicksort_flonum();
+  test_digits_pi();
   }
