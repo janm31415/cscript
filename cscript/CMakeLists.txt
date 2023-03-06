@@ -1,6 +1,8 @@
 set(HDRS
 compiler.h
 constant.h
+constfold.h
+constprop.h
 context.h
 cscript.h
 dump.h
@@ -13,6 +15,7 @@ map.h
 memory.h
 object.h
 parser.h
+preprocess.h
 primitives.h
 stream.h
 string.h
@@ -26,6 +29,8 @@ vm.h
 set(SRCS
 compiler.c
 constant.c
+constfold.c
+constprop.c
 context.c
 dump.c
 environment.c
@@ -36,6 +41,7 @@ map.c
 memory.c
 object.c
 parser.c
+preprocess.c
 primitives.c
 stream.c
 string.c

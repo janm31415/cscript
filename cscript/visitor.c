@@ -495,7 +495,7 @@ static void visit_entry(cscript_context* ctxt, cscript_visitor* vis, cscript_vis
     {
     if (vis->previsit_flonum(ctxt, vis, cast(cscript_parsed_flonum*, e.entry)))
       {
-      cscript_vector_push_back(ctxt, &(vis->v), make_entry(e.entry, CSCRIPT_VISITOR_FIXNUM_POST), cscript_visitor_entry);
+      cscript_vector_push_back(ctxt, &(vis->v), make_entry(e.entry, CSCRIPT_VISITOR_FLONUM_POST), cscript_visitor_entry);
       cscript_vector* dims = &(cast(cscript_parsed_flonum*, e.entry)->dims);
       cscript_parsed_expression* expr_it = cscript_vector_begin(dims, cscript_parsed_expression);
       cscript_parsed_expression* expr_it_end = cscript_vector_end(dims, cscript_parsed_expression);
@@ -697,7 +697,7 @@ static void visit(cscript_context* ctxt, cscript_visitor* vis)
 
 void cscript_visit_statement(cscript_context* ctxt, cscript_visitor* vis, cscript_statement* stmt)
   {
-  cscript_visitor_entry e = make_entry(stmt, CSCRIPT_VISITOR_EXPRESSION_PRE);
+  cscript_visitor_entry e = make_entry(stmt, CSCRIPT_VISITOR_STATEMENT_PRE);
   cscript_vector_push_back(ctxt, &(vis->v), e, cscript_visitor_entry);
   visit(ctxt, vis);
   }

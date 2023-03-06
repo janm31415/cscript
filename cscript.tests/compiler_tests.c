@@ -8,18 +8,32 @@
 #include "cscript/error.h"
 #include "cscript/dump.h"
 #include "cscript/foreign.h"
+#include "cscript/preprocess.h"
 
 #include <math.h>
 #include <time.h>
 #include <stdlib.h>
 
 static int debug = 0;
+static int preprocess = 0;
+static int dump = 0;
 
 static void test_compile_aux_stack(cscript_fixnum expected, const char* script, int stack_size, int nr_parameters, void* pars, int output_type)
   {
   cscript_context* ctxt = cscript_open(stack_size);
   cscript_vector tokens = cscript_script2tokens(ctxt, script);
   cscript_program prog = make_program(ctxt, &tokens);
+
+  if (preprocess != 0)
+    cscript_preprocess(ctxt, &prog);
+
+  if (dump != 0)
+    {
+    cscript_dump_visitor* dumper = cscript_dump_visitor_new(ctxt);
+    cscript_visit_program(ctxt, dumper->visitor, &prog);
+    printf("%s\n", dumper->s.string_ptr);
+    cscript_dump_visitor_free(ctxt, dumper);
+    }
 
   cscript_function* compiled_program = cscript_compile_program(ctxt, &prog);
 
@@ -569,6 +583,9 @@ static void text_foreign_aux(cscript_fixnum expected, const char* script, const 
   cscript_vector tokens = cscript_script2tokens(ctxt, script);
   cscript_program prog = make_program(ctxt, &tokens);
 
+  if (preprocess != 0)
+    cscript_preprocess(ctxt, &prog);
+
   cscript_function* compiled_program = cscript_compile_program(ctxt, &prog);
 
   if (debug != 0)
@@ -662,6 +679,9 @@ static void test_compile_flonum_aux_close(cscript_flonum expected, const char* s
   cscript_context* ctxt = cscript_open(256);
   cscript_vector tokens = cscript_script2tokens(ctxt, script);
   cscript_program prog = make_program(ctxt, &tokens);
+
+  if (preprocess != 0)
+    cscript_preprocess(ctxt, &prog);
 
   cscript_function* compiled_program = cscript_compile_program(ctxt, &prog);
 
@@ -1115,6 +1135,8 @@ static void test_global_variables()
   cscript_context* ctxt = cscript_open(256);
   cscript_vector tokens = cscript_script2tokens(ctxt, "()int $g1=3; float $g2 = 3.14; $g1;");
   cscript_program prog = make_program(ctxt, &tokens);
+  if (preprocess != 0)
+    cscript_preprocess(ctxt, &prog);
   cscript_function* compiled_program = cscript_compile_program(ctxt, &prog);
   cscript_fixnum* res = cscript_run(ctxt, compiled_program);
   TEST_EQ_INT(3, *res);
@@ -1128,6 +1150,8 @@ static void test_global_variables()
 
   tokens = cscript_script2tokens(ctxt, "()$g2;");
   prog = make_program(ctxt, &tokens);
+  if (preprocess != 0)
+    cscript_preprocess(ctxt, &prog);
   compiled_program = cscript_compile_program(ctxt, &prog);
   res = cscript_run(ctxt, compiled_program);
   cscript_flonum* resf = cast(cscript_flonum*, res);
@@ -1142,6 +1166,8 @@ static void test_global_variables()
 
   tokens = cscript_script2tokens(ctxt, "()$g1+$g2;");
   prog = make_program(ctxt, &tokens);
+  if (preprocess != 0)
+    cscript_preprocess(ctxt, &prog);
   compiled_program = cscript_compile_program(ctxt, &prog);
   res = cscript_run(ctxt, compiled_program);
   resf = cast(cscript_flonum*, res);
@@ -1156,6 +1182,8 @@ static void test_global_variables()
 
   tokens = cscript_script2tokens(ctxt, "()$g1=2;$g2;");
   prog = make_program(ctxt, &tokens);
+  if (preprocess != 0)
+    cscript_preprocess(ctxt, &prog);
   compiled_program = cscript_compile_program(ctxt, &prog);
   res = cscript_run(ctxt, compiled_program);
   resf = cast(cscript_flonum*, res);
@@ -1170,6 +1198,8 @@ static void test_global_variables()
 
   tokens = cscript_script2tokens(ctxt, "()$g1+$g2;");
   prog = make_program(ctxt, &tokens);
+  if (preprocess != 0)
+    cscript_preprocess(ctxt, &prog);
   compiled_program = cscript_compile_program(ctxt, &prog);
   res = cscript_run(ctxt, compiled_program);
   resf = cast(cscript_flonum*, res);
@@ -1184,6 +1214,8 @@ static void test_global_variables()
 
   tokens = cscript_script2tokens(ctxt, "()$g2=8;$g1+$g2;");
   prog = make_program(ctxt, &tokens);
+  if (preprocess != 0)
+    cscript_preprocess(ctxt, &prog);
   compiled_program = cscript_compile_program(ctxt, &prog);
   res = cscript_run(ctxt, compiled_program);
   resf = cast(cscript_flonum*, res);
@@ -1198,6 +1230,8 @@ static void test_global_variables()
 
   tokens = cscript_script2tokens(ctxt, "()$g2+=0.2;$g1+$g2;");
   prog = make_program(ctxt, &tokens);
+  if (preprocess != 0)
+    cscript_preprocess(ctxt, &prog);
   compiled_program = cscript_compile_program(ctxt, &prog);
   res = cscript_run(ctxt, compiled_program);
   resf = cast(cscript_flonum*, res);
@@ -1212,6 +1246,8 @@ static void test_global_variables()
 
   tokens = cscript_script2tokens(ctxt, "()$g2-=0.2;$g1+$g2;");
   prog = make_program(ctxt, &tokens);
+  if (preprocess != 0)
+    cscript_preprocess(ctxt, &prog);
   compiled_program = cscript_compile_program(ctxt, &prog);
   res = cscript_run(ctxt, compiled_program);
   resf = cast(cscript_flonum*, res);
@@ -1226,6 +1262,8 @@ static void test_global_variables()
 
   tokens = cscript_script2tokens(ctxt, "()$g2*=2;$g1+$g2;");
   prog = make_program(ctxt, &tokens);
+  if (preprocess != 0)
+    cscript_preprocess(ctxt, &prog);
   compiled_program = cscript_compile_program(ctxt, &prog);
   res = cscript_run(ctxt, compiled_program);
   resf = cast(cscript_flonum*, res);
@@ -1240,6 +1278,8 @@ static void test_global_variables()
 
   tokens = cscript_script2tokens(ctxt, "()$g2/=2;$g1+$g2;");
   prog = make_program(ctxt, &tokens);
+  if (preprocess != 0)
+    cscript_preprocess(ctxt, &prog);
   compiled_program = cscript_compile_program(ctxt, &prog);
   res = cscript_run(ctxt, compiled_program);
   resf = cast(cscript_flonum*, res);
@@ -1255,35 +1295,51 @@ static void test_global_variables()
   cscript_close(ctxt);
   }
 
+static void test_constant_propagation()
+  {
+  debug = 1;
+  preprocess = 1;
+  dump = 1;
+  test_compile_flonum_aux(3.14, "float i = 3.14; i;");
+  debug = 0;
+  preprocess = 0;
+  dump = 0;
+  }
+
 void run_all_compiler_tests()
   {
-  test_compile_fixnum();
-  test_compile_flonum();
-  test_compile_term();
-  test_compile_expr();
-  test_compile_named_fixnum();
-  test_compile_named_flonum();
-  test_assigment();
-  test_array();
-  test_comment();
-  test_parameter();
-  test_parameter_pointer();
-  test_parameter_dereference();
-  test_inc_dec();
-  test_for_loop();
-  test_funccall();
-  test_if();
-  test_array_assignment();
-  text_external_calls();
-  test_array_address();
-  test_harmonic();
-  test_hamming();
-  test_fibonacci();
-  test_quicksort();
-  test_quicksort_flonum();
-  test_digits_pi();
-  test_comparison_with_input();
-  test_many_variables();
-  test_computation_order();
-  test_global_variables();
+  for (int i = 0; i < 2; ++i)
+    {
+    preprocess = i;
+    test_compile_fixnum();
+    test_compile_flonum();
+    test_compile_term();
+    test_compile_expr();
+    test_compile_named_fixnum();
+    test_compile_named_flonum();
+    test_assigment();    
+    test_array();
+    test_comment();
+    test_parameter();
+    test_parameter_pointer();
+    test_parameter_dereference();
+    test_inc_dec();
+    test_for_loop();
+    test_funccall();
+    test_if();
+    test_array_assignment();
+    text_external_calls();
+    test_array_address();
+    test_harmonic();
+    test_hamming();
+    test_fibonacci();
+    test_quicksort();
+    test_quicksort_flonum();
+    test_digits_pi();
+    test_comparison_with_input();
+    test_many_variables();
+    test_computation_order();
+    test_global_variables();
+    }
+  //test_constant_propagation();
   }
