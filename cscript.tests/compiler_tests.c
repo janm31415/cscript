@@ -729,9 +729,107 @@ static void test_hamming()
   int c0 = clock();
   test_compile_fixnum_pars_aux(2, "(int* a, int* b, int size) int hamming = 0; for (int i = 0; i < size; ++i) { hamming += a[i] != b[i];} hamming;", 3, pars_list);
   int c1 = clock();
-  printf("Harmonic time: %lldms\n", (int64_t)(c1 - c0) * (int64_t)1000 / (int64_t)CLOCKS_PER_SEC);
+  printf("Hamming time: %lldms\n", (int64_t)(c1 - c0) * (int64_t)1000 / (int64_t)CLOCKS_PER_SEC);
   free(a);
   free(b);
+  }
+
+static void test_fibonacci()
+  {
+  cscript_fixnum pars_list[6] = { 0, 0, 0, 0, 0, 0 };
+  pars_list[0] = 40;
+  int c0 = clock();
+  test_compile_fixnum_pars_aux(102334155, "(int i) int a = 0; int b = 1; for (int j = 0; j < i; ++j) { int c = a+b; a = b; b = c; } a;", 1, pars_list);
+  int c1 = clock();
+  printf("Fibonacci time: %lldms\n", (int64_t)(c1 - c0) * (int64_t)1000 / (int64_t)CLOCKS_PER_SEC);
+  }
+
+static void test_quicksort()
+  {
+  cscript_fixnum pars_list[6] = { 0, 0, 0, 0, 0, 0 };
+  cscript_fixnum max_size = 10000;
+  uint32_t x = 0x76543513;
+  cscript_fixnum* a;
+  cscript_fixnum* st;
+  a = malloc(max_size * sizeof(cscript_fixnum));
+  st = malloc(max_size * sizeof(cscript_fixnum));
+  for (cscript_fixnum i = 0; i < max_size; ++i)
+    {
+    x ^= x << 13;
+    x ^= x >> 17;
+    x ^= x << 5;
+    a[i] = x % max_size;
+    }
+
+  const char* script = "(int* a, int* stack, int size)\n"
+  "int lo = 0;\n"
+  "int hi = size - 1;\n"
+  "// initialize top of stack\n"
+  "int top = -1;\n"
+  "// push initial values of l and h to stack\n"
+  "stack[++top] = lo;\n"
+  "stack[++top] = hi;\n"
+  "while (top >= 0)\n"
+  "  {\n"
+  "  hi = stack[top];\n"
+  "  --top;\n"
+  "  lo = stack[top];\n"
+  "  --top;\n"
+  "  // partitioning algorithm\n"
+  "  // Set pivot element at its correct position\n"
+  "  // in sorted array\n"
+  "  int x = a[hi];\n"
+  "  int i = (lo - 1);\n"
+  "  for (int j = lo; j <= hi - 1; ++j)\n"
+  "    {\n"
+  "    if (a[j] <= x)\n"
+  "      {\n"
+  "      ++i;\n"
+  "      int tmp = a[i];\n"
+  "      a[i] = a[j];\n"
+  "      a[j] = tmp;\n"
+  "      }\n"
+  "    }\n"
+  "  int tmp2 = a[i + 1];\n"
+  "  a[i + 1] = a[hi];\n"
+  "  a[hi] = tmp2;\n"
+  "  int p = i + 1;\n"
+  "  // end partitioning algorithm\n"
+  "\n"
+  "  // If there are elements on left side of pivot,\n"
+  "  // then push left side to stack\n"
+  "  if (p - 1 > lo)\n"
+  "    {\n"
+  "    stack[++top] = lo;\n"
+  "    stack[++top] = p - 1;\n"
+  "    }\n"
+  "\n"
+  "  // If there are elements on right side of pivot,\n"
+  "  // then push right side to stack\n"
+  "  if (p + 1 < hi)\n"
+  "    {\n"
+  "    stack[++top] = p + 1;\n"
+  "    stack[++top] = hi;\n"
+  "    }\n"
+  "  0;\n"
+  "  }";
+
+  pars_list[0] = a;
+  pars_list[1] = st;
+  pars_list[2] = max_size;
+
+  int c0 = clock();
+  test_compile_fixnum_pars_aux(0, script, 3, pars_list);
+  int c1 = clock();
+  printf("Quiksort time: %lldms\n", (int64_t)(c1 - c0) * (int64_t)1000 / (int64_t)CLOCKS_PER_SEC);
+  int array_is_sorted = 1;
+  for (cscript_fixnum i = 0; i < max_size - 1; ++i)
+    {
+    array_is_sorted &= a[i] <= a[i + 1];
+    }
+  TEST_EQ_INT(1, array_is_sorted);
+  free(a);
+  free(st);
   }
 
 void run_all_compiler_tests()
@@ -757,4 +855,6 @@ void run_all_compiler_tests()
   test_array_address();
   test_harmonic();
   test_hamming();
+  test_fibonacci();
+  test_quicksort();
   }
