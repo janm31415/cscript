@@ -10,6 +10,8 @@
 #include "cscript/foreign.h"
 
 #include <math.h>
+#include <time.h>
+#include <stdlib.h>
 
 static int debug = 0;
 
@@ -38,7 +40,7 @@ static void test_compile_aux_stack(cscript_fixnum expected, const char* script, 
   cscript_fixnum* res = cscript_run(ctxt, compiled_program);
 
   if (output_type == cscript_number_type_fixnum)
-    {    
+    {
     TEST_EQ_INT(expected, *res);
     }
   else
@@ -283,7 +285,7 @@ static void test_assigment()
 static void test_array()
   {
   test_compile_flonum_aux(1.0, "float f[3];\nf[0] = 1;f[0];");
-  test_compile_flonum_aux(6.0, "float f[3];\nf[0] = 1;\nf[1] = 2;\nf[2] = 3;\nf[0]*f[1]*f[2];");  
+  test_compile_flonum_aux(6.0, "float f[3];\nf[0] = 1;\nf[1] = 2;\nf[2] = 3;\nf[0]*f[1]*f[2];");
   test_compile_fixnum_aux(6, "int f[3];\nf[0] = 1;\nf[1] = 2;\nf[2] = 3;\nf[0]*f[1]*f[2];");
   test_compile_flonum_aux(1.0 + 3.14, "float f[10];\nf[8] = 1;\nf[8] += 3.14;f[8];");
   test_compile_fixnum_aux(4, "int f[10];\nf[8] = 1;\nf[8] += 3;f[8];");
@@ -299,18 +301,18 @@ static void test_comment()
   {
   const char* script =
     "int i[3]; // make an array of 3 integers\n"
-    "i[1] = 8; // assign 8 to index 1 position\n"    
+    "i[1] = 8; // assign 8 to index 1 position\n"
     "i[1] /= 2; // divide index 1 position by 2\n"
     "i[1]; // return the result in index 1";
   test_compile_fixnum_aux(4, script);
   const char* script2 =
-  "int i[3]; // make an array of 3 integers\n"
-  "i[1] = 8; // assign 8 to index 1 position\n"
-  "i[1];\n"
-  "/*\n"
-  "i[1] /= 2; // divide index 1 position by 2\n"
-  "i[1]; // return the result in index 1\n"
-  "*/\n";
+    "int i[3]; // make an array of 3 integers\n"
+    "i[1] = 8; // assign 8 to index 1 position\n"
+    "i[1];\n"
+    "/*\n"
+    "i[1] /= 2; // divide index 1 position by 2\n"
+    "i[1]; // return the result in index 1\n"
+    "*/\n";
   test_compile_fixnum_aux(8, script2);
   }
 
@@ -321,7 +323,7 @@ static cscript_fixnum convert_to_fx(cscript_flonum fl)
 
 static void test_parameter()
   {
-  cscript_fixnum pars_list[6] = {0, 0, 0, 0, 0, 0};
+  cscript_fixnum pars_list[6] = { 0, 0, 0, 0, 0, 0 };
   pars_list[0] = 3;
   test_compile_fixnum_pars_aux(4, "(int i) i + 1;", 1, pars_list);
   pars_list[1] = 7;
@@ -355,8 +357,8 @@ static void test_parameter()
 
 static void test_parameter_pointer()
   {
-  cscript_fixnum i[3] = {9999, 9999, 9999};
-  cscript_flonum f[3] = {9999.0, 9999.0, 9999.0};
+  cscript_fixnum i[3] = { 9999, 9999, 9999 };
+  cscript_flonum f[3] = { 9999.0, 9999.0, 9999.0 };
   cscript_fixnum pars_list[6] = { 0, 0, 0, 0, 0, 0 };
   pars_list[0] = (cscript_fixnum)&i[0];
   test_compile_fixnum_pars_aux(15, "(int* i) i[0] = 0; i[1] = 1; i[2] = 2; 15;", 1, pars_list);
@@ -441,7 +443,7 @@ static void test_parameter_dereference()
   pars_list[0] = (cscript_fixnum)&i;
   test_compile_fixnum_pars_aux(12, "(int* i) int g = (1 + (1 + (1 + (1 + (1 + (1 + ( 1 + i[0]))))))); g;", 1, pars_list);
   pars_list[0] = (cscript_fixnum)&f;
-  test_compile_flonum_pars_aux(3.14*3.14, "(float* f) *f * *f;", 1, pars_list);
+  test_compile_flonum_pars_aux(3.14 * 3.14, "(float* f) *f * *f;", 1, pars_list);
   pars_list[0] = (cscript_fixnum)&i;
   test_compile_fixnum_pars_aux(25, "(int* i) *i * *i;", 1, pars_list);
   pars_list[0] = (cscript_fixnum)&f;
@@ -450,9 +452,9 @@ static void test_parameter_dereference()
   test_compile_flonum_pars_aux(0.0, "(float* f) *f = 1.2; 0.0;", 1, pars_list);
   TEST_EQ_DOUBLE(1.2, f);
   test_compile_flonum_pars_aux(0.0, "(float* f) *f -= 1.4; 0.0;", 1, pars_list);
-  TEST_EQ_DOUBLE(1.2-1.4, f);
+  TEST_EQ_DOUBLE(1.2 - 1.4, f);
   test_compile_flonum_pars_aux(0.0, "(float* f) *f *= 2.8; 0.0;", 1, pars_list);
-  TEST_EQ_DOUBLE((1.2 - 1.4)*2.8, f);
+  TEST_EQ_DOUBLE((1.2 - 1.4) * 2.8, f);
   test_compile_flonum_pars_aux(0.0, "(float* f) *f /= 2.5; 0.0;", 1, pars_list);
   TEST_EQ_DOUBLE((1.2 - 1.4) * 2.8 / 2.5, f);
   pars_list[0] = (cscript_fixnum)&i;
@@ -470,7 +472,7 @@ static void test_parameter_dereference()
 
 static void test_inc_dec()
   {
-  
+
   test_compile_fixnum_aux(4, "() int i = 3; ++i;");
   test_compile_fixnum_aux(2, "() int i = 3; --i;");
   test_compile_fixnum_aux(4, "() int i = 3; ++i; i;");
@@ -480,7 +482,7 @@ static void test_inc_dec()
   test_compile_flonum_aux(2, "() float f = 3; --f;");
   test_compile_flonum_aux(4, "() float f = 3; ++f; f;");
   test_compile_flonum_aux(2, "() float f = 3; --f; f;");
-  
+
   test_compile_fixnum_aux(4, "() int i[4]; i[2] = 3; ++i[2];");
   test_compile_fixnum_aux(2, "() int i[4]; i[2] = 3; --i[2];");
   test_compile_flonum_aux(4, "() float f[4]; f[2] = 3; ++f[2];");
@@ -489,7 +491,7 @@ static void test_inc_dec()
   test_compile_fixnum_aux(2, "() int i[4]; i[2] = 3; --i[2]; i[2];");
   test_compile_flonum_aux(4, "() float f[4]; f[2] = 3; ++f[2]; f[2];");
   test_compile_flonum_aux(2, "() float f[4]; f[2] = 3; --f[2]; f[2];");
-  
+
   cscript_fixnum pars_list[6] = { 0, 0, 0, 0, 0, 0 };
   cscript_fixnum i[3] = { 9999, 9999, 9999 };
   cscript_flonum f[3] = { 9999.0, 9999.0, 9999.0 };
@@ -545,9 +547,9 @@ static void test_if()
   {
   test_compile_flonum_aux(7.0, "() float f = 0; if (3 > 2) { f = 7; } else { f = 9; } f;");
   test_compile_flonum_aux(9.0, "() float f = 0; if (3 < 2) { f = 7; } else { f = 9; } f;");
-  test_compile_flonum_aux(9.0,"() float f = 0; if (3 > 2) { f = 9; } f;");
-  test_compile_flonum_aux(9.0,"() float f = 0; if (3 < 2) { f = 7; } else { f = 9; } f;");
-  test_compile_flonum_aux(0.0,"() float f = 0; if (3 < 2) { f = 9; } f;");
+  test_compile_flonum_aux(9.0, "() float f = 0; if (3 > 2) { f = 9; } f;");
+  test_compile_flonum_aux(9.0, "() float f = 0; if (3 < 2) { f = 7; } else { f = 9; } f;");
+  test_compile_flonum_aux(0.0, "() float f = 0; if (3 < 2) { f = 9; } f;");
   test_compile_flonum_aux(10.0, "() float f = 0; if (3 < 2) { f = 9; } else if (3 > 2) { f = 10; } else { f = 11; } f;");
   test_compile_flonum_aux(11.0, "() float f = 0; if (3 < 2) { f = 9; } else if (3 == 2) { f = 10; } else { f = 11; } f;");
   }
@@ -635,7 +637,7 @@ static cscript_fixnum simple_add_fixnum(cscript_fixnum* a, cscript_fixnum* b)
 
 static cscript_flonum simple_add_flonum(cscript_flonum* a, cscript_flonum* b)
   {
-  return *a+*b;
+  return *a + *b;
   }
 
 static void text_external_calls()
@@ -653,6 +655,83 @@ static void test_array_address()
   pars_list[0] = (cscript_fixnum)&addr;
   test_compile_fixnum_pars_aux(100, "(int* addr) int my_array[5] = { 10, 20, 30, 40, 50 }; *addr = my_array; 100;", 1, pars_list);
   TEST_EQ_INT(1, addr);
+  }
+
+static void test_compile_flonum_aux_close(cscript_flonum expected, const char* script, int nr_parameters, void* pars, cscript_flonum threshold)
+  {
+  cscript_context* ctxt = cscript_open(256);
+  cscript_vector tokens = cscript_script2tokens(ctxt, script);
+  cscript_program prog = make_program(ctxt, &tokens);
+
+  cscript_function* compiled_program = cscript_compile_program(ctxt, &prog);
+
+  if (debug != 0)
+    {
+    cscript_string s = cscript_fun_to_string(ctxt, compiled_program);
+    printf("%s\n", s.string_ptr);
+    cscript_string_destroy(ctxt, &s);
+    }
+
+  // fill stack with parameters
+  for (int i = 0; i < nr_parameters; ++i)
+    {
+    cscript_fixnum* fx = cscript_vector_begin(&ctxt->stack, cscript_fixnum) + i;
+    *fx = *(cast(cscript_fixnum*, pars) + i);
+    }
+
+  cscript_fixnum* res = cscript_run(ctxt, compiled_program);
+
+  cscript_flonum* resf = cast(cscript_flonum*, res);
+  cscript_flonum expectedf = *cast(cscript_flonum*, &expected);
+
+  cscript_flonum diff = fabs(expectedf - *resf);
+
+  TEST_EQ_INT(1, diff <= threshold ? 1 : 0);
+
+  cscript_print_any_error(ctxt);
+
+  TEST_EQ_INT(0, ctxt->number_of_compile_errors);
+  TEST_EQ_INT(0, ctxt->number_of_syntax_errors);
+  TEST_EQ_INT(0, ctxt->number_of_runtime_errors);
+
+  cscript_function_free(ctxt, compiled_program);
+  destroy_tokens_vector(ctxt, &tokens);
+  cscript_program_destroy(ctxt, &prog);
+  cscript_close(ctxt);
+  }
+
+static void test_harmonic()
+  {
+  int c0 = clock();
+  test_compile_flonum_aux_close(14.392725722864990, "() float sum = 0.0; for (int i = 1; i<1000000; ++i) { sum += 1.0/i; } sum;", 0, NULL, 0.0001);
+  int c1 = clock();
+  printf("Harmonic time: %lldms\n", (int64_t)(c1 - c0) * (int64_t)1000 / (int64_t)CLOCKS_PER_SEC);
+  }
+
+static void test_hamming()
+  {
+  cscript_fixnum pars_list[6] = { 0, 0, 0, 0, 0, 0 };
+  cscript_fixnum max_size = 1000000;
+  cscript_fixnum* a;
+  cscript_fixnum* b;
+  a = malloc(max_size * sizeof(cscript_fixnum));
+  b = malloc(max_size * sizeof(cscript_fixnum));
+  for (cscript_fixnum i = 0; i < max_size; ++i)
+    {
+    a[i] = i;
+    b[i] = i;
+    }
+  b[max_size / 2] = 100;
+  b[max_size - 7] = 200;
+  pars_list[0] = (cscript_fixnum)a;
+  pars_list[1] = (cscript_fixnum)b;
+  pars_list[2] = (cscript_fixnum)max_size;
+  int c0 = clock();
+  test_compile_fixnum_pars_aux(2, "(int* a, int* b, int size) int hamming = 0; for (int i = 0; i < size; ++i) { hamming += a[i] != b[i];} hamming;", 3, pars_list);
+  int c1 = clock();
+  printf("Harmonic time: %lldms\n", (int64_t)(c1 - c0) * (int64_t)1000 / (int64_t)CLOCKS_PER_SEC);
+  free(a);
+  free(b);
   }
 
 void run_all_compiler_tests()
@@ -676,4 +755,6 @@ void run_all_compiler_tests()
   test_array_assignment();
   text_external_calls();
   test_array_address();
+  test_harmonic();
+  test_hamming();
   }
