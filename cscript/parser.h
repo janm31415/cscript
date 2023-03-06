@@ -223,5 +223,9 @@ cscript_statement cscript_make_statement(cscript_context* ctxt, token** token_it
 CSCRIPT_API cscript_program make_program(cscript_context* ctxt, cscript_vector* tokens);
 CSCRIPT_API void cscript_program_destroy(cscript_context* ctxt, cscript_program* p);
 CSCRIPT_API void cscript_statement_destroy(cscript_context* ctxt, cscript_statement* e);
+CSCRIPT_API void cscript_factor_destroy(cscript_context* ctxt, cscript_parsed_factor* f);
+CSCRIPT_API void cscript_term_destroy(cscript_context* ctxt, cscript_parsed_term* t);
+CSCRIPT_API void cscript_relop_destroy(cscript_context* ctxt, cscript_parsed_relop* r);
+CSCRIPT_API void cscript_expression_destroy(cscript_context* ctxt, cscript_parsed_expression* e);
 
 #endif //CSCRIPT_PARSER_H

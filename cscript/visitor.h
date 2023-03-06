@@ -95,6 +95,10 @@ struct cscript_visitor
 
 cscript_visitor* cscript_visitor_new(cscript_context* ctxt, void* impl);
 
+void cscript_visit_factor(cscript_context* ctxt, cscript_visitor* vis, cscript_parsed_factor* f);
+void cscript_visit_term(cscript_context* ctxt, cscript_visitor* vis, cscript_parsed_term* t);
+void cscript_visit_relop(cscript_context* ctxt, cscript_visitor* vis, cscript_parsed_relop* r);
+void cscript_visit_expression(cscript_context* ctxt, cscript_visitor* vis, cscript_parsed_expression* e);
 void cscript_visit_statement(cscript_context* ctxt, cscript_visitor* vis, cscript_statement* stmt);
 void cscript_visit_program(cscript_context* ctxt, cscript_visitor* vis, cscript_program* p);
 

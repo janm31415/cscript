@@ -9,22 +9,7 @@ typedef struct cscript_is_mutable_variable_visitor
   cscript_visitor* visitor;
   cscript_map* is_unmutable;
   } cscript_is_mutable_variable_visitor;
-/*
-int previsit_var(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_variable* var)
-  {
-  cscript_is_mutable_variable_visitor* vis = (cscript_is_mutable_variable_visitor*)(v->impl);
-  cscript_object key;
-  key.type = cscript_object_type_string;
-  key.value.s = var->name;
-  cscript_object* value = cscript_map_insert(ctxt, vis->is_unmutable, &key);
-  value->type = cscript_object_type_fixnum;
-  if (var->name.string_ptr[0] == '$' || var->dims.vector_size > 0 || var->dereference > 0) // global
-    value->value.fx = 0;
-  else
-    value->value.fx = 1;
-  return 1;
-  }
-*/
+
 int previsit_fixnum(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_fixnum* fx)
   {
   cscript_is_mutable_variable_visitor* vis = (cscript_is_mutable_variable_visitor*)(v->impl);

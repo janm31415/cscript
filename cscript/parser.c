@@ -1305,3 +1305,111 @@ void cscript_statement_destroy(cscript_context* ctxt, cscript_statement* e)
 
   destroyer.visitor->destroy(ctxt, destroyer.visitor);
   }
+
+void cscript_factor_destroy(cscript_context* ctxt, cscript_parsed_factor* f)
+  {
+  cscript_program_destroy_visitor destroyer;
+  destroyer.visitor = cscript_visitor_new(ctxt, &destroyer);
+
+  destroyer.visitor->visit_nop = visit_nop;
+  destroyer.visitor->visit_number = visit_number;
+  destroyer.visitor->postvisit_term = postvisit_term;
+  destroyer.visitor->postvisit_relop = postvisit_relop;
+  destroyer.visitor->postvisit_expression = postvisit_expression;
+  destroyer.visitor->postvisit_statements = postvisit_statements;
+  destroyer.visitor->postvisit_fixnum = postvisit_fixnum;
+  destroyer.visitor->postvisit_flonum = postvisit_flonum;
+  destroyer.visitor->postvisit_var = postvisit_variable;
+  destroyer.visitor->postvisit_assignment = postvisit_assignment;
+  destroyer.visitor->postvisit_lvalueop = postvisit_lvalueop;
+  destroyer.visitor->postvisit_for = postvisit_for;
+  destroyer.visitor->postvisit_if = postvisit_if;
+  destroyer.visitor->postvisit_function = postvisit_function;
+  destroyer.visitor->postvisit_expression_list = postvisit_expression_list;
+  destroyer.visitor->visit_parameter = visit_parameter;
+
+  cscript_visit_factor(ctxt, destroyer.visitor, f);
+
+  destroyer.visitor->destroy(ctxt, destroyer.visitor);
+  }
+
+void cscript_term_destroy(cscript_context* ctxt, cscript_parsed_term* t)
+  {
+  cscript_program_destroy_visitor destroyer;
+  destroyer.visitor = cscript_visitor_new(ctxt, &destroyer);
+
+  destroyer.visitor->visit_nop = visit_nop;
+  destroyer.visitor->visit_number = visit_number;
+  destroyer.visitor->postvisit_term = postvisit_term;
+  destroyer.visitor->postvisit_relop = postvisit_relop;
+  destroyer.visitor->postvisit_expression = postvisit_expression;
+  destroyer.visitor->postvisit_statements = postvisit_statements;
+  destroyer.visitor->postvisit_fixnum = postvisit_fixnum;
+  destroyer.visitor->postvisit_flonum = postvisit_flonum;
+  destroyer.visitor->postvisit_var = postvisit_variable;
+  destroyer.visitor->postvisit_assignment = postvisit_assignment;
+  destroyer.visitor->postvisit_lvalueop = postvisit_lvalueop;
+  destroyer.visitor->postvisit_for = postvisit_for;
+  destroyer.visitor->postvisit_if = postvisit_if;
+  destroyer.visitor->postvisit_function = postvisit_function;
+  destroyer.visitor->postvisit_expression_list = postvisit_expression_list;
+  destroyer.visitor->visit_parameter = visit_parameter;
+
+  cscript_visit_term(ctxt, destroyer.visitor, t);
+
+  destroyer.visitor->destroy(ctxt, destroyer.visitor);
+  }
+
+void cscript_relop_destroy(cscript_context* ctxt, cscript_parsed_relop* r)
+  {
+  cscript_program_destroy_visitor destroyer;
+  destroyer.visitor = cscript_visitor_new(ctxt, &destroyer);
+
+  destroyer.visitor->visit_nop = visit_nop;
+  destroyer.visitor->visit_number = visit_number;
+  destroyer.visitor->postvisit_term = postvisit_term;
+  destroyer.visitor->postvisit_relop = postvisit_relop;
+  destroyer.visitor->postvisit_expression = postvisit_expression;
+  destroyer.visitor->postvisit_statements = postvisit_statements;
+  destroyer.visitor->postvisit_fixnum = postvisit_fixnum;
+  destroyer.visitor->postvisit_flonum = postvisit_flonum;
+  destroyer.visitor->postvisit_var = postvisit_variable;
+  destroyer.visitor->postvisit_assignment = postvisit_assignment;
+  destroyer.visitor->postvisit_lvalueop = postvisit_lvalueop;
+  destroyer.visitor->postvisit_for = postvisit_for;
+  destroyer.visitor->postvisit_if = postvisit_if;
+  destroyer.visitor->postvisit_function = postvisit_function;
+  destroyer.visitor->postvisit_expression_list = postvisit_expression_list;
+  destroyer.visitor->visit_parameter = visit_parameter;
+
+  cscript_visit_relop(ctxt, destroyer.visitor, r);
+
+  destroyer.visitor->destroy(ctxt, destroyer.visitor);
+  }
+
+void cscript_expression_destroy(cscript_context* ctxt, cscript_parsed_expression* e)
+  {
+  cscript_program_destroy_visitor destroyer;
+  destroyer.visitor = cscript_visitor_new(ctxt, &destroyer);
+
+  destroyer.visitor->visit_nop = visit_nop;
+  destroyer.visitor->visit_number = visit_number;
+  destroyer.visitor->postvisit_term = postvisit_term;
+  destroyer.visitor->postvisit_relop = postvisit_relop;
+  destroyer.visitor->postvisit_expression = postvisit_expression;
+  destroyer.visitor->postvisit_statements = postvisit_statements;
+  destroyer.visitor->postvisit_fixnum = postvisit_fixnum;
+  destroyer.visitor->postvisit_flonum = postvisit_flonum;
+  destroyer.visitor->postvisit_var = postvisit_variable;
+  destroyer.visitor->postvisit_assignment = postvisit_assignment;
+  destroyer.visitor->postvisit_lvalueop = postvisit_lvalueop;
+  destroyer.visitor->postvisit_for = postvisit_for;
+  destroyer.visitor->postvisit_if = postvisit_if;
+  destroyer.visitor->postvisit_function = postvisit_function;
+  destroyer.visitor->postvisit_expression_list = postvisit_expression_list;
+  destroyer.visitor->visit_parameter = visit_parameter;
+
+  cscript_visit_expression(ctxt, destroyer.visitor, e);
+
+  destroyer.visitor->destroy(ctxt, destroyer.visitor);
+  }

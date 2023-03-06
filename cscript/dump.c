@@ -329,7 +329,7 @@ static void dump_if(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_if
 
 static void dump_statement(cscript_context* ctxt, cscript_visitor* v, cscript_statement* s)
   {
-  cscript_dump_visitor* d = (cscript_dump_visitor*)(v->impl);
+  //cscript_dump_visitor* d = (cscript_dump_visitor*)(v->impl);
   switch (s->type)
     {
     case cscript_statement_type_expression:
@@ -340,7 +340,7 @@ static void dump_statement(cscript_context* ctxt, cscript_visitor* v, cscript_st
       break;
     case cscript_statement_type_flonum:
       dump_flonum(ctxt, v, &s->statement.flonum);
-      return 0;
+      break;
     case cscript_statement_type_for:
       dump_for(ctxt, v, &s->statement.forloop);
       break;

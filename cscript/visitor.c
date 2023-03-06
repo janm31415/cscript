@@ -702,6 +702,34 @@ void cscript_visit_statement(cscript_context* ctxt, cscript_visitor* vis, cscrip
   visit(ctxt, vis);
   }
 
+void cscript_visit_factor(cscript_context* ctxt, cscript_visitor* vis, cscript_parsed_factor* f)
+  {
+  cscript_visitor_entry e = make_entry(f, CSCRIPT_VISITOR_FACTOR_PRE);
+  cscript_vector_push_back(ctxt, &(vis->v), e, cscript_visitor_entry);
+  visit(ctxt, vis);
+  }
+
+void cscript_visit_term(cscript_context* ctxt, cscript_visitor* vis, cscript_parsed_term* t)
+  {
+  cscript_visitor_entry e = make_entry(t, CSCRIPT_VISITOR_TERM_PRE);
+  cscript_vector_push_back(ctxt, &(vis->v), e, cscript_visitor_entry);
+  visit(ctxt, vis);
+  }
+
+void cscript_visit_relop(cscript_context* ctxt, cscript_visitor* vis, cscript_parsed_relop* r)
+  {
+  cscript_visitor_entry e = make_entry(r, CSCRIPT_VISITOR_RELOP_PRE);
+  cscript_vector_push_back(ctxt, &(vis->v), e, cscript_visitor_entry);
+  visit(ctxt, vis);
+  }
+
+void cscript_visit_expression(cscript_context* ctxt, cscript_visitor* vis, cscript_parsed_expression* ex)
+  {
+  cscript_visitor_entry e = make_entry(ex, CSCRIPT_VISITOR_EXPRESSION_PRE);
+  cscript_vector_push_back(ctxt, &(vis->v), e, cscript_visitor_entry);
+  visit(ctxt, vis);
+  }
+
 void cscript_visit_program(cscript_context* ctxt, cscript_visitor* vis, cscript_program* p)
   {
   cscript_statement* stmt_it = cscript_vector_begin(&p->statements, cscript_statement);
