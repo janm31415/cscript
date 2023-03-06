@@ -651,10 +651,8 @@ static void test_array_address()
   cscript_fixnum pars_list[6] = { 0, 0, 0, 0, 0, 0 };
   cscript_fixnum addr = 999;
   pars_list[0] = (cscript_fixnum)&addr;
-  debug = 1;
-  test_compile_fixnum_pars_aux(0, "(int* addr) int my_array[5] = { 1, 2, 3, 4, 5 }; *addr = my_array; 0;", 1, pars_list);
-  debug = 0;
-  TEST_EQ_INT(0, addr);
+  test_compile_fixnum_pars_aux(100, "(int* addr) int my_array[5] = { 10, 20, 30, 40, 50 }; *addr = my_array; 100;", 1, pars_list);
+  TEST_EQ_INT(1, addr);
   }
 
 void run_all_compiler_tests()
@@ -677,5 +675,5 @@ void run_all_compiler_tests()
   test_if();
   test_array_assignment();
   text_external_calls();
-  //test_array_address();
+  test_array_address();
   }

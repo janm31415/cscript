@@ -176,7 +176,7 @@ static void compile_local_variable(cscript_context* ctxt, compiler_state* state,
           state->reg_typeinfo = cscript_number_type_fixnum;
           }
         make_code_abc(ctxt, state->fun, CSCRIPT_OPCODE_MOVE_FROM_ARR, state->freereg, (int)entry.position, state->freereg);
-        state->reg_typeinfo = entry.register_type&1;
+        state->reg_typeinfo = entry.register_type & 1;
         }
       }
     else
@@ -184,12 +184,22 @@ static void compile_local_variable(cscript_context* ctxt, compiler_state* state,
       if (v->dereference != 0)
         {
         make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_LOAD_MEMORY, state->freereg, (int)entry.position);
+        state->reg_typeinfo = entry.register_type & 1;
         }
       else
         {
-        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, (int)entry.position);
+        int is_array = entry.register_type == cscript_reg_typeinfo_fixnum_array || entry.register_type == cscript_reg_typeinfo_flonum_array ? 1 : 0;
+        if (is_array == 0)
+          {
+          make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, (int)entry.position);
+          state->reg_typeinfo = entry.register_type;
+          }
+        else // get address, not value
+          {
+          make_code_asbx(ctxt, state->fun, CSCRIPT_OPCODE_SETFIXNUM, state->freereg, (int)entry.position);
+          state->reg_typeinfo = cscript_reg_typeinfo_fixnum;
+          }
         }
-      state->reg_typeinfo = entry.register_type & 1;
       }
     }
   }
@@ -746,7 +756,7 @@ static void compile_fixnum_array(cscript_context* ctxt, compiler_state* state, c
             cscript_object obj = make_cscript_object_fixnum(fx);
             int k_pos = get_k(ctxt, state->fun, &obj);
             make_code_abx(ctxt, state->fun, CSCRIPT_OPCODE_LOADK, stack_pos, k_pos);
-            }      
+            }
           }
         }
       cscript_vector_destroy(ctxt, &init_values);
@@ -866,7 +876,7 @@ static void compile_flonum_array(cscript_context* ctxt, compiler_state* state, c
         cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, fl->line_nr, fl->column_nr, &fl->filename, "array initializer list has wrong dimension");
         }
       else
-        {    
+        {
         cscript_constant_value* it = cscript_vector_begin(&init_values, cscript_constant_value);
         cscript_constant_value* it_end = cscript_vector_end(&init_values, cscript_constant_value);
         int stack_pos = (int)entry.position;
@@ -950,7 +960,7 @@ static void compile_flonum(cscript_context* ctxt, compiler_state* state, cscript
     }
   }
 
-static void compile_assigment_pointer(cscript_context* ctxt, compiler_state* state, cscript_parsed_assignment* a, cscript_environment_entry entry)
+static void compile_assignment_pointer(cscript_context* ctxt, compiler_state* state, cscript_parsed_assignment* a, cscript_environment_entry entry)
   {
   /*
   freereg + 0: dim
@@ -987,7 +997,7 @@ static void compile_assigment_pointer(cscript_context* ctxt, compiler_state* sta
   state->freereg += 2;
   compile_expression(ctxt, state, &a->expr);
 
-  if (state->reg_typeinfo != (entry.register_type & 1))
+  if (state->reg_typeinfo <= cscript_reg_typeinfo_flonum && state->reg_typeinfo != (entry.register_type & 1))
     {
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, (entry.register_type & 1));
     state->reg_typeinfo = (entry.register_type & 1);
@@ -1035,7 +1045,7 @@ static void compile_assigment_pointer(cscript_context* ctxt, compiler_state* sta
   }
 
 
-static void compile_assigment_dereference(cscript_context* ctxt, compiler_state* state, cscript_parsed_assignment* a, cscript_environment_entry entry)
+static void compile_assignment_dereference(cscript_context* ctxt, compiler_state* state, cscript_parsed_assignment* a, cscript_environment_entry entry)
   {
   make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_MOVE, state->freereg, (int)entry.position);
   /*
@@ -1045,7 +1055,7 @@ static void compile_assigment_dereference(cscript_context* ctxt, compiler_state*
   state->freereg += 2;
   compile_expression(ctxt, state, &a->expr);
 
-  if (state->reg_typeinfo != (entry.register_type & 1))
+  if (state->reg_typeinfo <= cscript_reg_typeinfo_flonum && state->reg_typeinfo != (entry.register_type & 1))
     {
     make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, (entry.register_type & 1));
     state->reg_typeinfo = (entry.register_type & 1);
@@ -1092,7 +1102,7 @@ static void compile_assigment_dereference(cscript_context* ctxt, compiler_state*
     }
   }
 
-static void compile_assigment_array(cscript_context* ctxt, compiler_state* state, cscript_parsed_assignment* a, cscript_environment_entry entry)
+static void compile_assignment_array(cscript_context* ctxt, compiler_state* state, cscript_parsed_assignment* a, cscript_environment_entry entry)
   {
   cscript_parsed_expression* e = cscript_vector_begin(&a->dims, cscript_parsed_expression);
   compile_expression(ctxt, state, e);
@@ -1103,10 +1113,10 @@ static void compile_assigment_array(cscript_context* ctxt, compiler_state* state
     }
   state->freereg += 2;
   compile_expression(ctxt, state, &a->expr);
-  if (state->reg_typeinfo != (entry.register_type&1))
+  if (state->reg_typeinfo <= cscript_reg_typeinfo_flonum && state->reg_typeinfo != (entry.register_type & 1))
     {
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, entry.register_type&1);
-    state->reg_typeinfo = entry.register_type&1;
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, entry.register_type & 1);
+    state->reg_typeinfo = entry.register_type & 1;
     }
   state->freereg -= 2;
   switch (a->op.string_ptr[0])
@@ -1119,7 +1129,7 @@ static void compile_assigment_array(cscript_context* ctxt, compiler_state* state
     case '+':
     {
     make_code_abc(ctxt, state->fun, CSCRIPT_OPCODE_MOVE_FROM_ARR, state->freereg + 1, (int)entry.position, state->freereg);
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, (entry.register_type&1) == cscript_reg_typeinfo_flonum ? CSCRIPT_ADD_FLONUM : CSCRIPT_ADD_FIXNUM);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg + 1, (entry.register_type & 1) == cscript_reg_typeinfo_flonum ? CSCRIPT_ADD_FLONUM : CSCRIPT_ADD_FIXNUM);
     make_code_abc(ctxt, state->fun, CSCRIPT_OPCODE_MOVE_TO_ARR, (int)entry.position, state->freereg, state->freereg + 1);
     break;
     }
@@ -1149,7 +1159,7 @@ static void compile_assigment_array(cscript_context* ctxt, compiler_state* state
     }
   }
 
-static void compile_assigment_single(cscript_context* ctxt, compiler_state* state, cscript_parsed_assignment* a, cscript_environment_entry entry)
+static void compile_assignment_single(cscript_context* ctxt, compiler_state* state, cscript_parsed_assignment* a, cscript_environment_entry entry)
   {
   ++state->freereg;
   compile_expression(ctxt, state, &a->expr);
@@ -1203,7 +1213,7 @@ static void compile_assigment_single(cscript_context* ctxt, compiler_state* stat
     }
   }
 
-static void compile_assigment(cscript_context* ctxt, compiler_state* state, cscript_parsed_assignment* a)
+static void compile_assignment(cscript_context* ctxt, compiler_state* state, cscript_parsed_assignment* a)
   {
   if (a->name.string_ptr[0] == '$')
     {
@@ -1221,20 +1231,20 @@ static void compile_assigment(cscript_context* ctxt, compiler_state* state, cscr
         {
         if (entry.register_type >= cscript_reg_typeinfo_fixnum_pointer)
           {
-          compile_assigment_pointer(ctxt, state, a, entry);
+          compile_assignment_pointer(ctxt, state, a, entry);
           }
         else
           {
-          compile_assigment_array(ctxt, state, a, entry);
+          compile_assignment_array(ctxt, state, a, entry);
           }
         }
       else if (a->derefence != 0)
         {
-        compile_assigment_dereference(ctxt, state, a, entry);
+        compile_assignment_dereference(ctxt, state, a, entry);
         }
       else
         {
-        compile_assigment_single(ctxt, state, a, entry);
+        compile_assignment_single(ctxt, state, a, entry);
         }
       }
     }
@@ -1345,7 +1355,7 @@ static void compile_statement(cscript_context* ctxt, compiler_state* state, cscr
     case cscript_statement_type_nop:
       break;
     case cscript_statement_type_assignment:
-      compile_assigment(ctxt, state, &stmt->statement.assignment);
+      compile_assignment(ctxt, state, &stmt->statement.assignment);
       break;
     default:
       cscript_throw(ctxt, CSCRIPT_ERROR_NOT_IMPLEMENTED);
