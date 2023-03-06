@@ -124,7 +124,20 @@ static void compile_statement(cscript_context* ctxt, compiler_state* state, cscr
 
 static void compile_global_variable(cscript_context* ctxt, compiler_state* state, cscript_parsed_variable* v)
   {
-  cscript_assert(0);
+  cscript_environment_entry entry;
+  if (!cscript_environment_find_recursive(&entry, ctxt, &v->name))
+    {
+    // the global variable was not yet declared, but since it's a global, we will then declare it here as being a real value.
+    entry.type = CSCRIPT_ENV_TYPE_GLOBAL;
+    entry.position = ctxt->globals.vector_size;
+    entry.register_type = cscript_reg_typeinfo_flonum;
+    cscript_string s;
+    cscript_string_copy(ctxt, &s, &v->name);
+    cscript_environment_add(ctxt, &s, entry);
+    cscript_vector_push_back(ctxt, &ctxt->globals, 0, cscript_fixnum);
+    }
+  make_code_abx(ctxt, state->fun, CSCRIPT_OPCODE_LOADGLOBAL, state->freereg, (int)entry.position);
+  state->reg_typeinfo = entry.register_type;
   }
 
 static void compile_local_variable(cscript_context* ctxt, compiler_state* state, cscript_parsed_variable* v)
@@ -713,7 +726,7 @@ static void compile_fixnum_array(cscript_context* ctxt, compiler_state* state, c
   cscript_environment_entry entry;
   if (cscript_environment_find(&entry, ctxt, &fx->name))
     {
-    cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, fx->line_nr, fx->column_nr, &fx->filename, "Variable already exists");
+    cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, fx->line_nr, fx->column_nr, &fx->filename, "variable already exists");
     }
   else
     {
@@ -766,7 +779,35 @@ static void compile_fixnum_array(cscript_context* ctxt, compiler_state* state, c
 
 static void compile_fixnum_global_single(cscript_context* ctxt, compiler_state* state, cscript_parsed_fixnum* fx)
   {
-  cscript_assert(0);
+  int init = fx->expr.operands.vector_size > 0;
+  if (init)
+    {
+    compile_expression(ctxt, state, &fx->expr);
+    if (state->reg_typeinfo == cscript_reg_typeinfo_flonum)
+      {
+      make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, cscript_number_type_fixnum);
+      state->reg_typeinfo = cscript_number_type_fixnum;
+      }
+    }
+  cscript_environment_entry entry;
+  if (cscript_environment_find(&entry, ctxt, &fx->name))
+    {
+    cscript_assert(0);
+    }
+  else
+    {
+    entry.type = CSCRIPT_ENV_TYPE_GLOBAL;
+    entry.position = ctxt->globals.vector_size;
+    entry.register_type = cscript_reg_typeinfo_fixnum;
+    cscript_string s;
+    cscript_string_copy(ctxt, &s, &fx->name);
+    cscript_environment_add(ctxt, &s, entry);
+    cscript_vector_push_back(ctxt, &ctxt->globals, 0, cscript_fixnum);
+    if (init)
+      {
+      make_code_abx(ctxt, state->fun, CSCRIPT_OPCODE_STOREGLOBAL, state->freereg, entry.position);
+      }
+    }
   }
 
 static void compile_fixnum_single(cscript_context* ctxt, compiler_state* state, cscript_parsed_fixnum* fx)
@@ -784,7 +825,7 @@ static void compile_fixnum_single(cscript_context* ctxt, compiler_state* state, 
   cscript_environment_entry entry;
   if (cscript_environment_find(&entry, ctxt, &fx->name))
     {
-    cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, fx->line_nr, fx->column_nr, &fx->filename, "Variable already exists");
+    cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, fx->line_nr, fx->column_nr, &fx->filename, "variable already exists");
     }
   else
     {
@@ -804,7 +845,7 @@ static void compile_fixnum(cscript_context* ctxt, compiler_state* state, cscript
     {
     if (fx->name.string_ptr[0] == '$')
       {
-      cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, fx->line_nr, fx->column_nr, &fx->filename, "Global variables can't be arrays");
+      cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, fx->line_nr, fx->column_nr, &fx->filename, "global variables can't be arrays");
       }
     else
       {
@@ -900,9 +941,37 @@ static void compile_flonum_array(cscript_context* ctxt, compiler_state* state, c
     }
   }
 
-static void compile_flonum_global_single(cscript_context* ctxt, compiler_state* state, cscript_parsed_flonum* fx)
+static void compile_flonum_global_single(cscript_context* ctxt, compiler_state* state, cscript_parsed_flonum* fl)
   {
-  cscript_assert(0);
+  int init = fl->expr.operands.vector_size > 0;
+  if (init)
+    {
+    compile_expression(ctxt, state, &fl->expr);
+    if (state->reg_typeinfo == cscript_reg_typeinfo_fixnum)
+      {
+      make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, cscript_number_type_flonum);
+      state->reg_typeinfo = cscript_number_type_flonum;
+      }
+    }
+  cscript_environment_entry entry;
+  if (cscript_environment_find(&entry, ctxt, &fl->name))
+    {
+    cscript_assert(0);
+    }
+  else
+    {
+    entry.type = CSCRIPT_ENV_TYPE_GLOBAL;
+    entry.position = ctxt->globals.vector_size;
+    entry.register_type = cscript_reg_typeinfo_flonum;
+    cscript_string s;
+    cscript_string_copy(ctxt, &s, &fl->name);
+    cscript_environment_add(ctxt, &s, entry);
+    cscript_vector_push_back(ctxt, &ctxt->globals, 0, cscript_fixnum);
+    if (init)
+      {
+      make_code_abx(ctxt, state->fun, CSCRIPT_OPCODE_STOREGLOBAL, state->freereg, entry.position);
+      }
+    }
   }
 
 static void compile_flonum_single(cscript_context* ctxt, compiler_state* state, cscript_parsed_flonum* fl)
@@ -1213,17 +1282,83 @@ static void compile_assignment_single(cscript_context* ctxt, compiler_state* sta
     }
   }
 
+
+
+static void compile_global_assignment_single(cscript_context* ctxt, compiler_state* state, cscript_parsed_assignment* a, cscript_environment_entry entry)
+  {
+  if (a->dims.vector_size > 0)
+    {
+    cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, a->line_nr, a->column_nr, &a->filename, "global variables can't be arrays");
+    }
+  if (a->derefence != 0)
+    {
+    cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, a->line_nr, a->column_nr, &a->filename, "global variables can't be dereferenced");
+    }
+
+  ++state->freereg;
+  compile_expression(ctxt, state, &a->expr);
+  --state->freereg;
+  if (entry.register_type > cscript_reg_typeinfo_flonum)
+    {
+    cscript_assert(0);
+    }
+  if (state->reg_typeinfo != entry.register_type)
+    {
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg + 1, entry.register_type);
+    state->reg_typeinfo = entry.register_type;
+    }
+  switch (a->op.string_ptr[0])
+    {
+    case '=':
+    {
+    make_code_abx(ctxt, state->fun, CSCRIPT_OPCODE_STOREGLOBAL, state->freereg + 1, (int)entry.position);
+    break;
+    }
+    case '+':
+    {
+    make_code_abx(ctxt, state->fun, CSCRIPT_OPCODE_LOADGLOBAL, state->freereg, (int)entry.position);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, (entry.register_type & 1) == cscript_reg_typeinfo_flonum ? CSCRIPT_ADD_FLONUM : CSCRIPT_ADD_FIXNUM);
+    make_code_abx(ctxt, state->fun, CSCRIPT_OPCODE_STOREGLOBAL, state->freereg, (int)entry.position);
+    break;
+    }
+    case '*':
+    {
+    make_code_abx(ctxt, state->fun, CSCRIPT_OPCODE_LOADGLOBAL, state->freereg, (int)entry.position);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, (entry.register_type & 1) == cscript_reg_typeinfo_flonum ? CSCRIPT_MUL_FLONUM : CSCRIPT_MUL_FIXNUM);
+    make_code_abx(ctxt, state->fun, CSCRIPT_OPCODE_STOREGLOBAL, state->freereg, (int)entry.position);
+    break;
+    }
+    case '-':
+    {
+    make_code_abx(ctxt, state->fun, CSCRIPT_OPCODE_LOADGLOBAL, state->freereg, (int)entry.position);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, (entry.register_type & 1) == cscript_reg_typeinfo_flonum ? CSCRIPT_SUB_FLONUM : CSCRIPT_SUB_FIXNUM);
+    make_code_abx(ctxt, state->fun, CSCRIPT_OPCODE_STOREGLOBAL, state->freereg, (int)entry.position);
+    break;
+    }
+    case '/':
+    {
+    make_code_abx(ctxt, state->fun, CSCRIPT_OPCODE_LOADGLOBAL, state->freereg, (int)entry.position);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, (entry.register_type & 1) == cscript_reg_typeinfo_flonum ? CSCRIPT_DIV_FLONUM : CSCRIPT_DIV_FIXNUM);
+    make_code_abx(ctxt, state->fun, CSCRIPT_OPCODE_STOREGLOBAL, state->freereg, (int)entry.position);
+    break;
+    }
+    default:
+      break;
+    }
+  }
+
 static void compile_assignment(cscript_context* ctxt, compiler_state* state, cscript_parsed_assignment* a)
   {
-  if (a->name.string_ptr[0] == '$')
+  cscript_environment_entry entry;
+  if (!cscript_environment_find_recursive(&entry, ctxt, &a->name))
     {
+    cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_VARIABLE_UNKNOWN, a->line_nr, a->column_nr, &a->filename, a->name.string_ptr);
     }
   else
     {
-    cscript_environment_entry entry;
-    if (!cscript_environment_find_recursive(&entry, ctxt, &a->name))
+    if (a->name.string_ptr[0] == '$')
       {
-      cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_VARIABLE_UNKNOWN, a->line_nr, a->column_nr, &a->filename, a->name.string_ptr);
+      compile_global_assignment_single(ctxt, state, a, entry);
       }
     else
       {

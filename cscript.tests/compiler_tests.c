@@ -1103,6 +1103,158 @@ static void test_computation_order()
   test_compile_flonum_pars_aux(4.0, "(int i) i/127.0*4.0;", 1, pars_list);
   }
 
+static void test_global_variables()
+  {
+  //test_compile_fixnum_aux(3, "()int $g1=3; float $g2 = 3.14; $g1;");
+  //test_compile_flonum_aux(3.14, "()$g2;");
+  //test_compile_flonum_aux(6.1400000000000006, "()$g1+$g2;");
+  //test_compile_flonum_aux(3.14, "()$g1=2;$g2;");
+  //test_compile_flonum_aux(5.1400000000000006, "()$g1+$g2;");
+  //test_compile_fixnum_aux(10, "()$g2=8;$g1+$g2;");
+
+  cscript_context* ctxt = cscript_open(256);
+  cscript_vector tokens = cscript_script2tokens(ctxt, "()int $g1=3; float $g2 = 3.14; $g1;");
+  cscript_program prog = make_program(ctxt, &tokens);
+  cscript_function* compiled_program = cscript_compile_program(ctxt, &prog);
+  cscript_fixnum* res = cscript_run(ctxt, compiled_program);
+  TEST_EQ_INT(3, *res);
+  cscript_print_any_error(ctxt);
+  TEST_EQ_INT(0, ctxt->number_of_compile_errors);
+  TEST_EQ_INT(0, ctxt->number_of_syntax_errors);
+  TEST_EQ_INT(0, ctxt->number_of_runtime_errors);
+  cscript_function_free(ctxt, compiled_program);
+  destroy_tokens_vector(ctxt, &tokens);
+  cscript_program_destroy(ctxt, &prog);
+
+  tokens = cscript_script2tokens(ctxt, "()$g2;");
+  prog = make_program(ctxt, &tokens);
+  compiled_program = cscript_compile_program(ctxt, &prog);
+  res = cscript_run(ctxt, compiled_program);
+  cscript_flonum* resf = cast(cscript_flonum*, res);
+  TEST_EQ_DOUBLE(3.14, *resf);
+  cscript_print_any_error(ctxt);
+  TEST_EQ_INT(0, ctxt->number_of_compile_errors);
+  TEST_EQ_INT(0, ctxt->number_of_syntax_errors);
+  TEST_EQ_INT(0, ctxt->number_of_runtime_errors);
+  cscript_function_free(ctxt, compiled_program);
+  destroy_tokens_vector(ctxt, &tokens);
+  cscript_program_destroy(ctxt, &prog);
+
+  tokens = cscript_script2tokens(ctxt, "()$g1+$g2;");
+  prog = make_program(ctxt, &tokens);
+  compiled_program = cscript_compile_program(ctxt, &prog);
+  res = cscript_run(ctxt, compiled_program);
+  resf = cast(cscript_flonum*, res);
+  TEST_EQ_DOUBLE(6.1400000000000006, *resf);
+  cscript_print_any_error(ctxt);
+  TEST_EQ_INT(0, ctxt->number_of_compile_errors);
+  TEST_EQ_INT(0, ctxt->number_of_syntax_errors);
+  TEST_EQ_INT(0, ctxt->number_of_runtime_errors);
+  cscript_function_free(ctxt, compiled_program);
+  destroy_tokens_vector(ctxt, &tokens);
+  cscript_program_destroy(ctxt, &prog);
+
+  tokens = cscript_script2tokens(ctxt, "()$g1=2;$g2;");
+  prog = make_program(ctxt, &tokens);
+  compiled_program = cscript_compile_program(ctxt, &prog);
+  res = cscript_run(ctxt, compiled_program);
+  resf = cast(cscript_flonum*, res);
+  TEST_EQ_DOUBLE(3.14, *resf);
+  cscript_print_any_error(ctxt);
+  TEST_EQ_INT(0, ctxt->number_of_compile_errors);
+  TEST_EQ_INT(0, ctxt->number_of_syntax_errors);
+  TEST_EQ_INT(0, ctxt->number_of_runtime_errors);
+  cscript_function_free(ctxt, compiled_program);
+  destroy_tokens_vector(ctxt, &tokens);
+  cscript_program_destroy(ctxt, &prog);
+
+  tokens = cscript_script2tokens(ctxt, "()$g1+$g2;");
+  prog = make_program(ctxt, &tokens);
+  compiled_program = cscript_compile_program(ctxt, &prog);
+  res = cscript_run(ctxt, compiled_program);
+  resf = cast(cscript_flonum*, res);
+  TEST_EQ_DOUBLE(5.1400000000000006, *resf);
+  cscript_print_any_error(ctxt);
+  TEST_EQ_INT(0, ctxt->number_of_compile_errors);
+  TEST_EQ_INT(0, ctxt->number_of_syntax_errors);
+  TEST_EQ_INT(0, ctxt->number_of_runtime_errors);
+  cscript_function_free(ctxt, compiled_program);
+  destroy_tokens_vector(ctxt, &tokens);
+  cscript_program_destroy(ctxt, &prog);
+
+  tokens = cscript_script2tokens(ctxt, "()$g2=8;$g1+$g2;");
+  prog = make_program(ctxt, &tokens);
+  compiled_program = cscript_compile_program(ctxt, &prog);
+  res = cscript_run(ctxt, compiled_program);
+  resf = cast(cscript_flonum*, res);
+  TEST_EQ_DOUBLE(10.0, *resf);
+  cscript_print_any_error(ctxt);
+  TEST_EQ_INT(0, ctxt->number_of_compile_errors);
+  TEST_EQ_INT(0, ctxt->number_of_syntax_errors);
+  TEST_EQ_INT(0, ctxt->number_of_runtime_errors);
+  cscript_function_free(ctxt, compiled_program);
+  destroy_tokens_vector(ctxt, &tokens);
+  cscript_program_destroy(ctxt, &prog);
+
+  tokens = cscript_script2tokens(ctxt, "()$g2+=0.2;$g1+$g2;");
+  prog = make_program(ctxt, &tokens);
+  compiled_program = cscript_compile_program(ctxt, &prog);
+  res = cscript_run(ctxt, compiled_program);
+  resf = cast(cscript_flonum*, res);
+  TEST_EQ_DOUBLE(10.2, *resf);
+  cscript_print_any_error(ctxt);
+  TEST_EQ_INT(0, ctxt->number_of_compile_errors);
+  TEST_EQ_INT(0, ctxt->number_of_syntax_errors);
+  TEST_EQ_INT(0, ctxt->number_of_runtime_errors);
+  cscript_function_free(ctxt, compiled_program);
+  destroy_tokens_vector(ctxt, &tokens);
+  cscript_program_destroy(ctxt, &prog);
+
+  tokens = cscript_script2tokens(ctxt, "()$g2-=0.2;$g1+$g2;");
+  prog = make_program(ctxt, &tokens);
+  compiled_program = cscript_compile_program(ctxt, &prog);
+  res = cscript_run(ctxt, compiled_program);
+  resf = cast(cscript_flonum*, res);
+  TEST_EQ_DOUBLE(10.0, *resf);
+  cscript_print_any_error(ctxt);
+  TEST_EQ_INT(0, ctxt->number_of_compile_errors);
+  TEST_EQ_INT(0, ctxt->number_of_syntax_errors);
+  TEST_EQ_INT(0, ctxt->number_of_runtime_errors);
+  cscript_function_free(ctxt, compiled_program);
+  destroy_tokens_vector(ctxt, &tokens);
+  cscript_program_destroy(ctxt, &prog);
+
+  tokens = cscript_script2tokens(ctxt, "()$g2*=2;$g1+$g2;");
+  prog = make_program(ctxt, &tokens);
+  compiled_program = cscript_compile_program(ctxt, &prog);
+  res = cscript_run(ctxt, compiled_program);
+  resf = cast(cscript_flonum*, res);
+  TEST_EQ_DOUBLE(18.0, *resf);
+  cscript_print_any_error(ctxt);
+  TEST_EQ_INT(0, ctxt->number_of_compile_errors);
+  TEST_EQ_INT(0, ctxt->number_of_syntax_errors);
+  TEST_EQ_INT(0, ctxt->number_of_runtime_errors);
+  cscript_function_free(ctxt, compiled_program);
+  destroy_tokens_vector(ctxt, &tokens);
+  cscript_program_destroy(ctxt, &prog);
+
+  tokens = cscript_script2tokens(ctxt, "()$g2/=2;$g1+$g2;");
+  prog = make_program(ctxt, &tokens);
+  compiled_program = cscript_compile_program(ctxt, &prog);
+  res = cscript_run(ctxt, compiled_program);
+  resf = cast(cscript_flonum*, res);
+  TEST_EQ_DOUBLE(10.0, *resf);
+  cscript_print_any_error(ctxt);
+  TEST_EQ_INT(0, ctxt->number_of_compile_errors);
+  TEST_EQ_INT(0, ctxt->number_of_syntax_errors);
+  TEST_EQ_INT(0, ctxt->number_of_runtime_errors);
+  cscript_function_free(ctxt, compiled_program);
+  destroy_tokens_vector(ctxt, &tokens);
+  cscript_program_destroy(ctxt, &prog);
+
+  cscript_close(ctxt);
+  }
+
 void run_all_compiler_tests()
   {
   test_compile_fixnum();
@@ -1133,4 +1285,5 @@ void run_all_compiler_tests()
   test_comparison_with_input();
   test_many_variables();
   test_computation_order();
+  test_global_variables();
   }

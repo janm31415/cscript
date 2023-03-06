@@ -64,6 +64,8 @@ static void context_init(cscript_context* ctxt, cscript_memsize heap_size)
 
 cscript_context* cscript_open(cscript_memsize heap_size)
   {
+  cscript_assert(sizeof(cscript_fixnum) == sizeof(cscript_flonum));
+  cscript_assert(sizeof(cscript_fixnum) == sizeof(void*));
   cscript_context* ctxt = context_new(NULL);
   if (ctxt)
     {
