@@ -6,6 +6,7 @@
 #include "environment.h"
 #include "syscalls.h"
 #include "limits.h"
+#include "foreign.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -161,6 +162,29 @@ static cscript_string instruction_to_string(cscript_context* ctxt, cscript_instr
     cscript_string_append_cstr(ctxt, &s, "), ...)");
     break;
     }
+    case CSCRIPT_OPCODE_CALLFOREIGN:
+    {
+    const int a = CSCRIPT_GETARG_A(instruc);
+    const int b = CSCRIPT_GETARG_B(instruc);
+    const int c = CSCRIPT_GETARG_C(instruc);
+    cscript_string_append_cstr(ctxt, &s, "CALLPRIM R(");
+    cscript_int_to_char(buffer, a);
+    cscript_string_append_cstr(ctxt, &s, buffer);
+    cscript_string_append_cstr(ctxt, &s, ") := (");
+    cscript_int_to_char(buffer, b);
+    cscript_string_append_cstr(ctxt, &s, buffer);
+    cscript_string_append_cstr(ctxt, &s, ")(R(");
+    cscript_int_to_char(buffer, a);
+    cscript_string_append_cstr(ctxt, &s, buffer);
+    cscript_string_append_cstr(ctxt, &s, "), R(");
+    cscript_int_to_char(buffer, a + 1);
+    cscript_string_append_cstr(ctxt, &s, buffer);
+    cscript_string_append_cstr(ctxt, &s, "), ...,R(");
+    cscript_int_to_char(buffer, a + c);
+    cscript_string_append_cstr(ctxt, &s, buffer);
+    cscript_string_append_cstr(ctxt, &s, "))");
+    break;
+    }
     case CSCRIPT_OPCODE_NEQ:
     {
     const int a = CSCRIPT_GETARG_A(instruc);
@@ -310,6 +334,28 @@ cscript_fixnum* cscript_run(cscript_context* ctxt, cscript_function* fun)
       const int a = CSCRIPT_GETARG_A(instruc);
       const int b = CSCRIPT_GETARG_B(instruc);
       cscript_call_primitive(ctxt, b, a);
+      continue;
+      }
+      case CSCRIPT_OPCODE_CALLFOREIGN:
+      {
+      const int a = CSCRIPT_GETARG_A(instruc);
+      const int b = CSCRIPT_GETARG_B(instruc);
+      const int c = CSCRIPT_GETARG_C(instruc);
+      cscript_fixnum* ra = cscript_vector_at(&ctxt->stack, a, cscript_fixnum);
+      cscript_assert(b < ctxt->externals.vector_size);
+      cscript_external_function* ext = cscript_vector_at(&ctxt->externals, b, cscript_external_function);      
+      cscript_object result = cscript_call_external(ctxt, ext, a, (int)c);
+      switch (result.type)
+        {
+        case cscript_object_type_fixnum:
+          memcpy(ra, &result.value.fx, sizeof(cscript_fixnum));
+          break;
+        case cscript_object_type_flonum:
+          memcpy(ra, &result.value.fl, sizeof(cscript_flonum));
+          break;
+        default:
+          break;
+        }
       continue;
       }
       case CSCRIPT_OPCODE_CAST:

@@ -3,6 +3,7 @@
 #include "error.h"
 #include "environment.h"
 #include "primitives.h"
+#include "foreign.h"
 
 static cscript_context* context_new(cscript_context* ctxt)
   {
@@ -31,6 +32,14 @@ static void context_free(cscript_context* ctxt)
   cscript_environment_destroy(ctxt);
   cscript_vector_destroy(ctxt, &ctxt->stack_raw);
   cscript_vector_destroy(ctxt, &ctxt->globals);
+  cscript_map_free(ctxt, ctxt->externals_map);
+  cscript_external_function* fit = cscript_vector_begin(&ctxt->externals, cscript_external_function);
+  cscript_external_function* fit_end = cscript_vector_end(&ctxt->externals, cscript_external_function);
+  for (; fit != fit_end; ++fit)
+    {
+    cscript_external_function_destroy(ctxt, fit);
+    }
+  cscript_vector_destroy(ctxt, &ctxt->externals);
   cscript_free(ctxt, ctxt, sizeof(cscript_context));
   }
 
@@ -48,6 +57,8 @@ static void context_init(cscript_context* ctxt, cscript_memsize heap_size)
   cscript_vector_init_with_size(ctxt, &ctxt->stack_raw, heap_size, cscript_fixnum);
   ctxt->stack = ctxt->stack_raw;
   cscript_vector_init(ctxt, &ctxt->globals, cscript_fixnum);
+  cscript_vector_init(ctxt, &ctxt->externals, cscript_external_function);
+  ctxt->externals_map = cscript_map_new(ctxt, 0, 4);
   cscript_environment_init(ctxt);
   }
 

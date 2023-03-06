@@ -7,6 +7,7 @@
 #include "cscript/vm.h"
 #include "cscript/error.h"
 #include "cscript/dump.h"
+#include "cscript/foreign.h"
 
 #include <math.h>
 
@@ -557,6 +558,71 @@ static void test_array_assignment()
   test_compile_fixnum_aux(34, "() int i[3] = {12, 34, 56}; i[1];");
   }
 
+static void text_foreign_aux(cscript_fixnum expected, const char* script, const char* name, void* address, cscript_foreign_return_type ret_type, int nr_parameters, void* pars, int output_type)
+  {
+  cscript_context* ctxt = cscript_open(250);
+  cscript_external_function ext = cscript_external_function_init(ctxt, name, address, ret_type);
+  cscript_register_external_function(ctxt, &ext);
+
+  cscript_vector tokens = cscript_script2tokens(ctxt, script);
+  cscript_program prog = make_program(ctxt, &tokens);
+
+  cscript_function* compiled_program = cscript_compile_program(ctxt, &prog);
+
+  if (debug != 0)
+    {
+    cscript_string s = cscript_fun_to_string(ctxt, compiled_program);
+    printf("%s\n", s.string_ptr);
+    cscript_string_destroy(ctxt, &s);
+    }
+
+  // fill stack with parameters
+  for (int i = 0; i < nr_parameters; ++i)
+    {
+    cscript_fixnum* fx = cscript_vector_begin(&ctxt->stack, cscript_fixnum) + i;
+    *fx = *(cast(cscript_fixnum*, pars) + i);
+    }
+
+  cscript_fixnum* res = cscript_run(ctxt, compiled_program);
+
+  if (output_type == cscript_number_type_fixnum)
+    {
+    TEST_EQ_INT(expected, *res);
+    }
+  else
+    {
+    cscript_flonum* resf = cast(cscript_flonum*, res);
+    cscript_flonum expectedf = *cast(cscript_flonum*, &expected);
+    TEST_EQ_DOUBLE(expectedf, *resf);
+    }
+
+  cscript_print_any_error(ctxt);
+
+  TEST_EQ_INT(0, ctxt->number_of_compile_errors);
+  TEST_EQ_INT(0, ctxt->number_of_syntax_errors);
+  TEST_EQ_INT(0, ctxt->number_of_runtime_errors);
+
+  cscript_function_free(ctxt, compiled_program);
+  destroy_tokens_vector(ctxt, &tokens);
+  cscript_program_destroy(ctxt, &prog);
+  cscript_close(ctxt);
+  }
+
+static cscript_fixnum seventeen()
+  {
+  return 17;
+  }
+
+static cscript_flonum pi()
+  {
+  return 3.14159;
+  }
+
+static void text_external_calls()
+  {
+  text_foreign_aux(17, "() seventeen();", "seventeen", cast(void*, &seventeen), cscript_foreign_fixnum, 0, NULL, cscript_number_type_fixnum);
+  }
+
 void run_all_compiler_tests()
   {
   test_compile_fixnum();
@@ -576,4 +642,5 @@ void run_all_compiler_tests()
   test_funccall();
   test_if();
   test_array_assignment();
+  text_external_calls();
   }

@@ -7,6 +7,7 @@
 #include "context.h"
 #include "environment.h"
 #include "constant.h"
+#include "foreign.h"
 
 #include <string.h>
 
@@ -324,13 +325,55 @@ static cscript_object* find_primitive(cscript_context* ctxt, cscript_string* s)
   return res;
   }
 
+static void compile_external_function(cscript_context* ctxt, compiler_state* state, cscript_parsed_function* f)
+  {
+  cscript_object key;
+  key.type = cscript_object_type_string;
+  key.value.s = f->name;
+  cscript_object* pos = cscript_map_get(ctxt, ctxt->externals_map, &key);
+  if (pos == NULL)
+    {
+    cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, f->line_nr, f->column_nr, &f->filename, "function unknown");
+    }
+  else
+    {
+    cscript_assert(cscript_object_get_type(pos) == cscript_object_type_fixnum);
+    const cscript_memsize position = cast(cscript_memsize, pos->value.fx);
+    int freereg = state->freereg;
+    cscript_parsed_expression* it = cscript_vector_begin(&f->args, cscript_parsed_expression);
+    cscript_parsed_expression* it_end = cscript_vector_end(&f->args, cscript_parsed_expression);
+    for (; it != it_end; ++it)
+      {
+      compile_expression(ctxt, state, it);
+      if (state->reg_typeinfo != cscript_reg_typeinfo_flonum)
+        {
+        make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CAST, state->freereg, cscript_number_type_flonum);
+        }
+      ++state->freereg;
+      }
+    state->freereg = freereg;
+    cscript_external_function* external_fun = cscript_vector_at(&ctxt->externals, position, cscript_external_function);
+    switch (external_fun->return_type)
+      {
+      case cscript_foreign_flonum:
+        state->reg_typeinfo = cscript_reg_typeinfo_flonum;
+        break;
+      case cscript_foreign_fixnum:
+        state->reg_typeinfo = cscript_reg_typeinfo_fixnum;
+        break;
+      default:
+        break;
+      }
+    make_code_abc(ctxt, state->fun, CSCRIPT_OPCODE_CALLFOREIGN, state->freereg, position, (int)f->args.vector_size);
+    }
+  }
+
 static void compile_function(cscript_context* ctxt, compiler_state* state, cscript_parsed_function* f)
   {
   cscript_object* fun = find_primitive(ctxt, &f->name);
   if (fun == NULL)
     {
-    cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, f->line_nr, f->column_nr, &f->filename, "function unknown");
-    return;
+    compile_external_function(ctxt, state, f);
     }
   else
     {

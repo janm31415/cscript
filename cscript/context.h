@@ -45,6 +45,8 @@ struct cscript_context
   struct cscript_longjmp* error_jmp;  // current error recover point
   cscript_vector filenames_list;
   cscript_vector environment; // linked chain of environment maps
+  cscript_vector externals;
+  cscript_map* externals_map;
   };
 
 #endif //CSCRIPT_CONTEXT_H

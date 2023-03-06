@@ -6,6 +6,7 @@ cscript.h
 dump.h
 environment.h
 error.h
+foreign.h
 func.h
 limits.h
 map.h
@@ -30,6 +31,7 @@ context.c
 dump.c
 environment.c
 error.c
+foreign.c
 func.c
 map.c
 memory.c

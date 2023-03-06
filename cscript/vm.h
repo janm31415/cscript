@@ -76,16 +76,17 @@ typedef enum
   CSCRIPT_OPCODE_MOVE_TO_ARR,   /*  A B C    R(A + R(B)) := R(C)  */
   CSCRIPT_OPCODE_MOVE_FROM_ARR, /*  A B C    R(A) := R(B+R(C))    */
   CSCRIPT_OPCODE_STORE_MEMORY,  /*  A B     *R(A) := R(B)        */
-  CSCRIPT_OPCODE_LOAD_MEMORY,   /*  A B     R(A) := *R(B)        */
-  CSCRIPT_OPCODE_LOADK,      /*  A Bx	    R(A) := Kst(Bx)      */
-  CSCRIPT_OPCODE_SETFIXNUM,  /*  A sBx    R(A) := sBx        */
-  CSCRIPT_OPCODE_CALLPRIM,   /*  A B	    R(A) := (B)(R(A),R(A+1),...) */
-  CSCRIPT_OPCODE_NEQ,         /*  A B     if (type of R(A) != B) then pc++, else perform the following JMP instruction on the next line*/  
-  CSCRIPT_OPCODE_JMP,        /*  sBx      PC += sBx					*/
-  CSCRIPT_OPCODE_RETURN,     /*  A B	     return R(A), ... ,R(A+B-1) */
-  CSCRIPT_OPCODE_LOADGLOBAL, /*  A Bx     R(A) := Global(Bx) */
-  CSCRIPT_OPCODE_STOREGLOBAL,/*  A Bx     Global(Bx) := R(A) */
-  CSCRIPT_OPCODE_CAST,       /*  A B      R(A) := (B)R(A)    */
+  CSCRIPT_OPCODE_LOAD_MEMORY,   /*  A B      R(A) := *R(B)        */
+  CSCRIPT_OPCODE_LOADK,         /*  A Bx	   R(A) := Kst(Bx)      */
+  CSCRIPT_OPCODE_SETFIXNUM,     /*  A sBx    R(A) := sBx        */
+  CSCRIPT_OPCODE_CALLPRIM,      /*  A B	     R(A) := (B)(R(A),R(A+1),...) */
+  CSCRIPT_OPCODE_CALLFOREIGN,   /*  A B C    R(A) := (B)(R(A),R(A+1), ..., R(A+C)) with B a fixnum indicating the index in ctxt->externals*/
+  CSCRIPT_OPCODE_NEQ,           /*  A B      if (type of R(A) != B) then pc++, else perform the following JMP instruction on the next line*/  
+  CSCRIPT_OPCODE_JMP,           /*  sBx      PC += sBx					*/
+  CSCRIPT_OPCODE_RETURN,        /*  A B	     return R(A), ... ,R(A+B-1) */
+  CSCRIPT_OPCODE_LOADGLOBAL,    /*  A Bx     R(A) := Global(Bx) */
+  CSCRIPT_OPCODE_STOREGLOBAL,   /*  A Bx     Global(Bx) := R(A) */
+  CSCRIPT_OPCODE_CAST,          /*  A B      R(A) := (B)R(A)    */
   } cscript_opcode;
 
 #define CSCRIPT_NUM_OPCODES (cast(int, CSCRIPT_OPCODE_RETURN+1))

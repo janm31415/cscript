@@ -282,8 +282,7 @@ static cscript_map_node* cscript_hash_string(const cscript_map* m, const char* s
 static cscript_map_node* cscript_main_position(const cscript_map* m, const cscript_object* key)
   {
   switch (cscript_object_get_type(key))
-    {
-   
+    {   
     case cscript_object_type_undefined:
       return cscript_hash_fixnum(m, cscript_object_get_type(key));   
     case cscript_object_type_fixnum:
@@ -293,7 +292,7 @@ static cscript_map_node* cscript_main_position(const cscript_map* m, const cscri
     case cscript_object_type_string:
       return cscript_hash_string(m, key->value.s.string_ptr);
     default:
-      return cscript_hash_pointer(m, key->value.v.vector_ptr);
+      return cscript_hash_pointer(m, key->value.ptr);
     }
   }
 

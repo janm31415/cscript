@@ -10,15 +10,14 @@
 #define cscript_object_type_fixnum 1
 #define cscript_object_type_flonum 2
 #define cscript_object_type_string 3
+#define cscript_object_type_void 4
 
 typedef union
   {
-  cscript_vector v;
   cscript_string s;
   void* ptr;
   cscript_fixnum fx;
   cscript_flonum fl;    
-  cscript_byte ch;
   } cscript_value;
 
 typedef struct cscript_object
