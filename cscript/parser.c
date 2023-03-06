@@ -629,9 +629,9 @@ cscript_statement make_if(cscript_context* ctxt, token** token_it, token** token
   i.filename = make_null_string();
   token_require(ctxt, token_it, token_it_end, "if");
   token_require(ctxt, token_it, token_it_end, "(");
-  cscript_vector_init(ctxt, &i.condition, cscript_statement);
-  cscript_statement cond = cscript_make_statement(ctxt, token_it, token_it_end);
-  cscript_vector_push_back(ctxt, &i.condition, cond, cscript_statement);
+  cscript_vector_init(ctxt, &i.condition, cscript_parsed_expression);
+  cscript_parsed_expression cond = cscript_make_expression(ctxt, token_it, token_it_end);
+  cscript_vector_push_back(ctxt, &i.condition, cond, cscript_parsed_expression);
   token_require(ctxt, token_it, token_it_end, ")");
   token_require(ctxt, token_it, token_it_end, "{");
   i.body = make_statements(ctxt, token_it, token_it_end, "}");

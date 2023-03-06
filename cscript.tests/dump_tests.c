@@ -51,4 +51,9 @@ void run_all_dump_tests()
   test_dump("int j = *i;\n");
   test_dump("int j = g[102+3-18];\n");
   test_dump2("int j, k, l;", "int j; int k; int l;\n");
+  test_dump("float f[3] = {1, 2, 3};\n");
+  test_dump("int k = ++u;\n");
+  test_dump("sqrt(4);\n");
+  test_dump("pow(2, 7);\n");
+  test_dump("if (i>2) { 3; } else { 4; };\n");
   }

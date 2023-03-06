@@ -5,7 +5,7 @@
 static void dump_expression(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_expression* e);
 static void dump_statement(cscript_context* ctxt, cscript_visitor* v, cscript_statement* s);
 
-static int dump_var(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_variable* e)
+static void dump_var(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_variable* e)
   {
   cscript_dump_visitor* d = (cscript_dump_visitor*)(v->impl);
   if (e->dereference != 0)
@@ -18,7 +18,6 @@ static int dump_var(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_va
     dump_expression(ctxt, v, ex);
     cscript_string_append_cstr(ctxt, &(d->s), "]");
     }
-  return 1;
   }
 
 static void append_op(cscript_context* ctxt, cscript_string* s, int op)
@@ -81,15 +80,40 @@ static void dump_number(cscript_context* ctxt, cscript_visitor* v, cscript_parse
 
 static void dump_lvalueop(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_lvalue_operator* l)
   {
-  
+  cscript_dump_visitor* d = (cscript_dump_visitor*)(v->impl);
+  cscript_string_append_cstr(ctxt, &(d->s), l->name.string_ptr);
+  dump_var(ctxt, v, &l->lvalue);
   }
 
 static void dump_function(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_function* f)
   {
+  cscript_dump_visitor* d = (cscript_dump_visitor*)(v->impl);
+  cscript_string_append_cstr(ctxt, &(d->s), f->name.string_ptr);
+  cscript_parsed_expression* it = cscript_vector_begin(&f->args, cscript_parsed_expression);
+  cscript_parsed_expression* it_end = cscript_vector_end(&f->args, cscript_parsed_expression);
+  cscript_string_append_cstr(ctxt, &(d->s), "(");
+  for (; it != it_end; ++it)
+    {
+    dump_expression(ctxt, v, it);
+    if (it + 1 != it_end)
+      cscript_string_append_cstr(ctxt, &(d->s), ", ");
+    }
+  cscript_string_append_cstr(ctxt, &(d->s), ")");
   }
 
 static void dump_expression_list(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_expression_list* l)
   {
+  cscript_dump_visitor* d = (cscript_dump_visitor*)(v->impl);
+  cscript_parsed_expression* it = cscript_vector_begin(&l->expressions, cscript_parsed_expression);
+  cscript_parsed_expression* it_end = cscript_vector_end(&l->expressions, cscript_parsed_expression);
+  cscript_string_append_cstr(ctxt, &(d->s), "{");
+  for (; it != it_end; ++it)
+    {
+    dump_expression(ctxt, v, it);
+    if (it+1 != it_end)
+      cscript_string_append_cstr(ctxt, &(d->s), ", ");
+    }
+  cscript_string_append_cstr(ctxt, &(d->s), "}");
   }
 
 static void dump_factor(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_factor* e)
@@ -250,6 +274,39 @@ static void dump_comma_separated_statements(cscript_context* ctxt, cscript_visit
     }
   }
 
+static void dump_for(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_for* f)
+  {
+  }
+
+static void dump_if(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_if* i)
+  {
+  cscript_dump_visitor* d = (cscript_dump_visitor*)(v->impl);
+  cscript_string_append_cstr(ctxt, &(d->s), "if (");
+  cscript_parsed_expression* cond = cscript_vector_at(&i->condition, 0, cscript_parsed_expression);
+  dump_expression(ctxt, v, cond);
+  cscript_string_append_cstr(ctxt, &(d->s), ")");
+  cscript_string_append_cstr(ctxt, &(d->s), " { ");
+  cscript_statement* it = cscript_vector_begin(&i->body, cscript_statement);
+  cscript_statement* it_end = cscript_vector_end(&i->body, cscript_statement);
+  for (; it != it_end; ++it)
+    {
+    dump_statement(ctxt, v, it); 
+    cscript_string_append_cstr(ctxt, &(d->s), "; ");
+    }
+  cscript_string_append_cstr(ctxt, &(d->s), "}");
+  if (i->alternative.vector_size > 0)
+    {
+    cscript_string_append_cstr(ctxt, &(d->s), " else { ");
+    it = cscript_vector_begin(&i->alternative, cscript_statement);
+    it_end = cscript_vector_end(&i->alternative, cscript_statement);
+    for (; it != it_end; ++it)
+      {
+      dump_statement(ctxt, v, it);
+      cscript_string_append_cstr(ctxt, &(d->s), "; ");
+      }
+    cscript_string_append_cstr(ctxt, &(d->s), "}");
+    }
+  }
 
 static void dump_statement(cscript_context* ctxt, cscript_visitor* v, cscript_statement* s)
   {
@@ -266,10 +323,10 @@ static void dump_statement(cscript_context* ctxt, cscript_visitor* v, cscript_st
       dump_flonum(ctxt, v, &s->statement.flonum);
       return 0;
     case cscript_statement_type_for:
-      cscript_assert(0); // todo
+      dump_for(ctxt, v, &s->statement.forloop);
       break;
     case cscript_statement_type_if:
-      cscript_assert(0); // todo
+      dump_if(ctxt, v, &s->statement.iftest);
       break;
     case cscript_statement_type_comma_separated:
       dump_comma_separated_statements(ctxt, v, &s->statement.stmts);

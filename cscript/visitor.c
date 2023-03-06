@@ -664,13 +664,13 @@ static void visit_entry(cscript_context* ctxt, cscript_visitor* vis, cscript_vis
         {
         cscript_vector_push_back(ctxt, &(vis->v), make_entry(cast(void*, stmt_rit), CSCRIPT_VISITOR_STATEMENT_PRE), cscript_visitor_entry);
         }
-      stmt_it = cscript_vector_begin(&cast(cscript_parsed_if*, e.entry)->condition, cscript_statement);
-      stmt_it_end = cscript_vector_end(&cast(cscript_parsed_if*, e.entry)->condition, cscript_statement);
-      stmt_rit = stmt_it_end - 1;
-      stmt_rit_end = stmt_it - 1;
-      for (; stmt_rit != stmt_rit_end; --stmt_rit) // IMPORTANT: brackets necessary, as cscript_vector_push_back is a C macro
+      cscript_parsed_expression* expr_it = cscript_vector_begin(&cast(cscript_parsed_if*, e.entry)->condition, cscript_parsed_expression);
+      cscript_parsed_expression* expr_it_end = cscript_vector_end(&cast(cscript_parsed_if*, e.entry)->condition, cscript_parsed_expression);
+      cscript_parsed_expression* expr_rit = expr_it_end - 1;
+      cscript_parsed_expression* expr_rit_end = expr_it - 1;
+      for (; expr_rit != expr_rit_end; --expr_rit) // IMPORTANT: brackets necessary, as cscript_vector_push_back is a C macro
         {
-        cscript_vector_push_back(ctxt, &(vis->v), make_entry(cast(void*, stmt_rit), CSCRIPT_VISITOR_STATEMENT_PRE), cscript_visitor_entry);
+        cscript_vector_push_back(ctxt, &(vis->v), make_entry(cast(void*, expr_rit), CSCRIPT_VISITOR_EXPRESSION_PRE), cscript_visitor_entry);
         }
       }
     break;

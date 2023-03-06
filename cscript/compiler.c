@@ -1421,8 +1421,8 @@ static void compile_for(cscript_context* ctxt, compiler_state* state, cscript_pa
 
 static void compile_if(cscript_context* ctxt, compiler_state* state, cscript_parsed_if* i)
   {
-  cscript_statement* cond = cscript_vector_at(&i->condition, 0, cscript_statement);
-  compile_statement(ctxt, state, cond);
+  cscript_parsed_expression* cond = cscript_vector_at(&i->condition, 0, cscript_parsed_expression);
+  compile_expression(ctxt, state, cond);
   make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_NEQ, state->freereg, 0);
   cscript_instruction i1 = 0;
   CSCRIPT_SET_OPCODE(i1, CSCRIPT_OPCODE_JMP);
