@@ -1,5 +1,5 @@
 # cscript
-Scripting language similar to C in syntax, but without functions, strings, dynamic memory, local scope.
+Scripting language similar to C in syntax, but without functions, strings, dynamic memory.
 
 ## Syntax
 
@@ -26,7 +26,7 @@ Scripting language similar to C in syntax, but without functions, strings, dynam
  * pow: power function where pow(x,y) computes x^y
 
 ### Variables & arrays:
- * There is no local scope. All variables should have a unique name. Names are case sensitive.
+ * Names are case sensitive.
  * Type declarations are int or float, where int represents a 64-bit integer, and float represents a double precisiong floating point number.
  * Arrays of type int or float can be declared. There is no bound checking when calling arrays, so be careful.
 
@@ -52,7 +52,7 @@ Scripting language similar to C in syntax, but without functions, strings, dynam
      * (int a)              input integer parameter named a
      * (int a, float b)     input integer parameter named a and input floating point parameter named b 
      * (int* a, float* b)   input pointers to a list of integers named a, and a list of floats named b. These pointers can point to dynamic memory. This is the way to use dynamic memory inside a cscript.
- * After the function call parameters brackets {} should be omitted.
+ * After the function call parameters brackets {} can be omitted.
  
 ### global variables
  * You can create variables in a first cscript that can be used in a second cscript.
