@@ -1,33 +1,35 @@
 set(HDRS
-compiletests.h
-cscripttests.h
-optimizetests.h
-parsetests.h
+compiler_tests.h
+dump_tests.h
+map_tests.h
+parser_tests.h
+stream_tests.h
+string_tests.h
 test_assert.h
-tokenizetests.h
-    )
+token_tests.h
+vector_tests.h
+)
 	
 set(SRCS
-compiletests.cpp
-cscripttests.cpp
-optimizetests.cpp
-parsetests.cpp
-test.cpp
-test_assert.cpp
-tokenizetests.cpp
+compiler_tests.c
+dump_tests.c
+map_tests.c
+parser_tests.c
+stream_tests.c
+string_tests.c
+test.c
+test_assert.c
+token_tests.c
+vector_tests.c
 )
 
 if (WIN32)
 set(CMAKE_C_FLAGS_DEBUG "/W4 /MP /GF /RTCu /Od /MDd /Zi")
-set(CMAKE_CXX_FLAGS_DEBUG "/W4 /MP /GF /RTCu /Od /MDd /Zi")
 set(CMAKE_C_FLAGS_RELEASE "/W4 /MP /GF /O2 /Ob2 /Oi /Ot /MD /Zi /DNDEBUG")
-set(CMAKE_CXX_FLAGS_RELEASE "/W4 /MP /GF /O2 /Ob2 /Oi /Ot /MD /Zi /DNDEBUG")
 endif(WIN32)
 
-# general build definitions
-add_definitions(-D_UNICODE)
-add_definitions(-DUNICODE)
-add_definitions(-D_SCL_SECURE_NO_WARNINGS)
+add_definitions(-DMEMORY_LEAK_TRACKING)
+add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
 add_executable(cscript.tests ${HDRS} ${SRCS})
 source_group("Header Files" FILES ${hdrs})
@@ -36,10 +38,9 @@ source_group("Source Files" FILES ${srcs})
 target_include_directories(cscript.tests
     PRIVATE
 	  ${CMAKE_CURRENT_SOURCE_DIR}/..
-    )
+    )	
 	
 target_link_libraries(cscript.tests
-    PRIVATE
-    vm
+    PRIVATE		 
     cscript
-    )	
+    )

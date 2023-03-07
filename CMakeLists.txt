@@ -10,10 +10,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #set(CMAKE_CXX_EXTENSIONS OFF)
 
-
 add_subdirectory(cscript)
 add_subdirectory(cscript.tests)
-add_subdirectory(vm)
-add_subdirectory(vm.tests)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
