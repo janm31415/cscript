@@ -3,15 +3,6 @@
 
 #include <string.h>
 
-static cscript_object* find_primitive(cscript_context* ctxt, cscript_string* s)
-  {
-  cscript_object key;
-  key.type = cscript_object_type_string;
-  key.value.s = *s;
-  cscript_object* res = cscript_map_get(ctxt, ctxt->global->primitives_map, &key);
-  return res;
-  }
-
 int cscript_is_constant_factor(cscript_context* ctxt, cscript_parsed_factor* f)
   {
   switch (f->type)
@@ -20,15 +11,6 @@ int cscript_is_constant_factor(cscript_context* ctxt, cscript_parsed_factor* f)
       return 1;
     case cscript_factor_type_expression:
       return cscript_is_constant_expression(ctxt, &f->factor.expr);
-      /*
-    case cscript_factor_type_function:
-    {
-    cscript_object* fun = find_primitive(ctxt, &f->factor.fun.name);
-    if (fun == NULL)
-      return 0;
-    return cscript_is_constant_expression_list(ctxt, &f->factor.fun.args);
-    }
-    */
     case cscript_factor_type_expression_list:
     {
     return cscript_is_constant_expression_list(ctxt, &f->factor.exprlist.expressions);

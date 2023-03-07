@@ -38,6 +38,7 @@ int cscript_log2(uint32_t x)
 
 int cscript_objects_equal(cscript_context* ctxt, const cscript_object* obj1, const cscript_object* obj2)
   {
+  UNUSED(ctxt);
   if (cscript_object_get_type(obj1) != cscript_object_get_type(obj2))
     return 0;
   switch (cscript_object_get_type(obj1))
@@ -129,7 +130,7 @@ static cscript_runtime_task make_text_task(const char* txt)
   return task;
   }
 
-void cscript_object_append_to_string(cscript_context* ctxt, cscript_object* input_obj, cscript_string* s, int display)
+void cscript_object_append_to_string(cscript_context* ctxt, cscript_object* input_obj, cscript_string* s)
   {
   cscript_vector tasks;
   cscript_vector_init(ctxt, &tasks, cscript_runtime_task);
@@ -171,10 +172,10 @@ void cscript_object_append_to_string(cscript_context* ctxt, cscript_object* inpu
   cscript_vector_destroy(ctxt, &tasks);
   }
 
-cscript_string cscript_object_to_string(cscript_context* ctxt, cscript_object* input_obj, int display)
+cscript_string cscript_object_to_string(cscript_context* ctxt, cscript_object* input_obj)
   {
   cscript_string s;
   cscript_string_init(ctxt, &s, "");
-  cscript_object_append_to_string(ctxt, input_obj, &s, display);
+  cscript_object_append_to_string(ctxt, input_obj, &s);
   return s;
   }

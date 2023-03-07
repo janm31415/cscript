@@ -167,16 +167,16 @@ void cscript_show_environment(cscript_context* ctxt, cscript_string* s)
         if (entry.type == CSCRIPT_ENV_TYPE_STACK)
           {
           cscript_object* local = cscript_vector_at(&ctxt->stack, entry.position, cscript_object);
-          tmp = cscript_object_to_string(ctxt, local, 0);
+          tmp = cscript_object_to_string(ctxt, local);
           }
         else
           {
-          cscript_string tmp2 = cscript_object_to_string(ctxt, &m->node[i].value, 0);
+          cscript_string tmp2 = cscript_object_to_string(ctxt, &m->node[i].value);
           cscript_string_append(ctxt, s, &tmp2);
           cscript_string_destroy(ctxt, &tmp2);
           cscript_string_append_cstr(ctxt, s, ": ");
           cscript_object* global = cscript_vector_at(&ctxt->globals, entry.position, cscript_object);
-          tmp = cscript_object_to_string(ctxt, global, 0);
+          tmp = cscript_object_to_string(ctxt, global);
           }
         cscript_string_append(ctxt, s, &tmp);
 

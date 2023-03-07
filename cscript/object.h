@@ -44,7 +44,7 @@ cscript_object make_cscript_object_string(cscript_context* ctxt, const char* s);
 
 void cscript_object_destroy(cscript_context* ctxt, cscript_object* obj);
 
-void cscript_object_append_to_string(cscript_context* ctxt, cscript_object* obj, cscript_string* s, int display);
-cscript_string cscript_object_to_string(cscript_context* ctxt, cscript_object* obj, int display);
+void cscript_object_append_to_string(cscript_context* ctxt, cscript_object* obj, cscript_string* s);
+cscript_string cscript_object_to_string(cscript_context* ctxt, cscript_object* obj);
 
 #endif //CSCRIPT_OBJECT_H

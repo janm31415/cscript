@@ -368,6 +368,22 @@ static int previsit_statement(cscript_context* ctxt, cscript_visitor* v, cscript
   return 0;
   }
 
+static int previsit_factor(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_factor* f)
+  {
+  cscript_dump_visitor* d = (cscript_dump_visitor*)(v->impl);
+  dump_factor(ctxt, v, f);
+  cscript_string_append_cstr(ctxt, &(d->s), ";\n");
+  return 0;
+  }
+
+static int previsit_expression(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_expression* e)
+  {
+  cscript_dump_visitor* d = (cscript_dump_visitor*)(v->impl);
+  dump_expression(ctxt, v, e);
+  cscript_string_append_cstr(ctxt, &(d->s), ";\n");
+  return 0;
+  }
+
 cscript_dump_visitor* cscript_dump_visitor_new(cscript_context* ctxt)
   {
   cscript_dump_visitor* v = cscript_new(ctxt, cscript_dump_visitor);
@@ -375,6 +391,8 @@ cscript_dump_visitor* cscript_dump_visitor_new(cscript_context* ctxt)
   cscript_string_init(ctxt, &(v->s), "");
   
   v->visitor->previsit_statement = previsit_statement;
+  v->visitor->previsit_factor = previsit_factor;
+  v->visitor->previsit_expression = previsit_expression;
   return v;
   }
 

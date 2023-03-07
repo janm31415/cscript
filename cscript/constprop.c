@@ -10,7 +10,7 @@ typedef struct cscript_is_mutable_variable_visitor
   cscript_map* is_unmutable;
   } cscript_is_mutable_variable_visitor;
 
-int previsit_fixnum(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_fixnum* fx)
+static int previsit_fixnum(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_fixnum* fx)
   {
   cscript_is_mutable_variable_visitor* vis = (cscript_is_mutable_variable_visitor*)(v->impl);
   cscript_object key;
@@ -25,7 +25,7 @@ int previsit_fixnum(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_fi
   return 1;
   }
 
-int previsit_flonum(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_flonum* fl)
+static int previsit_flonum(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_flonum* fl)
   {
   cscript_is_mutable_variable_visitor* vis = (cscript_is_mutable_variable_visitor*)(v->impl);
   cscript_object key;
@@ -40,7 +40,7 @@ int previsit_flonum(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_fl
   return 1;
   }
 
-int previsit_assignment(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_assignment* a)
+static int previsit_assignment(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_assignment* a)
   {
   cscript_is_mutable_variable_visitor* vis = (cscript_is_mutable_variable_visitor*)(v->impl);
   cscript_object key;
@@ -52,7 +52,7 @@ int previsit_assignment(cscript_context* ctxt, cscript_visitor* v, cscript_parse
   return 1;
   }
 
-int previsit_lvalueop(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_lvalue_operator* l)
+static int previsit_lvalueop(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_lvalue_operator* l)
   {
   cscript_is_mutable_variable_visitor* vis = (cscript_is_mutable_variable_visitor*)(v->impl);
   cscript_object key;
@@ -92,7 +92,7 @@ typedef struct cscript_replace_variable_visitor
   cscript_number replace_by_this_number;
   } cscript_replace_variable_visitor;
 
-int previsit_statement(cscript_context* ctxt, cscript_visitor* v, cscript_statement* s)
+static int previsit_statement(cscript_context* ctxt, cscript_visitor* v, cscript_statement* s)
   {
   cscript_replace_variable_visitor* vis = (cscript_replace_variable_visitor*)(v->impl);
   if (s->type == cscript_statement_type_fixnum)
@@ -118,7 +118,7 @@ int previsit_statement(cscript_context* ctxt, cscript_visitor* v, cscript_statem
   return 1;
   }
 
-int previsit_factor(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_factor* f)
+static int previsit_factor(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_factor* f)
   {
   cscript_replace_variable_visitor* vis = (cscript_replace_variable_visitor*)(v->impl);
   if (f->type == cscript_factor_type_variable)
@@ -166,7 +166,7 @@ typedef struct cscript_constant_propagation_visitor
   cscript_program* program;
   } cscript_constant_propagation_visitor;
 
-void postvisit_fixnum(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_fixnum* fx)
+static void postvisit_fixnum(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_fixnum* fx)
   {
   cscript_constant_propagation_visitor* vis = (cscript_constant_propagation_visitor*)(v->impl);
   cscript_object key;
@@ -202,7 +202,7 @@ void postvisit_fixnum(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_
     }
   }
 
-void postvisit_flonum(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_flonum* fl)
+static void postvisit_flonum(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_flonum* fl)
   {
   cscript_constant_propagation_visitor* vis = (cscript_constant_propagation_visitor*)(v->impl);
   cscript_object key;

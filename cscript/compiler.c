@@ -412,7 +412,7 @@ static void compile_function(cscript_context* ctxt, compiler_state* state, cscri
       }
     state->freereg = freereg;
     state->reg_typeinfo = cscript_reg_typeinfo_flonum;
-    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, fun->value.fx);
+    make_code_ab(ctxt, state->fun, CSCRIPT_OPCODE_CALLPRIM, state->freereg, (int)fun->value.fx);
     }
   }
 
@@ -748,7 +748,7 @@ static void compile_fixnum_array(cscript_context* ctxt, compiler_state* state, c
     state->freereg += dimension;
     if (init)
       {
-      if (init_values.vector_size != dimension)
+      if ((int)init_values.vector_size != dimension)
         {
         cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, fx->line_nr, fx->column_nr, &fx->filename, "array initializer list has wrong dimension");
         }
@@ -759,14 +759,14 @@ static void compile_fixnum_array(cscript_context* ctxt, compiler_state* state, c
         int stack_pos = (int)entry.position;
         for (; it != it_end; ++it, ++stack_pos)
           {
-          cscript_fixnum fx = it->number.fx;
-          if (fx <= CSCRIPT_MAXARG_sBx && fx >= -CSCRIPT_MAXARG_sBx)
+          cscript_fixnum fix = it->number.fx;
+          if (fix <= CSCRIPT_MAXARG_sBx && fix >= -CSCRIPT_MAXARG_sBx)
             {
-            make_code_asbx(ctxt, state->fun, CSCRIPT_OPCODE_SETFIXNUM, stack_pos, cast(int, fx));
+            make_code_asbx(ctxt, state->fun, CSCRIPT_OPCODE_SETFIXNUM, stack_pos, cast(int, fix));
             }
           else
             {
-            cscript_object obj = make_cscript_object_fixnum(fx);
+            cscript_object obj = make_cscript_object_fixnum(fix);
             int k_pos = get_k(ctxt, state->fun, &obj);
             make_code_abx(ctxt, state->fun, CSCRIPT_OPCODE_LOADK, stack_pos, k_pos);
             }
@@ -805,7 +805,7 @@ static void compile_fixnum_global_single(cscript_context* ctxt, compiler_state* 
     cscript_vector_push_back(ctxt, &ctxt->globals, 0, cscript_fixnum);
     if (init)
       {
-      make_code_abx(ctxt, state->fun, CSCRIPT_OPCODE_STOREGLOBAL, state->freereg, entry.position);
+      make_code_abx(ctxt, state->fun, CSCRIPT_OPCODE_STOREGLOBAL, state->freereg, (int)entry.position);
       }
     }
   }
@@ -912,7 +912,7 @@ static void compile_flonum_array(cscript_context* ctxt, compiler_state* state, c
     state->freereg += dimension;
     if (init)
       {
-      if (init_values.vector_size != dimension)
+      if ((int)init_values.vector_size != dimension)
         {
         cscript_compile_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, fl->line_nr, fl->column_nr, &fl->filename, "array initializer list has wrong dimension");
         }
@@ -969,7 +969,7 @@ static void compile_flonum_global_single(cscript_context* ctxt, compiler_state* 
     cscript_vector_push_back(ctxt, &ctxt->globals, 0, cscript_fixnum);
     if (init)
       {
-      make_code_abx(ctxt, state->fun, CSCRIPT_OPCODE_STOREGLOBAL, state->freereg, entry.position);
+      make_code_abx(ctxt, state->fun, CSCRIPT_OPCODE_STOREGLOBAL, state->freereg, (int)entry.position);
       }
     }
   }

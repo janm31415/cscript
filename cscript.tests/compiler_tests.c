@@ -17,6 +17,7 @@
 static int debug = 0;
 static int preprocess = 0;
 static int dump = 0;
+static cscript_memsize number_of_vm_calls = 0;
 
 static void test_compile_aux_stack(cscript_fixnum expected, const char* script, int stack_size, int nr_parameters, void* pars, int output_type)
   {
@@ -36,6 +37,8 @@ static void test_compile_aux_stack(cscript_fixnum expected, const char* script, 
     }
 
   cscript_function* compiled_program = cscript_compile_program(ctxt, &prog);
+
+  number_of_vm_calls = compiled_program->code.vector_size;
 
   if (debug != 0)
     {
@@ -1295,15 +1298,21 @@ static void test_global_variables()
   cscript_close(ctxt);
   }
 
-static void test_constant_propagation()
+static void test_preprocessor()
   {
-  debug = 1;
-  preprocess = 1;
-  dump = 1;
-  test_compile_flonum_aux(3.14, "float i = 3.14; i;");
-  debug = 0;
+  int pre = preprocess;
+  const char* script = "()\n"
+    "int i = 7;\n"
+    "int j = 8;\n"
+    "j += 9;\n"
+    "10;\n";
   preprocess = 0;
-  dump = 0;
+  test_compile_fixnum_aux(10, script);
+  TEST_EQ_INT(7, number_of_vm_calls);
+  preprocess = 1;
+  test_compile_fixnum_aux(10, script);
+  TEST_EQ_INT(1, number_of_vm_calls);
+  preprocess = pre;
   }
 
 void run_all_compiler_tests()
@@ -1332,7 +1341,7 @@ void run_all_compiler_tests()
     test_array_address();
     test_harmonic();
     test_hamming();
-    test_fibonacci();
+    test_fibonacci();    
     test_quicksort();
     test_quicksort_flonum();
     test_digits_pi();
@@ -1341,5 +1350,5 @@ void run_all_compiler_tests()
     test_computation_order();
     test_global_variables();
     }
-  //test_constant_propagation();
+  test_preprocessor();
   }

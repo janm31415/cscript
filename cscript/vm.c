@@ -342,7 +342,7 @@ cscript_fixnum* cscript_run(cscript_context* ctxt, cscript_function* fun)
       const int b = CSCRIPT_GETARG_B(instruc);
       const int c = CSCRIPT_GETARG_C(instruc);
       cscript_fixnum* ra = cscript_vector_at(&ctxt->stack, a, cscript_fixnum);
-      cscript_assert(b < ctxt->externals.vector_size);
+      cscript_assert(b < (int)ctxt->externals.vector_size);
       cscript_external_function* ext = cscript_vector_at(&ctxt->externals, b, cscript_external_function);      
       cscript_object result = cscript_call_external(ctxt, ext, a, (int)c);
       switch (result.type)
@@ -455,10 +455,9 @@ void cscript_show_stack(cscript_context* ctxt, cscript_string* s, int stack_star
     cscript_string_append_cstr(ctxt, s, "  ");
     cscript_string_append_cstr(ctxt, s, buffer);
     cscript_string_append_cstr(ctxt, s, ": ");
-    cscript_object* stack_item = cscript_vector_at(&ctxt->stack, i, cscript_object);
-    cscript_string tmp = cscript_object_to_string(ctxt, stack_item, 0);
-    cscript_string_append(ctxt, s, &tmp);
-    cscript_string_destroy(ctxt, &tmp);
+    cscript_fixnum* stack_item = cscript_vector_at(&ctxt->stack, i, cscript_fixnum);
+    cscript_fixnum_to_char(buffer, *stack_item);
+    cscript_string_append_cstr(ctxt, s, buffer);
     cscript_string_push_back(ctxt, s, '\n');
     }  
   }

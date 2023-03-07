@@ -17,6 +17,7 @@ object.h
 parser.h
 preprocess.h
 primitives.h
+remdeadvar.h
 stream.h
 string.h
 syscalls.h
@@ -43,6 +44,7 @@ object.c
 parser.c
 preprocess.c
 primitives.c
+remdeadvar.c
 stream.c
 string.c
 syscalls.c
