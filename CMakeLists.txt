@@ -12,9 +12,5 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(cscript)
 add_subdirectory(cscript.tests)
-add_subdirectory(cscript_old)
-add_subdirectory(cscript_old.tests)
-add_subdirectory(vm)
-add_subdirectory(vm.tests)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
