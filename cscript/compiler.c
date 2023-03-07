@@ -1387,7 +1387,6 @@ static void compile_assignment(cscript_context* ctxt, compiler_state* state, csc
 
 static void compile_for(cscript_context* ctxt, compiler_state* state, cscript_parsed_for* f)
   {
-  cscript_environment_push_child(ctxt);
   cscript_statement* init = cscript_vector_at(&f->init_cond_inc, 0, cscript_statement);
   cscript_statement* cond = cscript_vector_at(&f->init_cond_inc, 1, cscript_statement);
   cscript_statement* inc = cscript_vector_at(&f->init_cond_inc, 2, cscript_statement);
@@ -1416,7 +1415,6 @@ static void compile_for(cscript_context* ctxt, compiler_state* state, cscript_pa
 
   cscript_instruction* first_jump = cscript_vector_at(&state->fun->code, for_loop_jump, cscript_instruction);
   CSCRIPT_SETARG_sBx(*first_jump, (int)state->fun->code.vector_size - for_loop_jump - 1);
-  cscript_environment_pop_child(ctxt);
   }
 
 static void compile_if(cscript_context* ctxt, compiler_state* state, cscript_parsed_if* i)
@@ -1428,14 +1426,12 @@ static void compile_if(cscript_context* ctxt, compiler_state* state, cscript_par
   CSCRIPT_SET_OPCODE(i1, CSCRIPT_OPCODE_JMP);
   cscript_vector_push_back(ctxt, &state->fun->code, i1, cscript_instruction);
   int if_jump = (int)state->fun->code.vector_size - 1;
-  cscript_environment_push_child(ctxt);
   cscript_statement* it = cscript_vector_begin(&i->body, cscript_statement);
   cscript_statement* it_end = cscript_vector_end(&i->body, cscript_statement);
   for (; it != it_end; ++it)
     {
     compile_statement(ctxt, state, it);
     }
-  cscript_environment_pop_child(ctxt);
   if (i->alternative.vector_size > 0)
     {
     cscript_instruction i2 = 0;
@@ -1443,14 +1439,12 @@ static void compile_if(cscript_context* ctxt, compiler_state* state, cscript_par
     cscript_vector_push_back(ctxt, &state->fun->code, i2, cscript_instruction);
     int else_jump = (int)state->fun->code.vector_size - 1;
 
-    cscript_environment_push_child(ctxt);
     it = cscript_vector_begin(&i->alternative, cscript_statement);
     it_end = cscript_vector_end(&i->alternative, cscript_statement);
     for (; it != it_end; ++it)
       {
       compile_statement(ctxt, state, it);
       }
-    cscript_environment_pop_child(ctxt);
 
     cscript_instruction* alt_jump = cscript_vector_at(&state->fun->code, else_jump, cscript_instruction);
     CSCRIPT_SETARG_sBx(*alt_jump, (int)state->fun->code.vector_size - else_jump - 1);
@@ -1463,6 +1457,18 @@ static void compile_if(cscript_context* ctxt, compiler_state* state, cscript_par
     cscript_instruction* first_jump = cscript_vector_at(&state->fun->code, if_jump, cscript_instruction);
     CSCRIPT_SETARG_sBx(*first_jump, (int)state->fun->code.vector_size - if_jump - 1);
     }
+  }
+
+static void compile_scoped(cscript_context* ctxt, compiler_state* state, cscript_scoped_statements* s)
+  {
+  cscript_environment_push_child(ctxt);
+  cscript_statement* it = cscript_vector_begin(&s->statements, cscript_statement);
+  cscript_statement* it_end = cscript_vector_end(&s->statements, cscript_statement);
+  for (; it != it_end; ++it)
+    {
+    compile_statement(ctxt, state, it);
+    }
+  cscript_environment_pop_child(ctxt);
   }
 
 static void compile_statement(cscript_context* ctxt, compiler_state* state, cscript_statement* stmt)
@@ -1491,6 +1497,9 @@ static void compile_statement(cscript_context* ctxt, compiler_state* state, cscr
       break;
     case cscript_statement_type_assignment:
       compile_assignment(ctxt, state, &stmt->statement.assignment);
+      break;
+    case cscript_statement_type_scoped:
+      compile_scoped(ctxt, state, &stmt->statement.scoped);
       break;
     default:
       cscript_throw(ctxt, CSCRIPT_ERROR_NOT_IMPLEMENTED);

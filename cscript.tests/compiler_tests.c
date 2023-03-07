@@ -9,6 +9,7 @@
 #include "cscript/dump.h"
 #include "cscript/foreign.h"
 #include "cscript/preprocess.h"
+#include "cscript/alpha.h"
 
 #include <math.h>
 #include <time.h>
@@ -27,6 +28,8 @@ static void test_compile_aux_stack(cscript_fixnum expected, const char* script, 
 
   if (preprocess != 0)
     cscript_preprocess(ctxt, &prog);
+  else
+    cscript_alpha_conversion(ctxt, &prog);
 
   if (dump != 0)
     {
@@ -588,6 +591,8 @@ static void text_foreign_aux(cscript_fixnum expected, const char* script, const 
 
   if (preprocess != 0)
     cscript_preprocess(ctxt, &prog);
+  else
+    cscript_alpha_conversion(ctxt, &prog);
 
   cscript_function* compiled_program = cscript_compile_program(ctxt, &prog);
 
@@ -685,6 +690,8 @@ static void test_compile_flonum_aux_close(cscript_flonum expected, const char* s
 
   if (preprocess != 0)
     cscript_preprocess(ctxt, &prog);
+  else
+    cscript_alpha_conversion(ctxt, &prog);
 
   cscript_function* compiled_program = cscript_compile_program(ctxt, &prog);
 
@@ -1140,6 +1147,8 @@ static void test_global_variables()
   cscript_program prog = make_program(ctxt, &tokens);
   if (preprocess != 0)
     cscript_preprocess(ctxt, &prog);
+  else
+    cscript_alpha_conversion(ctxt, &prog);
   cscript_function* compiled_program = cscript_compile_program(ctxt, &prog);
   cscript_fixnum* res = cscript_run(ctxt, compiled_program);
   TEST_EQ_INT(3, *res);
@@ -1155,6 +1164,8 @@ static void test_global_variables()
   prog = make_program(ctxt, &tokens);
   if (preprocess != 0)
     cscript_preprocess(ctxt, &prog);
+  else
+    cscript_alpha_conversion(ctxt, &prog);
   compiled_program = cscript_compile_program(ctxt, &prog);
   res = cscript_run(ctxt, compiled_program);
   cscript_flonum* resf = cast(cscript_flonum*, res);
@@ -1171,6 +1182,8 @@ static void test_global_variables()
   prog = make_program(ctxt, &tokens);
   if (preprocess != 0)
     cscript_preprocess(ctxt, &prog);
+  else
+    cscript_alpha_conversion(ctxt, &prog);
   compiled_program = cscript_compile_program(ctxt, &prog);
   res = cscript_run(ctxt, compiled_program);
   resf = cast(cscript_flonum*, res);
@@ -1187,6 +1200,8 @@ static void test_global_variables()
   prog = make_program(ctxt, &tokens);
   if (preprocess != 0)
     cscript_preprocess(ctxt, &prog);
+  else
+    cscript_alpha_conversion(ctxt, &prog);
   compiled_program = cscript_compile_program(ctxt, &prog);
   res = cscript_run(ctxt, compiled_program);
   resf = cast(cscript_flonum*, res);
@@ -1203,6 +1218,8 @@ static void test_global_variables()
   prog = make_program(ctxt, &tokens);
   if (preprocess != 0)
     cscript_preprocess(ctxt, &prog);
+  else
+    cscript_alpha_conversion(ctxt, &prog);
   compiled_program = cscript_compile_program(ctxt, &prog);
   res = cscript_run(ctxt, compiled_program);
   resf = cast(cscript_flonum*, res);
@@ -1219,6 +1236,8 @@ static void test_global_variables()
   prog = make_program(ctxt, &tokens);
   if (preprocess != 0)
     cscript_preprocess(ctxt, &prog);
+  else
+    cscript_alpha_conversion(ctxt, &prog);
   compiled_program = cscript_compile_program(ctxt, &prog);
   res = cscript_run(ctxt, compiled_program);
   resf = cast(cscript_flonum*, res);
@@ -1235,6 +1254,8 @@ static void test_global_variables()
   prog = make_program(ctxt, &tokens);
   if (preprocess != 0)
     cscript_preprocess(ctxt, &prog);
+  else
+    cscript_alpha_conversion(ctxt, &prog);
   compiled_program = cscript_compile_program(ctxt, &prog);
   res = cscript_run(ctxt, compiled_program);
   resf = cast(cscript_flonum*, res);
@@ -1251,6 +1272,8 @@ static void test_global_variables()
   prog = make_program(ctxt, &tokens);
   if (preprocess != 0)
     cscript_preprocess(ctxt, &prog);
+  else
+    cscript_alpha_conversion(ctxt, &prog);
   compiled_program = cscript_compile_program(ctxt, &prog);
   res = cscript_run(ctxt, compiled_program);
   resf = cast(cscript_flonum*, res);
@@ -1267,6 +1290,8 @@ static void test_global_variables()
   prog = make_program(ctxt, &tokens);
   if (preprocess != 0)
     cscript_preprocess(ctxt, &prog);
+  else
+    cscript_alpha_conversion(ctxt, &prog);
   compiled_program = cscript_compile_program(ctxt, &prog);
   res = cscript_run(ctxt, compiled_program);
   resf = cast(cscript_flonum*, res);
@@ -1283,6 +1308,8 @@ static void test_global_variables()
   prog = make_program(ctxt, &tokens);
   if (preprocess != 0)
     cscript_preprocess(ctxt, &prog);
+  else
+    cscript_alpha_conversion(ctxt, &prog);
   compiled_program = cscript_compile_program(ctxt, &prog);
   res = cscript_run(ctxt, compiled_program);
   resf = cast(cscript_flonum*, res);
@@ -1296,6 +1323,15 @@ static void test_global_variables()
   cscript_program_destroy(ctxt, &prog);
 
   cscript_close(ctxt);
+  }
+
+static void test_scope()
+  {
+  test_compile_fixnum_aux(4, "() { 7; } int i = 3; ++i;");
+  //debug = 1;
+  test_compile_fixnum_aux(8, "() int i = 8; { int i = 9; } i;");
+  test_compile_fixnum_aux(12, "() int i = 8; int k = 3; { int i = 9; k += i; } i; k;");
+  //debug = 0;
   }
 
 static void test_preprocessor()
@@ -1349,6 +1385,7 @@ void run_all_compiler_tests()
     test_many_variables();
     test_computation_order();
     test_global_variables();
+    test_scope();
     }
   test_preprocessor();
   }

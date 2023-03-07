@@ -27,6 +27,19 @@ static void postvisit_statements(cscript_context* ctxt, cscript_visitor* v, cscr
   UNUSED(v);
   UNUSED(s);
   }
+static int previsit_scoped_statements(cscript_context* ctxt, cscript_visitor* v, cscript_scoped_statements* s)
+  {
+  UNUSED(ctxt);
+  UNUSED(v);
+  UNUSED(s);
+  return 1;
+  }
+static void postvisit_scoped_statements(cscript_context* ctxt, cscript_visitor* v, cscript_scoped_statements* s)
+  {
+  UNUSED(ctxt);
+  UNUSED(v);
+  UNUSED(s);
+  }
 static int previsit_expression(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_expression* s)
   {
   UNUSED(ctxt);
@@ -240,6 +253,8 @@ cscript_visitor* cscript_visitor_new(cscript_context* ctxt, void* impl)
   v->postvisit_statement = postvisit_statement;
   v->previsit_statements = previsit_statements;
   v->postvisit_statements = postvisit_statements;
+  v->previsit_scoped_statements = previsit_scoped_statements;
+  v->postvisit_scoped_statements = postvisit_scoped_statements;
   v->previsit_expression = previsit_expression;
   v->postvisit_expression = postvisit_expression;
   v->previsit_assignment = previsit_assignment;
@@ -314,6 +329,9 @@ static void visit_entry(cscript_context* ctxt, cscript_visitor* vis, cscript_vis
         case cscript_statement_type_for:
           cscript_vector_push_back(ctxt, &(vis->v), make_entry(&cast(cscript_statement*, e.entry)->statement.forloop, CSCRIPT_VISITOR_FOR_PRE), cscript_visitor_entry);
           break;
+        case cscript_statement_type_scoped:
+          cscript_vector_push_back(ctxt, &(vis->v), make_entry(&cast(cscript_statement*, e.entry)->statement.scoped, CSCRIPT_VISITOR_SCOPED_STATEMENTS_PRE), cscript_visitor_entry);
+          break;
         default:
           cscript_assert(0); // not implemented yet
           break;
@@ -367,6 +385,27 @@ static void visit_entry(cscript_context* ctxt, cscript_visitor* vis, cscript_vis
     case CSCRIPT_VISITOR_STATEMENTS_POST:
     {
     vis->postvisit_statements(ctxt, vis, cast(cscript_comma_separated_statements*, e.entry));
+    break;
+    }
+    case CSCRIPT_VISITOR_SCOPED_STATEMENTS_PRE:
+    {
+    if (vis->previsit_scoped_statements(ctxt, vis, cast(cscript_scoped_statements*, e.entry)))
+      {
+      cscript_vector_push_back(ctxt, &(vis->v), make_entry(e.entry, CSCRIPT_VISITOR_SCOPED_STATEMENTS_POST), cscript_visitor_entry);
+      cscript_statement* stmt_it = cscript_vector_begin(&cast(cscript_statement*, e.entry)->statement.scoped.statements, cscript_statement);
+      cscript_statement* stmt_it_end = cscript_vector_end(&cast(cscript_statement*, e.entry)->statement.scoped.statements, cscript_statement);
+      cscript_statement* stmt_rit = stmt_it_end - 1;
+      cscript_statement* stmt_rit_end = stmt_it - 1;
+      for (; stmt_rit != stmt_rit_end; --stmt_rit) // IMPORTANT: brackets necessary, as cscript_vector_push_back is a C macro
+        {
+        cscript_vector_push_back(ctxt, &(vis->v), make_entry(cast(void*, stmt_rit), CSCRIPT_VISITOR_STATEMENT_PRE), cscript_visitor_entry);
+        }
+      }
+    break;
+    }
+    case CSCRIPT_VISITOR_SCOPED_STATEMENTS_POST:
+    {
+    vis->postvisit_scoped_statements(ctxt, vis, cast(cscript_scoped_statements*, e.entry));
     break;
     }
     case CSCRIPT_VISITOR_NUMBER:

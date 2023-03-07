@@ -156,6 +156,11 @@ typedef struct cscript_comma_separated_statements
   cscript_vector statements;
   } cscript_comma_separated_statements;
 
+typedef struct cscript_scoped_statements
+  {
+  cscript_vector statements;
+  } cscript_scoped_statements;
+
 typedef struct cscript_parsed_for
   {
   cscript_vector init_cond_inc;
@@ -181,6 +186,7 @@ typedef struct cscript_parsed_if
 #define cscript_statement_type_for 5
 #define cscript_statement_type_comma_separated 6
 #define cscript_statement_type_assignment 7
+#define cscript_statement_type_scoped 8
 
 typedef union
   {
@@ -192,6 +198,7 @@ typedef union
   cscript_parsed_assignment assignment;
   cscript_parsed_for forloop;
   cscript_parsed_if iftest;
+  cscript_scoped_statements scoped;
   } cscript_parsed_statement;
 
 typedef struct cscript_statement

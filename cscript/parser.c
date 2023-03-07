@@ -160,7 +160,7 @@ static int current_token_type(token** token_it, token** token_it_end)
 static void check_for_semicolon(cscript_context* ctxt, token** token_it, token** token_it_end, cscript_statement* last_statement)
   {
   int optional = 0;
-  if (last_statement->type == cscript_statement_type_if || last_statement->type == cscript_statement_type_for)
+  if (last_statement->type == cscript_statement_type_if || last_statement->type == cscript_statement_type_for || last_statement->type == cscript_statement_type_scoped)
     optional = 1;
   if (optional)
     {
@@ -620,6 +620,16 @@ cscript_vector make_statements(cscript_context* ctxt, token** token_it, token** 
   return stmts;
   }
 
+cscript_statement make_scoped(cscript_context* ctxt, token** token_it, token** token_it_end)
+  {
+  cscript_scoped_statements scoped;
+  token_require(ctxt, token_it, token_it_end, "{");
+  scoped.statements = make_statements(ctxt, token_it, token_it_end, "}");
+  cscript_statement outstmt;
+  outstmt.type = cscript_statement_type_scoped;
+  outstmt.statement.scoped = scoped;
+  return outstmt;
+  }
 
 cscript_statement make_if(cscript_context* ctxt, token** token_it, token** token_it_end)
   {
@@ -633,8 +643,11 @@ cscript_statement make_if(cscript_context* ctxt, token** token_it, token** token
   cscript_parsed_expression cond = cscript_make_expression(ctxt, token_it, token_it_end);
   cscript_vector_push_back(ctxt, &i.condition, cond, cscript_parsed_expression);
   token_require(ctxt, token_it, token_it_end, ")");
-  token_require(ctxt, token_it, token_it_end, "{");
-  i.body = make_statements(ctxt, token_it, token_it_end, "}");
+  //token_require(ctxt, token_it, token_it_end, "{");
+  //i.body = make_statements(ctxt, token_it, token_it_end, "}");
+  cscript_statement scoped = make_scoped(ctxt, token_it, token_it_end);
+  cscript_vector_init(ctxt, &i.body, cscript_statement);
+  cscript_vector_push_back(ctxt, &i.body, scoped, cscript_statement);
   if (current_token_equals(token_it, token_it_end, "else") != 0)
     {
     token_require(ctxt, token_it, token_it_end, "else");
@@ -646,8 +659,11 @@ cscript_statement make_if(cscript_context* ctxt, token** token_it, token** token
       }
     else
       {
-      token_require(ctxt, token_it, token_it_end, "{");
-      i.alternative = make_statements(ctxt, token_it, token_it_end, "}");
+      //token_require(ctxt, token_it, token_it_end, "{");
+      //i.alternative = make_statements(ctxt, token_it, token_it_end, "}");
+      cscript_statement scoped2 = make_scoped(ctxt, token_it, token_it_end);
+      cscript_vector_init(ctxt, &i.alternative, cscript_statement);
+      cscript_vector_push_back(ctxt, &i.alternative, scoped2, cscript_statement);
       }
     }
   else
@@ -678,8 +694,11 @@ cscript_statement make_for(cscript_context* ctxt, token** token_it, token** toke
   cscript_statement inc = cscript_make_statement(ctxt, token_it, token_it_end);
   cscript_vector_push_back(ctxt, &f.init_cond_inc, inc, cscript_statement);
   token_require(ctxt, token_it, token_it_end, ")");
-  token_require(ctxt, token_it, token_it_end, "{");
-  f.statements = make_statements(ctxt, token_it, token_it_end, "}");
+  //token_require(ctxt, token_it, token_it_end, "{");
+  //f.statements = make_statements(ctxt, token_it, token_it_end, "}");
+  cscript_statement scoped = make_scoped(ctxt, token_it, token_it_end);
+  cscript_vector_init(ctxt, &f.statements, cscript_statement);
+  cscript_vector_push_back(ctxt, &f.statements, scoped, cscript_statement);
   cscript_statement outstmt;
   outstmt.type = cscript_statement_type_for;
   outstmt.statement.forloop = f;
@@ -701,8 +720,11 @@ cscript_statement make_while(cscript_context* ctxt, token** token_it, token** to
   cscript_vector_push_back(ctxt, &f.init_cond_inc, cond, cscript_statement);
   cscript_vector_push_back(ctxt, &f.init_cond_inc, nop, cscript_statement);
   token_require(ctxt, token_it, token_it_end, ")");
-  token_require(ctxt, token_it, token_it_end, "{");
-  f.statements = make_statements(ctxt, token_it, token_it_end, "}");
+  //token_require(ctxt, token_it, token_it_end, "{");
+  //f.statements = make_statements(ctxt, token_it, token_it_end, "}");
+  cscript_statement scoped = make_scoped(ctxt, token_it, token_it_end);
+  cscript_vector_init(ctxt, &f.statements, cscript_statement);
+  cscript_vector_push_back(ctxt, &f.statements, scoped, cscript_statement);
   cscript_statement outstmt;
   outstmt.type = cscript_statement_type_for;
   outstmt.statement.forloop = f;
@@ -979,6 +1001,11 @@ cscript_statement cscript_make_statement(cscript_context* ctxt, token** token_it
 
   switch (current_token_type(token_it, token_it_end))
     {
+    case CSCRIPT_T_LEFT_CURLY_BRACE:
+    {
+    cscript_statement stmt = make_scoped(ctxt, token_it, token_it_end);
+    return stmt;
+    }
     case CSCRIPT_T_SEMICOLON:
     {
     cscript_statement nop = make_nop();
@@ -1187,6 +1214,11 @@ static void postvisit_statements(cscript_context* ctxt, cscript_visitor* v, cscr
   UNUSED(v);
   cscript_vector_destroy(ctxt, &e->statements);
   }
+static void postvisit_scoped_statements(cscript_context* ctxt, cscript_visitor* v, cscript_scoped_statements* e)
+  {
+  UNUSED(v);
+  cscript_vector_destroy(ctxt, &e->statements);
+  }
 static void postvisit_fixnum(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_fixnum* fx)
   {
   UNUSED(v);
@@ -1261,6 +1293,7 @@ void cscript_program_destroy(cscript_context* ctxt, cscript_program* p)
   destroyer.visitor->postvisit_relop = postvisit_relop;
   destroyer.visitor->postvisit_expression = postvisit_expression;
   destroyer.visitor->postvisit_statements = postvisit_statements;
+  destroyer.visitor->postvisit_scoped_statements = postvisit_scoped_statements;
   destroyer.visitor->postvisit_fixnum = postvisit_fixnum;
   destroyer.visitor->postvisit_flonum = postvisit_flonum;
   destroyer.visitor->postvisit_var = postvisit_variable;
@@ -1290,6 +1323,7 @@ void cscript_statement_destroy(cscript_context* ctxt, cscript_statement* e)
   destroyer.visitor->postvisit_relop = postvisit_relop;
   destroyer.visitor->postvisit_expression = postvisit_expression;
   destroyer.visitor->postvisit_statements = postvisit_statements;
+  destroyer.visitor->postvisit_scoped_statements = postvisit_scoped_statements;
   destroyer.visitor->postvisit_fixnum = postvisit_fixnum;
   destroyer.visitor->postvisit_flonum = postvisit_flonum;
   destroyer.visitor->postvisit_var = postvisit_variable;
@@ -1317,6 +1351,7 @@ void cscript_factor_destroy(cscript_context* ctxt, cscript_parsed_factor* f)
   destroyer.visitor->postvisit_relop = postvisit_relop;
   destroyer.visitor->postvisit_expression = postvisit_expression;
   destroyer.visitor->postvisit_statements = postvisit_statements;
+  destroyer.visitor->postvisit_scoped_statements = postvisit_scoped_statements;
   destroyer.visitor->postvisit_fixnum = postvisit_fixnum;
   destroyer.visitor->postvisit_flonum = postvisit_flonum;
   destroyer.visitor->postvisit_var = postvisit_variable;
@@ -1344,6 +1379,7 @@ void cscript_term_destroy(cscript_context* ctxt, cscript_parsed_term* t)
   destroyer.visitor->postvisit_relop = postvisit_relop;
   destroyer.visitor->postvisit_expression = postvisit_expression;
   destroyer.visitor->postvisit_statements = postvisit_statements;
+  destroyer.visitor->postvisit_scoped_statements = postvisit_scoped_statements;
   destroyer.visitor->postvisit_fixnum = postvisit_fixnum;
   destroyer.visitor->postvisit_flonum = postvisit_flonum;
   destroyer.visitor->postvisit_var = postvisit_variable;
@@ -1371,6 +1407,7 @@ void cscript_relop_destroy(cscript_context* ctxt, cscript_parsed_relop* r)
   destroyer.visitor->postvisit_relop = postvisit_relop;
   destroyer.visitor->postvisit_expression = postvisit_expression;
   destroyer.visitor->postvisit_statements = postvisit_statements;
+  destroyer.visitor->postvisit_scoped_statements = postvisit_scoped_statements;
   destroyer.visitor->postvisit_fixnum = postvisit_fixnum;
   destroyer.visitor->postvisit_flonum = postvisit_flonum;
   destroyer.visitor->postvisit_var = postvisit_variable;
@@ -1398,6 +1435,7 @@ void cscript_expression_destroy(cscript_context* ctxt, cscript_parsed_expression
   destroyer.visitor->postvisit_relop = postvisit_relop;
   destroyer.visitor->postvisit_expression = postvisit_expression;
   destroyer.visitor->postvisit_statements = postvisit_statements;
+  destroyer.visitor->postvisit_scoped_statements = postvisit_scoped_statements;
   destroyer.visitor->postvisit_fixnum = postvisit_fixnum;
   destroyer.visitor->postvisit_flonum = postvisit_flonum;
   destroyer.visitor->postvisit_var = postvisit_variable;

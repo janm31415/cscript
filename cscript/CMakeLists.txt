@@ -1,4 +1,5 @@
 set(HDRS
+alpha.h
 compiler.h
 constant.h
 constfold.h
@@ -28,6 +29,7 @@ vm.h
 )
 	
 set(SRCS
+alpha.c
 compiler.c
 constant.c
 constfold.c

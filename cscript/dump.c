@@ -274,6 +274,20 @@ static void dump_comma_separated_statements(cscript_context* ctxt, cscript_visit
     }
   }
 
+static void dump_scoped(cscript_context* ctxt, cscript_visitor* v, cscript_scoped_statements* f)
+  {
+  cscript_dump_visitor* d = (cscript_dump_visitor*)(v->impl);
+  cscript_statement* it = cscript_vector_begin(&f->statements, cscript_statement);
+  cscript_statement* it_end = cscript_vector_end(&f->statements, cscript_statement);
+  cscript_string_append_cstr(ctxt, &(d->s), "{ ");
+  for (; it != it_end; ++it)
+    {
+    dump_statement(ctxt, v, it);
+    cscript_string_append_cstr(ctxt, &(d->s), "; ");
+    }
+  cscript_string_append_cstr(ctxt, &(d->s), "}");
+  }
+
 static void dump_for(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_for* f)
   {
   cscript_dump_visitor* d = (cscript_dump_visitor*)(v->impl);
@@ -287,14 +301,10 @@ static void dump_for(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_f
   cscript_string_append_cstr(ctxt, &(d->s), "; ");
   dump_statement(ctxt, v, inc);
   cscript_statement* it = cscript_vector_begin(&f->statements, cscript_statement);
-  cscript_statement* it_end = cscript_vector_end(&f->statements, cscript_statement);
-  cscript_string_append_cstr(ctxt, &(d->s), ") { ");
-  for (; it != it_end; ++it)
-    {
-    dump_statement(ctxt, v, it);
-    cscript_string_append_cstr(ctxt, &(d->s), "; ");
-    }
-  cscript_string_append_cstr(ctxt, &(d->s), "}");
+  //cscript_statement* it_end = cscript_vector_end(&f->statements, cscript_statement);
+  cscript_string_append_cstr(ctxt, &(d->s), ") ");  
+  dump_statement(ctxt, v, it);
+
   }
 
 static void dump_if(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_if* i)
@@ -303,27 +313,15 @@ static void dump_if(cscript_context* ctxt, cscript_visitor* v, cscript_parsed_if
   cscript_string_append_cstr(ctxt, &(d->s), "if (");
   cscript_parsed_expression* cond = cscript_vector_at(&i->condition, 0, cscript_parsed_expression);
   dump_expression(ctxt, v, cond);
-  cscript_string_append_cstr(ctxt, &(d->s), ")");
-  cscript_string_append_cstr(ctxt, &(d->s), " { ");
+  cscript_string_append_cstr(ctxt, &(d->s), ") ");  
   cscript_statement* it = cscript_vector_begin(&i->body, cscript_statement);
-  cscript_statement* it_end = cscript_vector_end(&i->body, cscript_statement);
-  for (; it != it_end; ++it)
-    {
-    dump_statement(ctxt, v, it); 
-    cscript_string_append_cstr(ctxt, &(d->s), "; ");
-    }
-  cscript_string_append_cstr(ctxt, &(d->s), "}");
+  dump_statement(ctxt, v, it);
+  
   if (i->alternative.vector_size > 0)
     {
-    cscript_string_append_cstr(ctxt, &(d->s), " else { ");
+    cscript_string_append_cstr(ctxt, &(d->s), " else ");
     it = cscript_vector_begin(&i->alternative, cscript_statement);
-    it_end = cscript_vector_end(&i->alternative, cscript_statement);
-    for (; it != it_end; ++it)
-      {
-      dump_statement(ctxt, v, it);
-      cscript_string_append_cstr(ctxt, &(d->s), "; ");
-      }
-    cscript_string_append_cstr(ctxt, &(d->s), "}");
+    dump_statement(ctxt, v, it);
     }
   }
 
@@ -354,6 +352,9 @@ static void dump_statement(cscript_context* ctxt, cscript_visitor* v, cscript_st
       break;
     case cscript_statement_type_assignment:
       dump_assignment(ctxt, v, &s->statement.assignment);
+      break;
+    case cscript_statement_type_scoped:
+      dump_scoped(ctxt, v, &s->statement.scoped);
       break;
     default:
       break;
