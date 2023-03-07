@@ -80,6 +80,6 @@ CSCRIPT_API cscript_vector tokenize(cscript_context* ctxt, cscript_stream* str);
 
 CSCRIPT_API void destroy_tokens_vector(cscript_context* ctxt, cscript_vector* tokens);
 
-cscript_vector cscript_script2tokens(cscript_context* ctxt, const char* script);
+CSCRIPT_API cscript_vector cscript_script2tokens(cscript_context* ctxt, const char* script);
 
 #endif //CSCRIPT_TOKEN_H

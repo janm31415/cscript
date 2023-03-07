@@ -20,11 +20,11 @@ typedef struct cscript_external_function
   cscript_foreign_return_type return_type;
   } cscript_external_function;
 
-cscript_external_function cscript_external_function_init(cscript_context* ctxt, const char* name, void* address, cscript_foreign_return_type ret_type);
+CSCRIPT_API cscript_external_function cscript_external_function_init(cscript_context* ctxt, const char* name, void* address, cscript_foreign_return_type ret_type);
 
-void cscript_external_function_destroy(cscript_context* ctxt, cscript_external_function* ext);
+CSCRIPT_API void cscript_external_function_destroy(cscript_context* ctxt, cscript_external_function* ext);
 
-void cscript_register_external_function(cscript_context* ctxt, cscript_external_function* ext);
+CSCRIPT_API void cscript_register_external_function(cscript_context* ctxt, cscript_external_function* ext);
 
 cscript_object cscript_call_external(cscript_context* ctxt, cscript_external_function* ext, int argument_stack_offset, int nr_of_args);
 

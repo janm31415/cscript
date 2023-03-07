@@ -226,7 +226,7 @@ typedef struct cscript_program
   cscript_vector statements;
   } cscript_program;
 
-cscript_statement cscript_make_statement(cscript_context* ctxt, token** token_it, token** token_it_end);
+CSCRIPT_API cscript_statement cscript_make_statement(cscript_context* ctxt, token** token_it, token** token_it_end);
 CSCRIPT_API cscript_program make_program(cscript_context* ctxt, cscript_vector* tokens);
 CSCRIPT_API void cscript_program_destroy(cscript_context* ctxt, cscript_program* p);
 CSCRIPT_API void cscript_statement_destroy(cscript_context* ctxt, cscript_statement* e);

@@ -30,9 +30,9 @@ typedef unsigned char cscript_byte;
 #define CSCRIPT_API extern
 #endif
 
-CSCRIPT_API cscript_context* cscript_open(cscript_memsize heap_size);
+CSCRIPT_API cscript_context* cscript_open(cscript_memsize stack_size);
 CSCRIPT_API void cscript_close(cscript_context* ctxt);
-CSCRIPT_API cscript_context* cscript_context_init(cscript_context* ctxt, cscript_memsize heap_size);
+CSCRIPT_API cscript_context* cscript_context_init(cscript_context* ctxt, cscript_memsize stack_size);
 CSCRIPT_API void cscript_context_destroy(cscript_context* ctxt);
 
 #endif //CSCRIPT_H

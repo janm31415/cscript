@@ -4,6 +4,6 @@
 #include "cscript.h"
 #include "parser.h"
 
-void cscript_preprocess(cscript_context* ctxt, cscript_program* prog);
+CSCRIPT_API void cscript_preprocess(cscript_context* ctxt, cscript_program* prog);
 
 #endif //CSCRIPT_PREPROCESS_H

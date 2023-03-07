@@ -30,7 +30,7 @@ static void context_free(cscript_context* ctxt)
     }
   cscript_vector_destroy(ctxt, &ctxt->filenames_list);
   cscript_environment_destroy(ctxt);
-  cscript_vector_destroy(ctxt, &ctxt->stack_raw);
+  cscript_vector_destroy(ctxt, &ctxt->stack);
   cscript_vector_destroy(ctxt, &ctxt->globals);
   cscript_map_free(ctxt, ctxt->externals_map);
   cscript_external_function* fit = cscript_vector_begin(&ctxt->externals, cscript_external_function);
@@ -43,7 +43,7 @@ static void context_free(cscript_context* ctxt)
   cscript_free(ctxt, ctxt, sizeof(cscript_context));
   }
 
-static void context_init(cscript_context* ctxt, cscript_memsize heap_size)
+static void context_init(cscript_context* ctxt, cscript_memsize stack_size)
   {
   cscript_assert(ctxt->global != NULL);  
   ctxt->error_jmp = NULL;
@@ -54,15 +54,14 @@ static void context_init(cscript_context* ctxt, cscript_memsize heap_size)
   cscript_vector_init(ctxt, &ctxt->compile_error_reports, cscript_error_report);
   cscript_vector_init(ctxt, &ctxt->runtime_error_reports, cscript_error_report);
   cscript_vector_init(ctxt, &ctxt->filenames_list, cscript_string);
-  cscript_vector_init_with_size(ctxt, &ctxt->stack_raw, heap_size, cscript_fixnum);
-  ctxt->stack = ctxt->stack_raw;
+  cscript_vector_init_with_size(ctxt, &ctxt->stack, stack_size, cscript_fixnum);
   cscript_vector_init(ctxt, &ctxt->globals, cscript_fixnum);
   cscript_vector_init(ctxt, &ctxt->externals, cscript_external_function);
   ctxt->externals_map = cscript_map_new(ctxt, 0, 4);
   cscript_environment_init(ctxt);
   }
 
-cscript_context* cscript_open(cscript_memsize heap_size)
+cscript_context* cscript_open(cscript_memsize stack_size)
   {
   cscript_assert(sizeof(cscript_fixnum) == sizeof(cscript_flonum));
   cscript_assert(sizeof(cscript_fixnum) == sizeof(void*));
@@ -76,7 +75,7 @@ cscript_context* cscript_open(cscript_memsize heap_size)
     g->dummy_node->next = NULL;
     g->main_context = ctxt;  
     g->primitives_map = generate_primitives_map(ctxt);
-    context_init(ctxt, heap_size);
+    context_init(ctxt, stack_size);
     }
   return ctxt;
   }
@@ -90,14 +89,14 @@ void cscript_close(cscript_context* ctxt)
   context_free(ctxt);
   }
 
-cscript_context* cscript_context_init(cscript_context* ctxt, cscript_memsize heap_size)
+cscript_context* cscript_context_init(cscript_context* ctxt, cscript_memsize stack_size)
   {
   cscript_assert(ctxt->global != NULL);
   cscript_context* ctxt_new = context_new(ctxt);
   if (ctxt_new)
     {
     ctxt_new->global = ctxt->global;
-    context_init(ctxt_new, heap_size);
+    context_init(ctxt_new, stack_size);
     }
   return ctxt_new;
   }

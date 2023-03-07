@@ -8,11 +8,6 @@
 
 #include <setjmp.h>
 
-#define CSCRIPT_USE_POOL
-#define CSCRIPT_MAX_POOL 8
-
-#define CSCRIPT_STRING_PORT_ID -2
-
 typedef struct cscript_longjmp
   {
   cscript_alignment dummy;
@@ -33,7 +28,6 @@ typedef struct cscript_global_context
 struct cscript_context 
   {
   cscript_global_context* global; 
-  cscript_vector stack_raw;
   cscript_vector stack;
   cscript_vector globals;
   int number_of_syntax_errors;

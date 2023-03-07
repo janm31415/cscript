@@ -42,6 +42,6 @@ int cscript_environment_base_at(cscript_environment_entry* entry, cscript_string
 
 cscript_object* cscript_environment_find_key_given_position(cscript_context* ctxt, cscript_fixnum global_position);
 
-//cscript_string cscript_show_environment(cscript_context* ctxt);
+void cscript_show_environment(cscript_context* ctxt, cscript_string* s);
 
 #endif //CSCRIPT_ENVIRONMENT_H

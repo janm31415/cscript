@@ -258,6 +258,7 @@ static void postvisit_expression(cscript_context* ctxt, cscript_visitor* v, cscr
 
 static void postvisit_statement(cscript_context* ctxt, cscript_visitor* v, cscript_statement* s)
   {
+  UNUSED(v);
   if (s->type == cscript_statement_type_if)
     {
     cscript_parsed_expression* cond = cscript_vector_begin(&s->statement.iftest.condition, cscript_parsed_expression);
