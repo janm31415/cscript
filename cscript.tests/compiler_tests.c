@@ -1348,6 +1348,22 @@ static void test_preprocessor()
   preprocess = 1;
   test_compile_fixnum_aux(10, script);
   TEST_EQ_INT(1, number_of_vm_calls);
+
+  const char* script2 = "() if (3 > 2) {3;} else {2;}";
+  preprocess = 0;
+  test_compile_fixnum_aux(3, script2);
+  TEST_EQ_INT(8, number_of_vm_calls);
+  preprocess = 1;
+  test_compile_fixnum_aux(3, script2);
+  TEST_EQ_INT(1, number_of_vm_calls);
+
+  const char* script3 = "() if (3 < 2) {3;} else {2;}";
+  preprocess = 0;
+  test_compile_fixnum_aux(2, script3);
+  TEST_EQ_INT(8, number_of_vm_calls);
+  preprocess = 1;
+  test_compile_fixnum_aux(2, script3);
+  TEST_EQ_INT(1, number_of_vm_calls);
   preprocess = pre;
   }
 

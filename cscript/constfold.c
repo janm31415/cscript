@@ -256,6 +256,44 @@ static void postvisit_expression(cscript_context* ctxt, cscript_visitor* v, cscr
     }
   }
 
+static void postvisit_statement(cscript_context* ctxt, cscript_visitor* v, cscript_statement* s)
+  {
+  if (s->type == cscript_statement_type_if)
+    {
+    cscript_parsed_expression* cond = cscript_vector_begin(&s->statement.iftest.condition, cscript_parsed_expression);
+    if (cscript_is_constant_expression(ctxt, cond))
+      {
+      cscript_vector res = cscript_get_constant_value_expression(ctxt, cond);
+      if (res.vector_size == 1)
+        {
+        cscript_constant_value val = *cscript_vector_begin(&res, cscript_constant_value);
+        cscript_statement stmt;
+        if (val.number.fx == 0)
+          {
+          if (s->statement.iftest.alternative.vector_size > 0)
+            {
+            stmt = *cscript_vector_begin(&s->statement.iftest.alternative, cscript_statement);
+            s->statement.iftest.alternative.vector_size = 0;
+            }
+          else
+            {
+            stmt.type = cscript_statement_type_nop;
+            stmt.statement.nop.filename = make_null_string();
+            }
+          }
+        else
+          {
+          stmt = *cscript_vector_begin(&s->statement.iftest.body, cscript_statement);
+          s->statement.iftest.body.vector_size = 0;
+          }
+        cscript_statement_destroy(ctxt, s);
+        *s = stmt;
+        }
+      cscript_vector_destroy(ctxt, &res);
+      }
+    }
+  }
+
 static cscript_constant_folding_visitor* cscript_constant_folding_visitor_new(cscript_context* ctxt)
   {
   cscript_constant_folding_visitor* v = cscript_new(ctxt, cscript_constant_folding_visitor);
@@ -264,6 +302,7 @@ static cscript_constant_folding_visitor* cscript_constant_folding_visitor_new(cs
   v->visitor->postvisit_relop = postvisit_relop;
   v->visitor->postvisit_term = postvisit_term;
   v->visitor->postvisit_factor = postvisit_factor;
+  v->visitor->postvisit_statement = postvisit_statement;
   return v;
   }
 
