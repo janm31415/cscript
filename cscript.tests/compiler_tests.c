@@ -665,12 +665,47 @@ static cscript_flonum simple_add_flonum(cscript_flonum* a, cscript_flonum* b)
   return *a + *b;
   }
 
+static cscript_flonum lut(cscript_fixnum* lut_address, cscript_fixnum* lut_size, cscript_flonum* x)
+  {
+  // Note: Assumes points are monotonically increasing in x
+  assert(*lut_size % 2 == 0);
+
+  cscript_flonum* lut = (cscript_flonum*)*lut_address;
+
+  int64_t i = 0;
+  while (i < (*lut_size / 2) && *x > lut[i * 2])
+    ++i;
+
+  if (i == 0)
+    return lut[1];
+
+  if (i >= *lut_size)
+    return lut[*lut_size - 1];
+
+  double ratio = (*x - lut[(i - 1) * 2]) / (lut[i * 2] - lut[(i - 1) * 2]);
+
+  double result = lut[(i - 1) * 2 + 1] * (1.0 - ratio) + lut[i * 2 + 1] * ratio;
+  return result;
+  }
+
 static void text_external_calls()
   {
   test_foreign_fixnum_aux(17, "() seventeen();", "seventeen", cast(void*, &seventeen), cscript_foreign_fixnum, 0, NULL);
   test_foreign_flonum_aux(3.14159, "() pi();", "pi", cast(void*, &pi), cscript_foreign_flonum, 0, NULL);
   test_foreign_fixnum_aux(4, "() add(3, 1);", "add", cast(void*, &simple_add_fixnum), cscript_foreign_fixnum, 0, NULL);
   test_foreign_flonum_aux(3.24, "() add(3.14, 0.1);", "add", cast(void*, &simple_add_flonum), cscript_foreign_flonum, 0, NULL);
+  const char* lut_script = "()\n"
+  "float lut_table[14] = {\n"
+  "0.0,0.0,    \n"
+  "1.0,0.1,    \n"
+  "2.0,0.3,    \n"
+  "3.0,0.35,   \n"
+  "4.0,0.78,   \n"
+  "5.0,0.9,    \n"
+  "6.0,1.0 }; \n"
+  "float x = 3.5;\n"
+  "lut(lut_table, 14, x);";
+  test_foreign_flonum_aux(0.56499999999999995, lut_script, "lut", cast(void*, &lut), cscript_foreign_flonum, 0, NULL);
   }
 
 static void test_array_address()
@@ -678,8 +713,40 @@ static void test_array_address()
   cscript_fixnum pars_list[6] = { 0, 0, 0, 0, 0, 0 };
   cscript_fixnum addr = 999;
   pars_list[0] = (cscript_fixnum)&addr;
-  test_compile_fixnum_pars_aux(100, "(int* addr) int my_array[5] = { 10, 20, 30, 40, 50 }; *addr = my_array; 100;", 1, pars_list);
-  TEST_EQ_INT(1, addr);
+  //test_compile_fixnum_pars_aux(100, "(int* addr) int my_array[5] = { 10, 20, 30, 40, 50 }; *addr = my_array; 100;", 1, pars_list);
+  //TEST_EQ_INT(1, addr);
+  const char* script = "(int* addr) int my_array[5] = { 10, 20, 30, 40, 50 }; *addr = my_array;";
+  cscript_context* ctxt = cscript_open(256);
+  cscript_vector tokens = cscript_script2tokens(ctxt, script);
+  cscript_program prog = make_program(ctxt, &tokens);
+
+  if (preprocess != 0)
+    cscript_preprocess(ctxt, &prog);
+  else
+    cscript_alpha_conversion(ctxt, &prog);
+
+  cscript_function* compiled_program = cscript_compile_program(ctxt, &prog);
+
+  // fill stack with parameters
+  for (int i = 0; i < 1; ++i)
+    {
+    cscript_fixnum* fx = cscript_vector_begin(&ctxt->stack, cscript_fixnum) + i;
+    *fx = *(cast(cscript_fixnum*, pars_list) + i);
+    }
+
+  cscript_fixnum* res = cscript_run(ctxt, compiled_program);
+  cscript_print_any_error(ctxt);
+
+  TEST_EQ_INT(cast(cscript_fixnum, ctxt->stack.vector_ptr) + sizeof(cscript_fixnum), addr);
+
+  TEST_EQ_INT(0, ctxt->number_of_compile_errors);
+  TEST_EQ_INT(0, ctxt->number_of_syntax_errors);
+  TEST_EQ_INT(0, ctxt->number_of_runtime_errors);
+
+  cscript_function_free(ctxt, compiled_program);
+  destroy_tokens_vector(ctxt, &tokens);
+  cscript_program_destroy(ctxt, &prog);
+  cscript_close(ctxt);
   }
 
 static void test_compile_flonum_aux_close(cscript_flonum expected, const char* script, int nr_parameters, void* pars, cscript_flonum threshold)

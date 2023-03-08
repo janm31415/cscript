@@ -209,7 +209,17 @@ static void compile_local_variable(cscript_context* ctxt, compiler_state* state,
           }
         else // get address, not value
           {
-          make_code_asbx(ctxt, state->fun, CSCRIPT_OPCODE_SETFIXNUM, state->freereg, (int)entry.position);
+          cscript_fixnum address = cast(cscript_fixnum, ctxt->stack.vector_ptr) + entry.position * sizeof(cscript_fixnum);
+          if (address <= CSCRIPT_MAXARG_sBx && address >= -CSCRIPT_MAXARG_sBx)
+            {
+            make_code_asbx(ctxt, state->fun, CSCRIPT_OPCODE_SETFIXNUM, state->freereg, cast(int, address));
+            }
+          else
+            {
+            cscript_object obj = make_cscript_object_fixnum(address);
+            int k_pos = get_k(ctxt, state->fun, &obj);
+            make_code_abx(ctxt, state->fun, CSCRIPT_OPCODE_LOADK, state->freereg, k_pos);
+            }
           state->reg_typeinfo = cscript_reg_typeinfo_fixnum;
           }
         }
