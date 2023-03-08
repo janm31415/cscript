@@ -1196,7 +1196,7 @@ static void test_global_variables()
   destroy_tokens_vector(ctxt, &tokens);
   cscript_program_destroy(ctxt, &prog);
 
-  tokens = cscript_script2tokens(ctxt, "()$g1=2;$g2;");
+  tokens = cscript_script2tokens(ctxt, "()$g1=2;int i = 8;$g2;");
   prog = make_program(ctxt, &tokens);
   if (preprocess != 0)
     cscript_preprocess(ctxt, &prog);
@@ -1232,7 +1232,7 @@ static void test_global_variables()
   destroy_tokens_vector(ctxt, &tokens);
   cscript_program_destroy(ctxt, &prog);
 
-  tokens = cscript_script2tokens(ctxt, "()$g2=8;$g1+$g2;");
+  tokens = cscript_script2tokens(ctxt, "()$g2=8;int i = 9;$g1+$g2;");
   prog = make_program(ctxt, &tokens);
   if (preprocess != 0)
     cscript_preprocess(ctxt, &prog);

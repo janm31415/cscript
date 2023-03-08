@@ -133,7 +133,7 @@ static void compile_global_variable(cscript_context* ctxt, compiler_state* state
     entry.register_type = cscript_reg_typeinfo_flonum;
     cscript_string s;
     cscript_string_copy(ctxt, &s, &v->name);
-    cscript_environment_add(ctxt, &s, entry);
+    cscript_environment_add_to_base(ctxt, &s, entry);
     cscript_vector_push_back(ctxt, &ctxt->globals, 0, cscript_fixnum);
     }
   make_code_abx(ctxt, state->fun, CSCRIPT_OPCODE_LOADGLOBAL, state->freereg, (int)entry.position);
@@ -801,7 +801,7 @@ static void compile_fixnum_global_single(cscript_context* ctxt, compiler_state* 
     entry.register_type = cscript_reg_typeinfo_fixnum;
     cscript_string s;
     cscript_string_copy(ctxt, &s, &fx->name);
-    cscript_environment_add(ctxt, &s, entry);
+    cscript_environment_add_to_base(ctxt, &s, entry);
     cscript_vector_push_back(ctxt, &ctxt->globals, 0, cscript_fixnum);
     if (init)
       {
@@ -965,7 +965,7 @@ static void compile_flonum_global_single(cscript_context* ctxt, compiler_state* 
     entry.register_type = cscript_reg_typeinfo_flonum;
     cscript_string s;
     cscript_string_copy(ctxt, &s, &fl->name);
-    cscript_environment_add(ctxt, &s, entry);
+    cscript_environment_add_to_base(ctxt, &s, entry);
     cscript_vector_push_back(ctxt, &ctxt->globals, 0, cscript_fixnum);
     if (init)
       {
@@ -1537,6 +1537,7 @@ static void compile_parameter(cscript_context* ctxt, cscript_parameter* p, cscri
 cscript_function* cscript_compile_program(cscript_context* ctxt, cscript_program* prog)
   {
   cscript_compile_errors_clear(ctxt);
+  cscript_environment_push_child(ctxt);
   cscript_function* fun = cscript_function_new(ctxt);
   cscript_parameter* pit = cscript_vector_begin(&prog->parameters, cscript_parameter);
   cscript_parameter* pit_end = cscript_vector_end(&prog->parameters, cscript_parameter);
@@ -1553,5 +1554,6 @@ cscript_function* cscript_compile_program(cscript_context* ctxt, cscript_program
     compile_statement(ctxt, &state, it);
     }
   fun->result_position = state.freereg;
+  cscript_environment_pop_child(ctxt);
   return fun;
   }
