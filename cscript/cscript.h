@@ -51,4 +51,8 @@ CSCRIPT_API void cscript_get_error_message(cscript_context* ctxt, char* buffer, 
 CSCRIPT_API void cscript_set_function_arguments(cscript_context* ctxt, cscript_fixnum* arguments, int number_of_arguments);
 CSCRIPT_API cscript_fixnum* cscript_run(cscript_context* ctxt, cscript_function* fun);
 
+// returns 0 if failure
+CSCRIPT_API int cscript_set_global_flonum_value(cscript_context* ctxt, const char* global_name, cscript_flonum value);
+CSCRIPT_API int cscript_set_global_fixnum_value(cscript_context* ctxt, const char* global_name, cscript_fixnum value);
+
 #endif //CSCRIPT_H

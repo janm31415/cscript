@@ -6,6 +6,9 @@
 #include "preprocess.h"
 #include "error.h"
 #include "context.h"
+#include "environment.h"
+
+#include <string.h>
 
 cscript_function* cscript_compile(cscript_context* ctxt, const char* script)
   {
@@ -72,4 +75,62 @@ void cscript_set_function_arguments(cscript_context* ctxt, cscript_fixnum* argum
     cscript_fixnum* fx = cscript_vector_begin(&ctxt->stack, cscript_fixnum) + i;
     *fx = arguments[i];
     }
+  }
+
+int cscript_set_global_flonum_value(cscript_context* ctxt, const char* global_name, cscript_flonum value)
+  {
+  if (global_name[0] != '$')
+    {
+    cscript_syntax_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, -1, -1, NULL, "globals should start with $");
+    return 0;
+    }
+  cscript_environment_entry entry;
+  cscript_string name;
+  cscript_string_init(ctxt, &name, global_name);
+  int found = cscript_environment_find_recursive(&entry, ctxt, &name);
+  if (found)
+    {
+    memcpy(((cscript_fixnum*)ctxt->globals.vector_ptr) + entry.position, &value, sizeof(cscript_fixnum));
+    }
+  else
+    {
+    entry.type = CSCRIPT_ENV_TYPE_GLOBAL;
+    entry.position = ctxt->globals.vector_size;
+    entry.register_type = 1;
+    cscript_string s;
+    cscript_string_copy(ctxt, &s, &name);
+    cscript_environment_add_to_base(ctxt, &s, entry);
+    cscript_vector_push_back(ctxt, &ctxt->globals, value, cscript_flonum);
+    }
+  cscript_string_destroy(ctxt, &name);
+  return 1;
+  }
+
+int cscript_set_global_fixnum_value(cscript_context* ctxt, const char* global_name, cscript_fixnum value)
+  {
+  if (global_name[0] != '$')
+    {
+    cscript_syntax_error_cstr(ctxt, CSCRIPT_ERROR_BAD_SYNTAX, -1, -1, NULL, "globals should start with $");
+    return 0;
+    }
+  cscript_environment_entry entry;
+  cscript_string name;
+  cscript_string_init(ctxt, &name, global_name);
+  int found = cscript_environment_find_recursive(&entry, ctxt, &name);
+  if (found)
+    {
+    memcpy(((cscript_fixnum*)ctxt->globals.vector_ptr) + entry.position, &value, sizeof(cscript_fixnum));
+    }
+  else
+    {
+    entry.type = CSCRIPT_ENV_TYPE_GLOBAL;
+    entry.position = ctxt->globals.vector_size;
+    entry.register_type = 0;
+    cscript_string s;
+    cscript_string_copy(ctxt, &s, &name);
+    cscript_environment_add_to_base(ctxt, &s, entry);
+    cscript_vector_push_back(ctxt, &ctxt->globals, value, cscript_fixnum);
+    }
+  cscript_string_destroy(ctxt, &name);
+  return 1;
   }
