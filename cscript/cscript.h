@@ -55,4 +55,6 @@ CSCRIPT_API cscript_fixnum* cscript_run(cscript_context* ctxt, cscript_function*
 CSCRIPT_API int cscript_set_global_flonum_value(cscript_context* ctxt, const char* global_name, cscript_flonum value);
 CSCRIPT_API int cscript_set_global_fixnum_value(cscript_context* ctxt, const char* global_name, cscript_fixnum value);
 
+CSCRIPT_API cscript_memsize cscript_get_function_size(cscript_function* fun);
+
 #endif //CSCRIPT_H

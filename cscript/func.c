@@ -20,3 +20,8 @@ void cscript_function_free(cscript_context* ctxt, cscript_function* f)
   cscript_vector_destroy(ctxt, &f->code);
   cscript_delete(ctxt, f);
   }
+
+cscript_memsize cscript_get_function_size(cscript_function* fun)
+  {
+  return fun->code.vector_size;
+  }
