@@ -35,6 +35,7 @@ constant.c
 constfold.c
 constprop.c
 context.c
+cscript.c
 dump.c
 environment.c
 error.c

@@ -16,6 +16,6 @@ typedef struct cscript_function
 
 
 cscript_function* cscript_function_new(cscript_context* ctxt);
-void cscript_function_free(cscript_context* ctxt, cscript_function* f);
+//void cscript_function_free(cscript_context* ctxt, cscript_function* f);
 
 #endif //CSCRIPT_FUNC_H

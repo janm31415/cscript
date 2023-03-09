@@ -44,4 +44,11 @@ CSCRIPT_API void cscript_environment_clear(cscript_context* ctxt);
 
 CSCRIPT_API void cscript_register_external_function(cscript_context* ctxt, const char* name, void* address, cscript_foreign_return_type ret_type);
 
+CSCRIPT_API cscript_function* cscript_compile(cscript_context* ctxt, const char* script);
+CSCRIPT_API void cscript_function_free(cscript_context* ctxt, cscript_function* f);
+CSCRIPT_API void cscript_get_error_message(cscript_context* ctxt, char* buffer, cscript_memsize buffer_size);
+
+CSCRIPT_API void cscript_set_function_arguments(cscript_context* ctxt, cscript_fixnum* arguments, int number_of_arguments);
+CSCRIPT_API cscript_fixnum* cscript_run(cscript_context* ctxt, cscript_function* fun);
+
 #endif //CSCRIPT_H

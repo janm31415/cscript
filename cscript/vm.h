@@ -113,9 +113,6 @@ typedef enum
 #define CSCRIPT_GETARG_sBx(i)	(CSCRIPT_GETARG_Bx(i)-CSCRIPT_MAXARG_sBx)
 #define CSCRIPT_SETARG_sBx(i,b)	CSCRIPT_SETARG_Bx((i),cast(unsigned int, (b)+CSCRIPT_MAXARG_sBx))
 
-
-CSCRIPT_API cscript_fixnum* cscript_run(cscript_context* ctxt, cscript_function* fun);
-
 CSCRIPT_API cscript_string cscript_fun_to_string(cscript_context* ctxt, cscript_function* fun);
 
 CSCRIPT_API void cscript_show_stack(cscript_context* ctxt, cscript_string* s, int stack_start, int stack_end);
