@@ -2,7 +2,7 @@
 #include "context.h"
 #include "error.h"
 
-cscript_external_function cscript_external_function_init(cscript_context* ctxt, const char* name, void* address, cscript_foreign_return_type ret_type)
+static cscript_external_function external_function_init(cscript_context* ctxt, const char* name, void* address, cscript_foreign_return_type ret_type)
   {
   cscript_external_function ext;
   cscript_string_init(ctxt, &ext.name, name);
@@ -11,12 +11,7 @@ cscript_external_function cscript_external_function_init(cscript_context* ctxt, 
   return ext;
   }
 
-void cscript_external_function_destroy(cscript_context* ctxt, cscript_external_function* ext)
-  {
-  cscript_string_destroy(ctxt, &ext->name);
-  }
-
-void cscript_register_external_function(cscript_context* ctxt, cscript_external_function* ext)
+static void register_external_function(cscript_context* ctxt, cscript_external_function* ext)
   {
   cscript_object key;
   key.type = cscript_object_type_string;
@@ -27,6 +22,16 @@ void cscript_register_external_function(cscript_context* ctxt, cscript_external_
   cscript_vector_push_back(ctxt, &ctxt->externals, *ext, cscript_external_function);
   }
 
+void cscript_register_external_function(cscript_context* ctxt, const char* name, void* address, cscript_foreign_return_type ret_type)
+  {
+  cscript_external_function ext = external_function_init(ctxt,name, address, ret_type);
+  register_external_function(ctxt, &ext);
+  }
+
+void cscript_external_function_destroy(cscript_context* ctxt, cscript_external_function* ext)
+  {
+  cscript_string_destroy(ctxt, &ext->name);
+  }
 
 static void* get_argument_pointer(cscript_context* ctxt, int stack_offset)
   {

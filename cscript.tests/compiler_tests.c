@@ -583,8 +583,7 @@ static void test_array_assignment()
 static void text_foreign_aux(cscript_fixnum expected, const char* script, const char* name, void* address, cscript_foreign_return_type ret_type, int nr_parameters, void* pars, int output_type)
   {
   cscript_context* ctxt = cscript_open(250);
-  cscript_external_function ext = cscript_external_function_init(ctxt, name, address, ret_type);
-  cscript_register_external_function(ctxt, &ext);
+  cscript_register_external_function(ctxt, name, address, ret_type);
 
   cscript_vector tokens = cscript_script2tokens(ctxt, script);
   cscript_program prog = make_program(ctxt, &tokens);
@@ -734,7 +733,7 @@ static void test_array_address()
     *fx = *(cast(cscript_fixnum*, pars_list) + i);
     }
 
-  cscript_fixnum* res = cscript_run(ctxt, compiled_program);
+  cscript_run(ctxt, compiled_program);
   cscript_print_any_error(ctxt);
 
   TEST_EQ_INT(cast(cscript_fixnum, ctxt->stack.vector_ptr) + sizeof(cscript_fixnum), addr);

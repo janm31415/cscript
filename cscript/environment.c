@@ -59,7 +59,7 @@ int cscript_environment_find(cscript_environment_entry* entry, cscript_context* 
   cscript_object* entry_object = cscript_map_get(ctxt, *map_it, &key);
   if (entry_object != NULL)
     {
-    entry->type = (entry_object->type&3) - 1;
+    entry->type = (entry_object->type & 3) - 1;
     entry->register_type = entry_object->type >> 2;
     entry->position = entry_object->value.fx;
     return 1;
@@ -91,7 +91,7 @@ int cscript_environment_find_recursive(cscript_environment_entry* entry, cscript
   }
 
 void cscript_environment_update(cscript_context* ctxt, cscript_string* name, cscript_environment_entry entry)
-  {  
+  {
   cscript_object key;
   key.type = cscript_object_type_string;
   key.value.s = *name;
@@ -120,7 +120,7 @@ void cscript_environment_pop_child(cscript_context* ctxt)
   {
   cscript_assert(ctxt->environment.vector_size > 1); // don't pop the root
   cscript_map** child_map = cscript_vector_back(&ctxt->environment, cscript_map*);
-  cscript_map_keys_free(ctxt, *child_map);  
+  cscript_map_keys_free(ctxt, *child_map);
   cscript_map_free(ctxt, *child_map);
   cscript_vector_pop_back(&ctxt->environment);
   }
@@ -141,7 +141,7 @@ int cscript_environment_base_at(cscript_environment_entry* entry, cscript_string
     entry->position = (*parent_map)->node[pos].value.value.fx;
     *name = (*parent_map)->node[pos].key.value.s;
     return 1;
-    }  
+    }
   return 0;
   }
 
@@ -182,9 +182,9 @@ void cscript_show_environment(cscript_context* ctxt, cscript_string* s)
 
         cscript_string_append_cstr(ctxt, s, "\n");
         cscript_string_destroy(ctxt, &tmp);
-        }      
+        }
       }
-    }  
+    }
   }
 
 cscript_object* cscript_environment_find_key_given_position(cscript_context* ctxt, cscript_fixnum global_position)
@@ -203,4 +203,11 @@ cscript_object* cscript_environment_find_key_given_position(cscript_context* ctx
       }
     }
   return NULL;
+  }
+
+void cscript_environment_clear(cscript_context* ctxt)
+  {
+  ctxt->globals.vector_size = 0;
+  cscript_environment_destroy(ctxt);
+  cscript_environment_init(ctxt);
   }
