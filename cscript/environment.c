@@ -4,6 +4,7 @@
 #include "context.h"
 #include "map.h"
 #include "object.h"
+#include <stddef.h>
 
 void cscript_environment_init(cscript_context* ctxt)
   {

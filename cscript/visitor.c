@@ -1,5 +1,6 @@
 #include "visitor.h"
 #include "memory.h"
+#include <stddef.h>
 
 static int previsit_statement(cscript_context* ctxt, cscript_visitor* v, cscript_statement* s)
   {

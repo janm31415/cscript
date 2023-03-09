@@ -1,6 +1,7 @@
 #include "func.h"
 #include "vector.h"
 #include "object.h"
+#include <stddef.h>
 
 cscript_function* cscript_function_new(cscript_context* ctxt)
   {

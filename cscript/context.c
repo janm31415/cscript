@@ -4,6 +4,7 @@
 #include "environment.h"
 #include "primitives.h"
 #include "foreign.h"
+#include <stddef.h>
 
 static cscript_context* context_new(cscript_context* ctxt)
   {
